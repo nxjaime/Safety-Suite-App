@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, MoreHorizontal, User, Mail, Shield, Lock, Database, Trash2 } from 'lucide-react';
+import { Plus, MoreHorizontal, User, Mail, Shield, Lock, Database, Trash2 } from 'lucide-react';
 import Modal from '../components/UI/Modal';
 import clsx from 'clsx';
 
@@ -12,12 +12,8 @@ interface AppUser {
     lastLogin: string;
 }
 
-interface SystemDataItem {
-    id: string;
-    name: string;
-    description: string;
-    category: string;
-}
+// SystemDataItem interface might be unused now too if we are fully switching to SystemOption, checking usage below.
+// Actually SystemDataItem was used for types that are now SystemOption. removing if unused.
 
 const initialUsers: AppUser[] = [
     { id: '1', name: 'Sarah Connor', email: 'sarah.connor@safetyhub.com', role: 'Admin', status: 'Active', lastLogin: '2023-10-24 09:15 AM' },
@@ -25,28 +21,14 @@ const initialUsers: AppUser[] = [
     { id: '3', name: 'Emily Chen', email: 'emily.chen@safetyhub.com', role: 'Viewer', status: 'Inactive', lastLogin: '2023-09-15 11:00 AM' },
 ];
 
-const initialVehicleTypes: SystemDataItem[] = [
-    { id: '1', name: 'Tractor', description: 'Class 8 Heavy Duty Tractor', category: 'Vehicle' },
-    { id: '2', name: 'Trailer', description: '53ft Dry Van Trailer', category: 'Vehicle' },
-    { id: '3', name: 'Box Truck', description: '26ft Box Truck', category: 'Vehicle' },
-];
-
-const initialTrainingModules: SystemDataItem[] = [
-    { id: '1', name: 'Defensive Driving', description: 'Core safety principles for all drivers', category: 'Training' },
-    { id: '2', name: 'HOS Compliance', description: 'Hours of Service regulations and logging', category: 'Training' },
-    { id: '3', name: 'Pre-Trip Inspection', description: 'Proper vehicle inspection procedures', category: 'Training' },
-];
-
-const initialEventTypes: SystemDataItem[] = [
-    { id: '1', name: 'Accident', description: 'Vehicle collision or incident', category: 'Event' },
-    { id: '2', name: 'Citation', description: 'Traffic violation or warning', category: 'Event' },
-    { id: '3', name: 'Observation', description: 'Behavioral observation by safety manager', category: 'Event' },
-];
+import { settingsService } from '../services/settingsService';
+import type { SystemOption } from '../services/settingsService';
+import toast from 'react-hot-toast';
 
 const Settings: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'users' | 'system'>('users');
 
-    // User Management State
+    // User Management State (Mock for now as per original, or could be RLS/Auth admin later)
     const [users, setUsers] = useState<AppUser[]>(initialUsers);
     const [isUserModalOpen, setIsUserModalOpen] = useState(false);
     const [newUser, setNewUser] = useState({
@@ -57,12 +39,31 @@ const Settings: React.FC = () => {
     });
 
     // System Data State
-    const [systemDataType, setSystemDataType] = useState<'vehicle' | 'training' | 'event'>('vehicle');
-    const [vehicleTypes, setVehicleTypes] = useState<SystemDataItem[]>(initialVehicleTypes);
-    const [trainingModules, setTrainingModules] = useState<SystemDataItem[]>(initialTrainingModules);
-    const [eventTypes, setEventTypes] = useState<SystemDataItem[]>(initialEventTypes);
+    const [systemDataType, setSystemDataType] = useState<'vehicle_type' | 'training_module' | 'risk_type'>('vehicle_type');
+    const [systemOptions, setSystemOptions] = useState<SystemOption[]>([]);
+    const [loading, setLoading] = useState(false);
     const [isDataModalOpen, setIsDataModalOpen] = useState(false);
-    const [newDataItem, setNewDataItem] = useState({ name: '', description: '' });
+    const [newDataItem, setNewDataItem] = useState({ label: '', value: '' });
+
+    // Fetch Options
+    React.useEffect(() => {
+        if (activeTab === 'system') {
+            fetchOptions();
+        }
+    }, [activeTab, systemDataType]);
+
+    const fetchOptions = async () => {
+        setLoading(true);
+        try {
+            const data = await settingsService.getOptionsByCategory(systemDataType);
+            setSystemOptions(data || []);
+        } catch (error) {
+            console.error('Failed to fetch system options', error);
+            // toast.error('Failed to load system data');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // User Handlers
     const handleAddUser = (e: React.FormEvent) => {
@@ -78,41 +79,38 @@ const Settings: React.FC = () => {
         setUsers([...users, user]);
         setIsUserModalOpen(false);
         setNewUser({ name: '', email: '', role: 'Viewer', password: '' });
-        alert(`User ${user.name} added successfully!`);
+        toast.success(`User ${user.name} added successfully!`);
     };
 
     // System Data Handlers
-    const getCurrentDataList = () => {
-        switch (systemDataType) {
-            case 'vehicle': return vehicleTypes;
-            case 'training': return trainingModules;
-            case 'event': return eventTypes;
-            default: return [];
+    const handleAddSystemData = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await settingsService.addOption({
+                category: systemDataType,
+                label: newDataItem.label,
+                value: newDataItem.label, // Default value same as label for simplicity
+            });
+            await fetchOptions();
+            setIsDataModalOpen(false);
+            setNewDataItem({ label: '', value: '' });
+            toast.success('Item added successfully');
+        } catch (error) {
+            console.error('Failed to add item', error);
+            toast.error('Failed to add item');
         }
     };
 
-    const handleAddSystemData = (e: React.FormEvent) => {
-        e.preventDefault();
-        const newItem: SystemDataItem = {
-            id: Date.now().toString(),
-            name: newDataItem.name,
-            description: newDataItem.description,
-            category: systemDataType === 'vehicle' ? 'Vehicle' : systemDataType === 'training' ? 'Training' : 'Event'
-        };
-
-        if (systemDataType === 'vehicle') setVehicleTypes([...vehicleTypes, newItem]);
-        else if (systemDataType === 'training') setTrainingModules([...trainingModules, newItem]);
-        else setEventTypes([...eventTypes, newItem]);
-
-        setIsDataModalOpen(false);
-        setNewDataItem({ name: '', description: '' });
-    };
-
-    const handleDeleteSystemData = (id: string) => {
+    const handleDeleteSystemData = async (id: string) => {
         if (confirm('Are you sure you want to delete this item?')) {
-            if (systemDataType === 'vehicle') setVehicleTypes(vehicleTypes.filter(i => i.id !== id));
-            else if (systemDataType === 'training') setTrainingModules(trainingModules.filter(i => i.id !== id));
-            else setEventTypes(eventTypes.filter(i => i.id !== id));
+            try {
+                await settingsService.deleteOption(id);
+                setSystemOptions(systemOptions.filter(i => i.id !== id));
+                toast.success('Item deleted');
+            } catch (error) {
+                console.error('Failed to delete', error);
+                toast.error('Failed to delete item');
+            }
         }
     };
 
@@ -169,17 +167,7 @@ const Settings: React.FC = () => {
                     </div>
 
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                        <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                            <div className="relative max-w-md w-full">
-                                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Search users..."
-                                    className="pl-9 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 w-full"
-                                />
-                            </div>
-                        </div>
-
+                        {/* Table kept same as before for users... */}
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
@@ -248,9 +236,9 @@ const Settings: React.FC = () => {
                                 value={systemDataType}
                                 onChange={(e) => setSystemDataType(e.target.value as any)}
                             >
-                                <option value="vehicle">Vehicle Types</option>
-                                <option value="training">Training Modules</option>
-                                <option value="event">Event Types</option>
+                                <option value="vehicle_type">Vehicle Types</option>
+                                <option value="training_module">Training Modules</option>
+                                <option value="risk_type">Risk Types</option>
                             </select>
                         </div>
                         <button
@@ -258,7 +246,7 @@ const Settings: React.FC = () => {
                             className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 flex items-center shadow-sm"
                         >
                             <Plus className="w-4 h-4 mr-2" />
-                            Add {systemDataType === 'vehicle' ? 'Vehicle Type' : systemDataType === 'training' ? 'Module' : 'Event Type'}
+                            Add Option
                         </button>
                     </div>
 
@@ -266,24 +254,25 @@ const Settings: React.FC = () => {
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Label</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {getCurrentDataList().map((item) => (
+                                {loading && (
+                                    <tr>
+                                        <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">Loading...</td>
+                                    </tr>
+                                )}
+                                {!loading && systemOptions.map((item) => (
                                     <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            {item.name}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {item.description}
+                                            {item.label}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                                                {item.category}
+                                                {item.category.replace('_', ' ')}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -296,10 +285,10 @@ const Settings: React.FC = () => {
                                         </td>
                                     </tr>
                                 ))}
-                                {getCurrentDataList().length === 0 && (
+                                {!loading && systemOptions.length === 0 && (
                                     <tr>
-                                        <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">
-                                            No data available. Add a new item to get started.
+                                        <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">
+                                            No options found. Add one to get started.
                                         </td>
                                     </tr>
                                 )}
@@ -316,6 +305,7 @@ const Settings: React.FC = () => {
                 title="Add New User"
             >
                 <form onSubmit={handleAddUser} className="space-y-4">
+                    {/* ... (Kept same user inputs) ... */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                         <div className="relative">
@@ -395,50 +385,22 @@ const Settings: React.FC = () => {
             <Modal
                 isOpen={isDataModalOpen}
                 onClose={() => setIsDataModalOpen(false)}
-                title={`Add New ${systemDataType === 'vehicle' ? 'Vehicle Type' : systemDataType === 'training' ? 'Training Module' : 'Event Type'}`}
+                title={`Add New Option`}
             >
                 <form onSubmit={handleAddSystemData} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                        {systemDataType === 'vehicle' ? (
-                            <select
-                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                                value={newDataItem.name}
-                                onChange={(e) => setNewDataItem({ ...newDataItem, name: e.target.value })}
-                            >
-                                <option value="">Select a vehicle type...</option>
-                                <option value="Tractor">Tractor</option>
-                                <option value="Trailer">Trailer</option>
-                                <option value="Box Truck">Box Truck</option>
-                                <option value="Straight Truck">Straight Truck</option>
-                                <option value="Van">Van</option>
-                                <option value="Flatbed">Flatbed</option>
-                                <option value="Refrigerated">Refrigerated</option>
-                                <option value="Tanker">Tanker</option>
-                                <option value="Dump Truck">Dump Truck</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        ) : (
-                            <input
-                                type="text"
-                                required
-                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                                placeholder={systemDataType === 'training' ? 'e.g., Hazmat Safety' : 'e.g., Near Miss'}
-                                value={newDataItem.name}
-                                onChange={(e) => setNewDataItem({ ...newDataItem, name: e.target.value })}
-                            />
-                        )}
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                        <textarea
-                            rows={3}
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Name / Label</label>
+                        <input
+                            type="text"
                             required
                             className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                            placeholder="Enter a brief description..."
-                            value={newDataItem.description}
-                            onChange={(e) => setNewDataItem({ ...newDataItem, description: e.target.value })}
+                            placeholder="Enter option name..."
+                            value={newDataItem.label}
+                            onChange={(e) => setNewDataItem({ ...newDataItem, label: e.target.value })}
                         />
+                        <p className="mt-1 text-xs text-gray-500">
+                            Adding to category: <span className="font-semibold">{systemDataType.replace('_', ' ')}</span>
+                        </p>
                     </div>
                     <div className="flex justify-end space-x-3 mt-6">
                         <button
@@ -452,7 +414,7 @@ const Settings: React.FC = () => {
                             type="submit"
                             className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700"
                         >
-                            Add Item
+                            Add Option
                         </button>
                     </div>
                 </form>

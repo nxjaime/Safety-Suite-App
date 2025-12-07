@@ -40,6 +40,19 @@ async function testConnection() {
             } else {
                 console.error('FAILURE: Connection or Auth failed.');
             }
+
+            // Check system_options table
+            try {
+                const { error: systemOptionsError } = await supabase.from('system_options').select('count', { count: 'exact', head: true });
+                if (systemOptionsError) {
+                    console.error('❌ system_options table check failed:', systemOptionsError.message);
+                } else {
+                    console.log('✅ system_options table exists and is accessible.');
+                }
+            } catch (err) {
+                console.error('❌ Unexpected error checking system_options:', err);
+            }
+            console.log('\nVerification complete!');
         } else {
             console.log('SUCCESS: Connected and query executed.');
         }

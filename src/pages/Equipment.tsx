@@ -1,33 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Truck, AlertTriangle, Wrench } from 'lucide-react';
 import clsx from 'clsx';
 import Modal from '../components/UI/Modal';
 import toast from 'react-hot-toast';
+import { settingsService } from '../services/settingsService';
 
 const Equipment: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'Vehicles' | 'Trailers' | 'Miscellaneous'>('Vehicles');
+    const [vehicleTypes, setVehicleTypes] = useState<string[]>([]);
     const [newAsset, setNewAsset] = useState({
         id: '',
         type: '',
         make: '',
+        model: '',
         year: ''
     });
 
     const [vehicles, setVehicles] = useState([
-        { id: 'TRK-101', type: 'Tractor', make: 'Freightliner', year: 2022, status: 'Active', nextService: '2023-11-15', category: 'Vehicles' },
-        { id: 'TRK-102', type: 'Tractor', make: 'Volvo', year: 2021, status: 'Maintenance', nextService: '2023-10-20', category: 'Vehicles' },
-        { id: 'TRL-501', type: 'Trailer', make: 'Wabash', year: 2020, status: 'Active', nextService: '2023-12-01', category: 'Trailers' },
-        { id: 'TRK-103', type: 'Tractor', make: 'Peterbilt', year: 2023, status: 'Active', nextService: '2024-01-10', category: 'Vehicles' },
-        { id: 'TRL-502', type: 'Trailer', make: 'Great Dane', year: 2019, status: 'Inspection Due', nextService: '2023-10-15', category: 'Trailers' },
-        { id: 'TAB-001', type: 'Tablet', make: 'Samsung', year: 2023, status: 'Active', nextService: 'N/A', category: 'Miscellaneous' },
-        { id: 'CAM-001', type: 'Dash Cam', make: 'Samsara', year: 2023, status: 'Active', nextService: 'N/A', category: 'Miscellaneous' },
+        { id: 'TRK-101', type: 'Tractor', make: 'Freightliner', model: 'Cascadia', year: 2022, status: 'Active', nextService: '2023-11-15', category: 'Vehicles' },
+        { id: 'TRK-102', type: 'Tractor', make: 'Volvo', model: 'VNL 860', year: 2021, status: 'Maintenance', nextService: '2023-10-20', category: 'Vehicles' },
+        { id: 'TRL-501', type: 'Trailer', make: 'Wabash', model: 'Duraplate', year: 2020, status: 'Active', nextService: '2023-12-01', category: 'Trailers' },
+        { id: 'TRK-103', type: 'Tractor', make: 'Peterbilt', model: '579', year: 2023, status: 'Active', nextService: '2024-01-10', category: 'Vehicles' },
+        { id: 'TRL-502', type: 'Trailer', make: 'Great Dane', model: 'Champion', year: 2019, status: 'Inspection Due', nextService: '2023-10-15', category: 'Trailers' },
+        { id: 'TAB-001', type: 'Tablet', make: 'Samsung', model: 'Tab A8', year: 2023, status: 'Active', nextService: 'N/A', category: 'Miscellaneous' },
+        { id: 'CAM-001', type: 'Dash Cam', make: 'Samsara', model: 'CM32', year: 2023, status: 'Active', nextService: 'N/A', category: 'Miscellaneous' },
     ]);
     const [editingId, setEditingId] = useState<string | null>(null);
 
     const filteredVehicles = vehicles.filter(v => v.category === activeTab);
 
-    // ... (handlers remain mostly the same, just need to add category handling in add/edit if needed, but for now defaulting is fine or inferred)
+    useEffect(() => {
+        const loadSettings = async () => {
+            try {
+                const types = await settingsService.getOptionsByCategory('vehicle_type');
+                if (types && types.length > 0) {
+                    setVehicleTypes(types.map(t => t.value));
+                } else {
+                    // Fallback defaults
+                    setVehicleTypes(['Tractor', 'Trailer', 'Box Truck', 'Company Vehicle', 'Forklift']);
+                }
+            } catch (err) {
+                console.error('Failed to load vehicle types', err);
+                setVehicleTypes(['Tractor', 'Trailer', 'Box Truck', 'Company Vehicle', 'Forklift']);
+            }
+        };
+        loadSettings();
+    }, []);
 
     const handleAddAsset = (e: React.FormEvent) => {
         e.preventDefault();
@@ -42,7 +61,7 @@ const Equipment: React.FC = () => {
             toast.success('Asset added successfully');
         }
         setIsModalOpen(false);
-        setNewAsset({ id: '', type: '', make: '', year: '' });
+        setNewAsset({ id: '', type: '', make: '', model: '', year: '' });
     };
 
     const handleEdit = (vehicle: any) => {
@@ -50,6 +69,7 @@ const Equipment: React.FC = () => {
             id: vehicle.id,
             type: vehicle.type,
             make: vehicle.make,
+            model: vehicle.model || '',
             year: vehicle.year.toString()
         });
         setEditingId(vehicle.id);
@@ -57,7 +77,7 @@ const Equipment: React.FC = () => {
     };
 
     const openAddModal = () => {
-        setNewAsset({ id: '', type: '', make: '', year: '' });
+        setNewAsset({ id: '', type: '', make: '', model: '', year: '' });
         setEditingId(null);
         setIsModalOpen(true);
     };
@@ -102,7 +122,6 @@ const Equipment: React.FC = () => {
                         <h3 className="text-2xl font-bold text-gray-900">{filteredVehicles.length}</h3>
                     </div>
                 </div>
-                {/* ... other summary cards using filteredVehicles ... */}
 
                 <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex items-center">
                     <div className="p-3 bg-yellow-100 rounded-full mr-4 border border-yellow-200">
@@ -137,7 +156,7 @@ const Equipment: React.FC = () => {
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Make/Year</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Make/Model/Year</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Next Service</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -148,7 +167,7 @@ const Equipment: React.FC = () => {
                             <tr key={vehicle.id} className="hover:bg-gray-50">
                                 <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{vehicle.id}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{vehicle.type}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{vehicle.year} {vehicle.make}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{vehicle.year} {vehicle.make} {vehicle.model}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{vehicle.nextService}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span className={clsx(
@@ -203,9 +222,9 @@ const Equipment: React.FC = () => {
                             onChange={(e) => setNewAsset({ ...newAsset, type: e.target.value })}
                         >
                             <option value="">Select Type</option>
-                            <option value="Tractor">Tractor</option>
-                            <option value="Trailer">Trailer</option>
-                            <option value="Straight Truck">Straight Truck</option>
+                            {vehicleTypes.map(type => (
+                                <option key={type} value={type}>{type}</option>
+                            ))}
                         </select>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -221,16 +240,27 @@ const Equipment: React.FC = () => {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
                             <input
-                                type="number"
+                                type="text"
                                 required
                                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                                placeholder="2024"
-                                value={newAsset.year}
-                                onChange={(e) => setNewAsset({ ...newAsset, year: e.target.value })}
+                                placeholder="Cascadia"
+                                value={newAsset.model}
+                                onChange={(e) => setNewAsset({ ...newAsset, model: e.target.value })}
                             />
                         </div>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                        <input
+                            type="number"
+                            required
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            placeholder="2024"
+                            value={newAsset.year}
+                            onChange={(e) => setNewAsset({ ...newAsset, year: e.target.value })}
+                        />
                     </div>
                     <div className="flex justify-end space-x-3 mt-6">
                         <button
