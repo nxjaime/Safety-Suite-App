@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 
 const Equipment: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState<'Vehicles' | 'Trailers' | 'Miscellaneous'>('Vehicles');
     const [newAsset, setNewAsset] = useState({
         id: '',
         type: '',
@@ -14,28 +15,30 @@ const Equipment: React.FC = () => {
     });
 
     const [vehicles, setVehicles] = useState([
-        { id: 'TRK-101', type: 'Tractor', make: 'Freightliner', year: 2022, status: 'Active', nextService: '2023-11-15' },
-        { id: 'TRK-102', type: 'Tractor', make: 'Volvo', year: 2021, status: 'Maintenance', nextService: '2023-10-20' },
-        { id: 'TRL-501', type: 'Trailer', make: 'Wabash', year: 2020, status: 'Active', nextService: '2023-12-01' },
-        { id: 'TRK-103', type: 'Tractor', make: 'Peterbilt', year: 2023, status: 'Active', nextService: '2024-01-10' },
-        { id: 'TRL-502', type: 'Trailer', make: 'Great Dane', year: 2019, status: 'Inspection Due', nextService: '2023-10-15' },
+        { id: 'TRK-101', type: 'Tractor', make: 'Freightliner', year: 2022, status: 'Active', nextService: '2023-11-15', category: 'Vehicles' },
+        { id: 'TRK-102', type: 'Tractor', make: 'Volvo', year: 2021, status: 'Maintenance', nextService: '2023-10-20', category: 'Vehicles' },
+        { id: 'TRL-501', type: 'Trailer', make: 'Wabash', year: 2020, status: 'Active', nextService: '2023-12-01', category: 'Trailers' },
+        { id: 'TRK-103', type: 'Tractor', make: 'Peterbilt', year: 2023, status: 'Active', nextService: '2024-01-10', category: 'Vehicles' },
+        { id: 'TRL-502', type: 'Trailer', make: 'Great Dane', year: 2019, status: 'Inspection Due', nextService: '2023-10-15', category: 'Trailers' },
+        { id: 'TAB-001', type: 'Tablet', make: 'Samsung', year: 2023, status: 'Active', nextService: 'N/A', category: 'Miscellaneous' },
+        { id: 'CAM-001', type: 'Dash Cam', make: 'Samsara', year: 2023, status: 'Active', nextService: 'N/A', category: 'Miscellaneous' },
     ]);
     const [editingId, setEditingId] = useState<string | null>(null);
 
+    const filteredVehicles = vehicles.filter(v => v.category === activeTab);
+
+    // ... (handlers remain mostly the same, just need to add category handling in add/edit if needed, but for now defaulting is fine or inferred)
+
     const handleAddAsset = (e: React.FormEvent) => {
         e.preventDefault();
+        const baseAsset = { ...newAsset, year: parseInt(newAsset.year), category: activeTab };
+
         if (editingId) {
-            setVehicles(vehicles.map(v => v.id === editingId ? { ...v, ...newAsset, year: parseInt(newAsset.year) } : v));
+            setVehicles(vehicles.map(v => v.id === editingId ? { ...v, ...baseAsset, category: v.category } : v));
             setEditingId(null);
             toast.success('Asset updated successfully');
         } else {
-            const newVehicle = {
-                ...newAsset,
-                year: parseInt(newAsset.year),
-                status: 'Active',
-                nextService: 'Pending'
-            };
-            setVehicles([...vehicles, newVehicle]);
+            setVehicles([...vehicles, { ...baseAsset, status: 'Active', nextService: 'Pending' }]);
             toast.success('Asset added successfully');
         }
         setIsModalOpen(false);
@@ -68,8 +71,25 @@ const Equipment: React.FC = () => {
                     className="mt-6 px-4 py-2 bg-green-100 text-green-800 border border-green-200 rounded-md text-sm font-medium hover:bg-green-200 flex items-center"
                 >
                     <Truck className="w-4 h-4 mr-2" />
-                    Add Vehicle
+                    Add {activeTab}
                 </button>
+            </div>
+
+            <div className="flex space-x-4 border-b border-gray-200">
+                {['Vehicles', 'Trailers', 'Miscellaneous'].map((tab) => (
+                    <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab as any)}
+                        className={clsx(
+                            'py-2 px-4 border-b-2 font-medium text-sm transition-colors',
+                            activeTab === tab
+                                ? 'border-green-600 text-green-700'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        )}
+                    >
+                        {tab}
+                    </button>
+                ))}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -78,10 +98,12 @@ const Equipment: React.FC = () => {
                         <Truck className="w-6 h-6 text-green-800" />
                     </div>
                     <div>
-                        <p className="text-sm text-gray-500">Total Assets</p>
-                        <h3 className="text-2xl font-bold text-gray-900">{vehicles.length}</h3>
+                        <p className="text-sm text-gray-500">Total {activeTab}</p>
+                        <h3 className="text-2xl font-bold text-gray-900">{filteredVehicles.length}</h3>
                     </div>
                 </div>
+                {/* ... other summary cards using filteredVehicles ... */}
+
                 <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex items-center">
                     <div className="p-3 bg-yellow-100 rounded-full mr-4 border border-yellow-200">
                         <Wrench className="w-6 h-6 text-yellow-600" />
@@ -113,7 +135,7 @@ const Equipment: React.FC = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle ID</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Make/Year</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Next Service</th>
@@ -122,7 +144,7 @@ const Equipment: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {vehicles.map((vehicle) => (
+                        {filteredVehicles.map((vehicle) => (
                             <tr key={vehicle.id} className="hover:bg-gray-50">
                                 <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{vehicle.id}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{vehicle.type}</td>

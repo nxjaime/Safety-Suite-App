@@ -122,14 +122,32 @@ const FMCSA: React.FC = () => {
                             </div>
 
                             {expandedPartId === reg.id && (
-                                <div className="border-t border-gray-200 bg-gray-50 p-4 space-y-3">
+                                <div
+                                    className="border-t border-gray-200 bg-gray-50 p-4 space-y-3"
+                                >
+                                    <div className="mb-2">
+                                        <a
+                                            href={`https://www.ecfr.gov/current/title-49/part-${reg.id}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center"
+                                        >
+                                            <ExternalLink className="w-3 h-3 mr-1" />
+                                            View Full Part {reg.id} on eCFR
+                                        </a>
+                                    </div>
                                     {reg.sections.map((section) => (
                                         <div key={section.code} className="bg-white p-3 rounded-md border border-gray-200 shadow-sm ml-14">
                                             <div className="flex items-start justify-between">
                                                 <div>
-                                                    <span className="inline-block px-2 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded mb-1">
+                                                    <a
+                                                        href={`https://www.ecfr.gov/current/title-49/section-${section.code}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-block px-2 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded mb-1 hover:bg-gray-200"
+                                                    >
                                                         § {section.code}
-                                                    </span>
+                                                    </a>
                                                     <h4 className="text-sm font-bold text-gray-900">{section.title}</h4>
                                                     <p className="text-sm text-gray-600 mt-1">{section.description}</p>
                                                 </div>

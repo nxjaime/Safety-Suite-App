@@ -51,10 +51,31 @@ const Documents: React.FC = () => {
         toast.success(`Started download for ${docName}`);
     };
 
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+    const filteredDocuments = selectedCategory
+        ? documents.filter(d => d.category === selectedCategory)
+        : documents;
+
+    // ... handlers ...
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-800">Document Library</h2>
+                <h2 className="text-2xl font-bold text-gray-800">
+                    {selectedCategory ? (
+                        <div className="flex items-center">
+                            <span
+                                className="text-gray-500 hover:text-gray-700 cursor-pointer mr-2"
+                                onClick={() => setSelectedCategory(null)}
+                            >
+                                Document Library
+                            </span>
+                            <span className="text-gray-400 mr-2">/</span>
+                            <span>{selectedCategory}</span>
+                        </div>
+                    ) : 'Document Library'}
+                </h2>
                 <button
                     onClick={() => setIsModalOpen(true)}
                     className="px-4 py-2 bg-green-100 text-green-800 border border-green-200 rounded-md text-sm font-medium hover:bg-green-200 flex items-center"
@@ -64,6 +85,7 @@ const Documents: React.FC = () => {
                 </button>
             </div>
 
+            {/* Filter Bar */}
             <div className="flex space-x-4 mb-6">
                 <div className="relative flex-1">
                     <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -79,36 +101,29 @@ const Documents: React.FC = () => {
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center cursor-pointer hover:bg-gray-50">
-                    <Folder className="w-8 h-8 text-yellow-500 mr-3" />
-                    <div>
-                        <h4 className="font-medium text-gray-900">Policies</h4>
-                        <p className="text-xs text-gray-500">12 files</p>
-                    </div>
+            {!selectedCategory && (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                    {['Policies', 'Handbooks', 'Forms', 'Training'].map((cat) => {
+                        const count = documents.filter(d => d.category === cat).length;
+                        const color = cat === 'Policies' ? 'text-yellow-500' :
+                            cat === 'Handbooks' ? 'text-blue-500' :
+                                cat === 'Forms' ? 'text-green-500' : 'text-purple-500';
+                        return (
+                            <div
+                                key={cat}
+                                onClick={() => setSelectedCategory(cat)}
+                                className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center cursor-pointer hover:bg-gray-50"
+                            >
+                                <Folder className={`w-8 h-8 ${color} mr-3`} />
+                                <div>
+                                    <h4 className="font-medium text-gray-900">{cat}</h4>
+                                    <p className="text-xs text-gray-500">{count} files</p>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
-                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center cursor-pointer hover:bg-gray-50">
-                    <Folder className="w-8 h-8 text-blue-500 mr-3" />
-                    <div>
-                        <h4 className="font-medium text-gray-900">Handbooks</h4>
-                        <p className="text-xs text-gray-500">5 files</p>
-                    </div>
-                </div>
-                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center cursor-pointer hover:bg-gray-50">
-                    <Folder className="w-8 h-8 text-green-500 mr-3" />
-                    <div>
-                        <h4 className="font-medium text-gray-900">Forms</h4>
-                        <p className="text-xs text-gray-500">8 files</p>
-                    </div>
-                </div>
-                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center cursor-pointer hover:bg-gray-50">
-                    <Folder className="w-8 h-8 text-purple-500 mr-3" />
-                    <div>
-                        <h4 className="font-medium text-gray-900">Training</h4>
-                        <p className="text-xs text-gray-500">15 files</p>
-                    </div>
-                </div>
-            </div>
+            )}
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -123,7 +138,7 @@ const Documents: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {documents.map((doc) => (
+                        {filteredDocuments.map((doc) => (
                             <tr key={doc.id} className="hover:bg-gray-50">
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex items-center">

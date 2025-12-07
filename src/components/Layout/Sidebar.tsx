@@ -26,13 +26,11 @@ const navItems = [
     { name: 'Reporting', path: '/safeview', icon: BarChart2 },
     { name: 'Document Library', path: '/documents', icon: Files },
     { name: 'Regulations', path: '/fmcsa', icon: BookOpen },
-    { name: 'Document Library', path: '/documents', icon: Files },
-    { name: 'Regulations', path: '/fmcsa', icon: BookOpen },
 ];
 
 const Sidebar: React.FC = () => {
     return (
-        <div className="w-64 bg-gradient-to-br from-gray-900 via-green-900 to-emerald-900 text-white flex flex-col h-screen fixed right-0 top-0 overflow-y-auto shadow-xl">
+        <div className="w-64 bg-gradient-to-br from-gray-900 via-green-900 to-emerald-900 text-white flex flex-col h-screen fixed left-0 top-0 overflow-y-auto shadow-xl">
             <div className="p-4 border-b border-green-800 flex items-center space-x-2">
                 <img src="/logo.png" alt="SafetyHub Logo" className="w-8 h-8 object-contain" />
                 <div className="font-bold text-xl tracking-tight">
@@ -81,7 +79,7 @@ const Sidebar: React.FC = () => {
             </div>
 
             <div className="p-4 border-t border-green-800 text-xs text-green-300">
-                &copy; 2023 SafetyHub Connect, Inc.
+                &copy; 2025 SafetyHub Connect, Inc.
             </div>
         </div>
     );

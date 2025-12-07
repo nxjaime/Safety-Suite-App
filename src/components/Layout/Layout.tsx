@@ -7,7 +7,7 @@ const Layout: React.FC = () => {
     return (
         <div className="flex min-h-screen bg-gray-100 font-sans">
             <Sidebar />
-            <div className="flex-1 mr-64">
+            <div className="flex-1 ml-64">
                 <Header />
                 <main className="pt-16 p-6">
                     <Outlet />

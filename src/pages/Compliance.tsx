@@ -21,22 +21,22 @@ const Compliance: React.FC = () => {
     };
 
     const expirations = [
-        { id: 1, driver: 'John Smith', type: 'CDL', date: '2023-10-15', status: 'Critical' },
-        { id: 2, driver: 'Mike Brown', type: 'Medical Card', date: '2023-10-20', status: 'Warning' },
-        { id: 3, driver: 'Sarah Johnson', type: 'MVR', date: '2023-11-01', status: 'Good' },
-        { id: 4, driver: 'David Wilson', type: 'Hazmat Endorsement', date: '2023-10-10', status: 'Critical' },
-        { id: 5, driver: 'Emily Davis', type: 'Annual Review', date: '2023-11-15', status: 'Good' },
+        { id: 1, driver: 'Sarah Jenkins', type: 'CDL', date: '2025-10-15', status: 'Good' },
+        { id: 2, driver: 'Mike Ross', type: 'Medical Card', date: '2024-02-20', status: 'Critical' },
+        { id: 3, driver: 'David Kim', type: 'MVR', date: '2024-03-01', status: 'Warning' },
+        { id: 4, driver: 'Elena Rodriguez', type: 'Hazmat Endorsement', date: '2025-06-10', status: 'Good' },
+        { id: 5, driver: 'Sarah Jenkins', type: 'Annual Review', date: '2024-11-15', status: 'Good' },
     ];
 
     const hosViolations = [
-        { id: 1, driver: 'John Smith', violation: '11 Hour Rule', date: '2023-10-01', status: 'Open' },
-        { id: 2, driver: 'Mike Brown', violation: '14 Hour Rule', date: '2023-10-03', status: 'Resolved' },
-        { id: 3, driver: 'David Wilson', violation: '30 Minute Break', date: '2023-10-05', status: 'Open' },
+        { id: 1, driver: 'Mike Ross', violation: '11 Hour Rule', date: '2024-01-15', status: 'Open' },
+        { id: 2, driver: 'David Kim', violation: '14 Hour Rule', date: '2023-12-20', status: 'Resolved' },
+        { id: 3, driver: 'Elena Rodriguez', violation: '30 Minute Break', date: '2024-01-05', status: 'Open' },
     ];
 
     const missingDQFiles = [
-        { id: 1, driver: 'Sarah Johnson', file: 'Medical Card', status: 'Missing' },
-        { id: 2, driver: 'Emily Davis', file: 'MVR', status: 'Expired' },
+        { id: 1, driver: 'Mike Ross', file: 'Medical Card', status: 'Expired' },
+        { id: 2, driver: 'David Kim', file: 'MVR', status: 'Missing' },
     ];
 
     const auditItems = [
