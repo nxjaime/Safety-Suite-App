@@ -248,6 +248,7 @@ export const driverService = {
     async updateCoachingPlan(planId: string, updates: any) {
         const dbUpdates: any = {};
         if (updates.status) dbUpdates.status = updates.status;
+        // Explicitly map camelCase to snake_case for DB
         if (updates.weeklyCheckIns) dbUpdates.weekly_check_ins = updates.weeklyCheckIns;
 
         const { data, error } = await supabase

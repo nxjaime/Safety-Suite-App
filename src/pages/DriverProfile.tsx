@@ -188,6 +188,9 @@ const DriverProfile: React.FC = () => {
         }
     };
 
+    // State for deletion animation
+    const [deletingPlanId, setDeletingPlanId] = useState<string | null>(null);
+
     const handleUpdateCheckIn = async (planId: string, week: number, field: string, value: any) => {
         if (!driver) return;
 
@@ -212,20 +215,24 @@ const DriverProfile: React.FC = () => {
         const allComplete = updatedCheckIns.every((c: any) => c.status === 'Complete');
         const newStatus = allComplete ? 'Completed' : planToUpdate.status;
 
+        // Optimistic Update
+        const previousPlans = driver.coachingPlans;
+        const updatedPlans = (driver.coachingPlans || []).map((p: any) =>
+            p.id === planId ? { ...p, weeklyCheckIns: updatedCheckIns, status: newStatus } : p
+        );
+        setDriver({ ...driver, coachingPlans: updatedPlans });
+
         try {
             await driverService.updateCoachingPlan(planId, {
-                weeklyCheckIns: updatedCheckIns,
+                weeklyCheckIns: updatedCheckIns, // Service maps this to weekly_check_ins
                 status: newStatus
             });
-
-            // Optimistic Update or Refresh
-            const updatedPlans = (driver.coachingPlans || []).map((p: any) =>
-                p.id === planId ? { ...p, weeklyCheckIns: updatedCheckIns, status: newStatus } : p
-            );
-            setDriver({ ...driver, coachingPlans: updatedPlans });
             toast.success('Check-in updated');
         } catch (error) {
+            console.error("Check-in update failed:", error);
             toast.error('Failed to update check-in');
+            // Revert on error
+            setDriver({ ...driver, coachingPlans: previousPlans });
         }
     };
 
@@ -233,17 +240,25 @@ const DriverProfile: React.FC = () => {
         e.stopPropagation();
         if (!window.confirm('Are you sure you want to delete this coaching plan?')) return;
 
-        try {
-            await driverService.deleteCoachingPlan(planId);
-            toast.success('Coaching plan deleted');
-            if (driver) {
-                const updatedDriver = await driverService.getDriverById(driver.id);
-                setDriver(updatedDriver || undefined);
+        setDeletingPlanId(planId);
+
+        // Wait for animation
+        setTimeout(async () => {
+            try {
+                await driverService.deleteCoachingPlan(planId);
+                toast.success('Coaching plan deleted');
+                if (driver) {
+                    setDriver(prev => prev ? {
+                        ...prev,
+                        coachingPlans: prev.coachingPlans?.filter(p => p.id !== planId)
+                    } : undefined);
+                }
+            } catch (error) {
+                console.error(error);
+                toast.error('Failed to delete plan');
+                setDeletingPlanId(null); // Reset if failed so it reappears
             }
-        } catch (error) {
-            console.error(error);
-            toast.error('Failed to delete plan');
-        }
+        }, 500); // 500ms duration matching CSS transition
     };
 
     const handleAddNote = async () => {
@@ -495,7 +510,11 @@ const DriverProfile: React.FC = () => {
 
                             <div className="space-y-4">
                                 {(driver.coachingPlans || []).map((plan: any) => (
-                                    <div key={plan.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                                    <div
+                                        key={plan.id}
+                                        className={`border border-gray-200 rounded-lg overflow-hidden transition-all duration-500 ease-in-out ${deletingPlanId === plan.id ? 'opacity-0 transform scale-95 max-h-0 margin-0' : 'opacity-100 max-h-[500px]'
+                                            }`}
+                                    >
                                         <div
                                             className="bg-gray-50 p-4 flex justify-between items-center cursor-pointer hover:bg-gray-100"
                                             onClick={() => setExpandedPlanId(expandedPlanId === plan.id ? null : plan.id)}
