@@ -47,6 +47,17 @@ export interface CoachingPlan {
     weeklyCheckIns: WeeklyCheckIn[];
 }
 
+export interface DriverDocument {
+    id: string;
+    driverId: string;
+    name: string;
+    type: string;
+    url?: string;
+    notes?: string;
+    expiryDate?: string;
+    date: string; // created_at
+}
+
 export interface RiskEvent {
     id: string;
     date: string;
@@ -72,6 +83,7 @@ export interface Citation {
 export interface Driver {
     id: string;
     name: string;
+    driverManager?: string;
     status: 'Active' | 'Inactive' | 'On Leave';
     terminal: string;
     riskScore: number;

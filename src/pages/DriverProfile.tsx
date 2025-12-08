@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Save, ChevronDown, ChevronRight, UserPlus, AlertTriangle, FileText } from 'lucide-react';
+import { Save, ChevronDown, ChevronRight, UserPlus, AlertTriangle, FileText, Trash2, Upload } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Modal from '../components/UI/Modal';
 // import { storage } from '../utils/storage';
@@ -34,7 +34,8 @@ const DriverProfile: React.FC = () => {
         address: '',
         licenseNumber: '',
         terminal: '',
-        employeeId: ''
+        employeeId: '',
+        driverManager: '' // Added Driver Manager field
     });
 
 
@@ -57,6 +58,26 @@ const DriverProfile: React.FC = () => {
         file: null
     });
 
+    // Document Modal State
+    const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
+    const [driverDocuments, setDriverDocuments] = useState<any[]>([]);
+    const [newDocument, setNewDocument] = useState<{
+        name: string;
+        type: string;
+        notes: string;
+        expiryDate: string;
+        file: File | null;
+    }>({
+        name: '',
+        type: 'General',
+        notes: '',
+        expiryDate: '',
+        file: null
+    });
+
+    // Tab State
+    const [activeTab, setActiveTab] = useState<'overview' | 'safety' | 'documents'>('overview');
+
     useEffect(() => {
         if (driver) {
             setEditDriverData({
@@ -67,7 +88,8 @@ const DriverProfile: React.FC = () => {
                 address: driver.address || '',
                 licenseNumber: driver.licenseNumber || '',
                 terminal: driver.terminal || '',
-                employeeId: driver.employeeId || ''
+                employeeId: driver.employeeId || '',
+                driverManager: driver.driverManager || ''
             });
         }
     }, [driver]);
@@ -77,9 +99,12 @@ const DriverProfile: React.FC = () => {
             if (!id) return;
             setLoading(true);
             try {
-                const foundDriver = await driverService.getDriverById(id);
-                if (foundDriver) {
-                    setDriver(foundDriver);
+                const data = await driverService.getDriverById(id);
+                if (data) {
+                    setDriver(data);
+                    // Fetch documents
+                    const docs = await driverService.getDriverDocuments(id);
+                    setDriverDocuments(docs);
                 }
             } catch (error) {
                 console.error("Failed to fetch driver", error);
@@ -132,8 +157,8 @@ const DriverProfile: React.FC = () => {
         setIsCoachingModalOpen(true);
     };
 
-    const handleSavePlan = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleCreateCoachingPlanSubmit = async (e: React.FormEvent) => {
+        e.preventDefault(); // Ensure event default is prevented if called from form submit
         if (!driver) return;
 
         const checkIns = generateCheckIns(newPlan.startDate, newPlan.duration);
@@ -143,7 +168,8 @@ const DriverProfile: React.FC = () => {
             durationWeeks: newPlan.duration,
             type: newPlan.type,
             status: 'Active',
-            weeklyCheckIns: checkIns
+            weeklyCheckIns: checkIns,
+            // notes: newPlan.notes // If notes are part of the plan create structure
         };
 
         try {
@@ -203,6 +229,23 @@ const DriverProfile: React.FC = () => {
         }
     };
 
+    const handleDeletePlan = async (planId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!window.confirm('Are you sure you want to delete this coaching plan?')) return;
+
+        try {
+            await driverService.deleteCoachingPlan(planId);
+            toast.success('Coaching plan deleted');
+            if (driver) {
+                const updatedDriver = await driverService.getDriverById(driver.id);
+                setDriver(updatedDriver || undefined);
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to delete plan');
+        }
+    };
+
     const handleAddNote = async () => {
         if (!driver || !newNote.trim()) return;
 
@@ -226,25 +269,45 @@ const DriverProfile: React.FC = () => {
         }
     };
 
-    const handleViewFiles = () => {
-        navigate('/documents');
+    // Document Handlers
+    const handleUploadDocument = async () => {
+        if (!driver || !newDocument.name) {
+            toast.error('Please provide a document name');
+            return;
+        }
+
+        try {
+            const doc = await driverService.uploadDocument(driver.id, {
+                name: newDocument.name,
+                type: newDocument.type as any,
+                notes: newDocument.notes,
+                expiryDate: newDocument.expiryDate,
+                url: newDocument.file ? newDocument.file.name : '' // Mock URL for now
+            });
+
+            setDriverDocuments([doc, ...driverDocuments]);
+            setIsDocumentModalOpen(false);
+            setNewDocument({ name: '', type: 'General', notes: '', expiryDate: '', file: null });
+            toast.success('Document uploaded successfully');
+        } catch (error) {
+            console.error('Failed to upload document', error);
+            toast.error('Failed to upload document');
+        }
     };
 
-    if (loading) return <div className="p-6 flex justify-center items-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div></div>;
-    if (!driver) return (
-        <div className="p-6 text-center">
-            <h2 className="text-xl font-bold text-gray-800 mb-2">Driver Not Found</h2>
-            <p className="text-gray-600 mb-4">The driver you requested does not exist or has been removed.</p>
-            <button
-                onClick={() => navigate('/drivers')}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-            >
-                Back to Drivers
-            </button>
-        </div>
-    );
+    const handleDeleteDocument = async (docId: string) => {
+        if (!window.confirm('Are you sure you want to delete this document?')) return;
+        try {
+            await driverService.deleteDocument(docId);
+            setDriverDocuments(driverDocuments.filter(d => d.id !== docId));
+            toast.success('Document deleted');
+        } catch (error) {
+            console.error('Failed to delete document', error);
+            toast.error('Failed to delete document');
+        }
+    };
 
-    const riskData = [{ month: 'Jan', score: 45 }, { month: 'Feb', score: 52 }, { month: 'Mar', score: 48 }, { month: 'Apr', score: 60 }, { month: 'May', score: 55 }, { month: 'Jun', score: driver.riskScore }];
+    const riskData = [{ month: 'Jan', score: 45 }, { month: 'Feb', score: 52 }, { month: 'Mar', score: 48 }, { month: 'Apr', score: 60 }, { month: 'May', score: 55 }, { month: 'Jun', score: driver?.riskScore || 20 }];
 
     const handleLogRiskEvent = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -282,7 +345,7 @@ const DriverProfile: React.FC = () => {
             const updatedDriver = await driverService.getDriverById(driver.id);
             setDriver(updatedDriver || undefined);
 
-            toast.success(`Risk event logged: ${newRiskEvent.type}`);
+            toast.success(`Risk event logged: ${newRiskEvent.type} `);
             setIsRiskModalOpen(false);
             setNewRiskEvent({ date: new Date().toISOString().split('T')[0], type: '', notes: '', file: null });
         } catch (error) {
@@ -290,6 +353,20 @@ const DriverProfile: React.FC = () => {
             toast.error('Failed to log risk event');
         }
     };
+
+    if (loading) return <div className="p-6 flex justify-center items-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div></div>;
+    if (!driver) return (
+        <div className="p-6 text-center">
+            <h2 className="text-xl font-bold text-gray-800 mb-2">Driver Not Found</h2>
+            <p className="text-gray-600 mb-4">The driver you requested does not exist or has been removed.</p>
+            <button
+                onClick={() => navigate('/drivers')}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+            >
+                Back to Drivers
+            </button>
+        </div>
+    );
 
     return (
         <div className="space-y-6">
@@ -317,278 +394,362 @@ const DriverProfile: React.FC = () => {
                                 <span>{driver.status}</span>
                                 <span>•</span>
                                 <span>ID: {driver.employeeId}</span>
-                            </div>
-                            <div className="mt-4 flex space-x-3">
-                                <button
-                                    onClick={() => setIsEditModalOpen(true)}
-                                    className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 flex items-center"
-                                >
-                                    <UserPlus className="w-4 h-4 mr-2" />
-                                    Edit Profile
-                                </button>
-                                <button
-                                    onClick={handleCreateCoachingPlan}
-                                    className="px-4 py-2 bg-green-100 text-green-800 border border-green-200 text-sm font-medium rounded-md hover:bg-green-200 flex items-center"
-                                >
-                                    <UserPlus className="w-4 h-4 mr-2" />
-                                    Create Coaching Plan
-                                </button>
-                                <button
-                                    onClick={() => setIsRiskModalOpen(true)}
-                                    className="px-4 py-2 bg-red-50 text-red-800 border border-red-200 text-sm font-medium rounded-md hover:bg-red-100 flex items-center"
-                                >
-                                    <AlertTriangle className="w-4 h-4 mr-2" />
-                                    Log Risk Event
-                                </button>
-                                <button
-                                    onClick={handleViewFiles}
-                                    className="px-4 py-2 border border-green-200 bg-white text-green-800 text-sm font-medium rounded-md hover:bg-green-50"
-                                >
-                                    View Files
-                                </button>
+                                {driver.driverManager && (
+                                    <>
+                                        <span>•</span>
+                                        <span>Mgr: {driver.driverManager}</span>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
 
+                    <div className="flex flex-col space-y-3 mt-4 md:mt-0">
+                        <button
+                            onClick={() => setIsEditModalOpen(true)}
+                            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 flex items-center justify-center"
+                        >
+                            <UserPlus className="w-4 h-4 mr-2" />
+                            Edit Profile
+                        </button>
+                        <button
+                            onClick={() => setIsDocumentModalOpen(true)}
+                            className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 flex items-center justify-center"
+                        >
+                            <Upload className="w-4 h-4 mr-2" />
+                            Add Document
+                        </button>
+                    </div>
+
                     <div className="mt-6 md:mt-0 flex items-center space-x-8">
-                        <div className="text-center">
-                            <div className="text-sm text-gray-500 mb-1">Risk Score</div>
-                            <div className={`text-4xl font-bold ${driver.riskScore > 80 ? 'text-red-600' : 'text-green-600'}`}>
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 min-w-[150px] text-center">
+                            <div className={`text-3xl font-bold ${driver.riskScore > 80 ? 'text-red-600' : 'text-green-600'}`}>
                                 {driver.riskScore}
                             </div>
-                            <div className="text-xs text-gray-400 mt-1">Dynamic Score</div>
+                            <div className="text-xs text-gray-500 mt-1">Safety Score</div>
                         </div>
-                        <div className="h-12 w-px bg-gray-200"></div>
+
                         <div className="text-center">
                             <div className="text-sm text-gray-500 mb-1">Years of Service</div>
                             <div className="text-2xl font-semibold text-gray-900">{driver.yearsOfService}</div>
                         </div>
                     </div>
                 </div>
+
+                <div className="mt-8 flex space-x-6 border-b border-gray-200">
+                    <button
+                        onClick={() => setActiveTab('overview')}
+                        className={`pb-3 px-2 text-sm font-medium transition-colors border-b-2 ${activeTab === 'overview' ? 'border-green-600 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Overview
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('safety')}
+                        className={`pb-3 px-2 text-sm font-medium transition-colors border-b-2 ${activeTab === 'safety' ? 'border-green-600 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Safety & Compliance
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('documents')}
+                        className={`pb-3 px-2 text-sm font-medium transition-colors border-b-2 ${activeTab === 'documents' ? 'border-green-600 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Documents
+                    </button>
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 space-y-6">
-                    {/* Notes Section */}
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Driver Coaching & Notes</h3>
+            {/* Overview Tab Content */}
+            {activeTab === 'overview' && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 space-y-6">
+                        {/* Quick Actions */}
+                        <div className="flex space-x-4">
+                            <button
+                                onClick={handleCreateCoachingPlan}
+                                className="flex-1 py-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-center text-green-800 font-medium hover:bg-green-100"
+                            >
+                                <UserPlus className="w-5 h-5 mr-2" />
+                                Create Coaching Plan
+                            </button>
+                            <button
+                                onClick={() => setIsRiskModalOpen(true)}
+                                className="flex-1 py-3 bg-red-50 border border-red-200 rounded-lg flex items-center justify-center text-red-800 font-medium hover:bg-red-100"
+                            >
+                                <AlertTriangle className="w-5 h-5 mr-2" />
+                                Log Risk Event
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('documents')}
+                                className="flex-1 py-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-blue-800 font-medium hover:bg-blue-100"
+                            >
+                                <FileText className="w-5 h-5 mr-2" />
+                                All Files
+                            </button>
+                        </div>
 
-                        <div className="mb-4">
-                            <textarea
-                                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none h-24"
-                                placeholder="Add a new note..."
-                                value={newNote}
-                                onChange={(e) => setNewNote(e.target.value)}
-                            />
-                            <div className="flex justify-end mt-2">
-                                <button
-                                    onClick={handleAddNote}
-                                    disabled={!newNote.trim()}
-                                    className="flex items-center px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 disabled:opacity-50"
-                                >
-                                    <Save className="w-4 h-4 mr-1" /> Add Note
-                                </button>
+                        {/* Coaching Plans Section */}
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-semibold text-gray-800">Active Coaching Plans</h3>
                             </div>
-                        </div>
 
-                        <div className="space-y-4 max-h-60 overflow-y-auto">
-                            {driver.notes && driver.notes.length > 0 ? (
-                                driver.notes.map((note: any) => (
-                                    <div key={note.id} className="bg-gray-50 p-3 rounded-md border border-gray-100">
-                                        <div className="flex justify-between items-start mb-1">
-                                            <span className="text-xs font-semibold text-gray-600">{note.author}</span>
-                                            <span className="text-xs text-gray-400">{new Date(note.date).toLocaleString()}</span>
-                                        </div>
-                                        <p className="text-sm text-gray-800 whitespace-pre-wrap">{note.text}</p>
-                                    </div>
-                                ))
-                            ) : (
-                                <p className="text-sm text-gray-500 italic text-center py-4">No notes recorded.</p>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Coaching Plans Section */}
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Active Coaching Plans</h3>
-                        {driver.coachingPlans && driver.coachingPlans.length > 0 ? (
                             <div className="space-y-4">
-                                {driver.coachingPlans.map((plan: any) => (
-                                    <div key={plan.id} className="border border-gray-200 rounded-md overflow-hidden">
+                                {(driver.coachingPlans || []).map((plan: any) => (
+                                    <div key={plan.id} className="border border-gray-200 rounded-lg overflow-hidden">
                                         <div
-                                            className="flex items-center justify-between p-4 bg-gray-50 cursor-pointer"
+                                            className="bg-gray-50 p-4 flex justify-between items-center cursor-pointer hover:bg-gray-100"
                                             onClick={() => setExpandedPlanId(expandedPlanId === plan.id ? null : plan.id)}
                                         >
-                                            <div className="flex items-center space-x-3">
+                                            <div className="flex items-center space-x-4">
                                                 {expandedPlanId === plan.id ? <ChevronDown className="w-5 h-5 text-gray-500" /> : <ChevronRight className="w-5 h-5 text-gray-500" />}
                                                 <div>
-                                                    <h4 className="text-sm font-bold text-gray-900">{plan.type} Plan</h4>
-                                                    <p className="text-xs text-gray-500">Started: {plan.status === 'Active' ? new Date(plan.startDate).toLocaleDateString() : 'N/A'} • {plan.durationWeeks} Weeks</p>
+                                                    <h4 className="font-medium text-gray-900">{plan.type} Plan</h4>
+                                                    <p className="text-sm text-gray-500">
+                                                        Started: {new Date(plan.startDate).toLocaleDateString()} • {plan.durationWeeks} Weeks
+                                                    </p>
                                                 </div>
                                             </div>
-                                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${plan.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
-                                                {plan.status}
-                                            </span>
+                                            <div className="flex items-center space-x-3">
+                                                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${plan.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
+                                                    {plan.status}
+                                                </span>
+                                                <button
+                                                    onClick={(e) => handleDeletePlan(plan.id, e)}
+                                                    className="p-1 text-gray-400 hover:text-red-600"
+                                                    title="Delete Plan"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </div>
 
                                         {expandedPlanId === plan.id && (
-                                            <div className="p-4 bg-white border-t border-gray-200 space-y-3">
-                                                {plan.weeklyCheckIns && plan.weeklyCheckIns.map((checkIn: any) => (
-                                                    <div key={checkIn.week} className="flex flex-col space-y-2 p-3 bg-gray-50 rounded-md border border-gray-100">
-                                                        <div className="flex justify-between items-center">
-                                                            <span className="text-sm font-medium text-gray-700">Week {checkIn.week} - Due: {checkIn.date}</span>
-                                                            <span className="text-xs text-gray-400">Target: {checkIn.completedDate || 'Pending'}</span>
+                                            <div className="p-4 border-t border-gray-200 bg-white">
+                                                <h5 className="text-sm font-medium text-gray-700 mb-3 block">Weekly Check-ins</h5>
+                                                <div className="space-y-3">
+                                                    {plan.weeklyCheckIns?.map((checkIn: any) => (
+                                                        <div key={checkIn.week} className="flex items-center justify-between bg-gray-50 p-3 rounded border border-gray-100">
+                                                            <div className="flex items-center space-x-3">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={checkIn.status === 'Complete'}
+                                                                    onChange={(e) => handleUpdateCheckIn(plan.id, checkIn.week, 'status', e.target.checked)}
+                                                                    className="h-4 w-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                                                                />
+                                                                <span className={checkIn.status === 'Complete' ? 'text-gray-400 line-through' : 'text-gray-700'}>
+                                                                    Week {checkIn.week} Check-in
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center space-x-2">
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder="Add note..."
+                                                                    value={checkIn.notes || ''}
+                                                                    onChange={(e) => handleUpdateCheckIn(plan.id, checkIn.week, 'notes', e.target.value)}
+                                                                    className="text-xs border-gray-200 rounded py-1 px-2 w-48 focus:ring-green-500 focus:border-green-500"
+                                                                />
+                                                            </div>
                                                         </div>
-
-                                                        {/* Assigned To Select */}
-                                                        <div className="flex items-center space-x-2 mb-2">
-                                                            <label className="text-xs text-gray-500">Assigned To:</label>
-                                                            <select
-                                                                className="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-green-500"
-                                                                value={checkIn.assignedTo}
-                                                                onChange={(e) => handleUpdateCheckIn(plan.id, checkIn.week, 'assignedTo', e.target.value)}
-                                                            >
-                                                                <option value="Safety Manager">Safety Manager</option>
-                                                                <option value="Fleet Manager">Fleet Manager</option>
-                                                                <option value="Dispatcher">Dispatcher</option>
-                                                                <option value="Admin">Admin</option>
-                                                            </select>
-                                                        </div>
-
-                                                        <textarea
-                                                            className="w-full text-sm p-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-                                                            placeholder="Manager notes..."
-                                                            value={checkIn.notes}
-                                                            onChange={(e) => handleUpdateCheckIn(plan.id, checkIn.week, 'notes', e.target.value)}
-                                                        />
-                                                        <div className="flex items-center space-x-2">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={checkIn.status === 'Complete'}
-                                                                onChange={(e) => handleUpdateCheckIn(plan.id, checkIn.week, 'status', e.target.checked)}
-                                                                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                                                            />
-                                                            <span className="text-sm text-gray-600">Mark as Complete</span>
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                                    ))}
+                                                </div>
                                             </div>
                                         )}
                                     </div>
                                 ))}
+                                {(!driver.coachingPlans || driver.coachingPlans.length === 0) && (
+                                    <div className="text-center text-gray-500 py-8 border border-dashed border-gray-300 rounded-lg">
+                                        No active coaching plans.
+                                    </div>
+                                )}
                             </div>
-                        ) : (
-                            <p className="text-sm text-gray-500 italic">No active coaching plans.</p>
-                        )}
-                    </div>
+                        </div>
 
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Safety Score Trend</h3>
-                        <div className="h-64">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={riskData}>
-                                    <defs>
-                                        <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />
-                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                    <XAxis dataKey="month" />
-                                    <YAxis />
-                                    <Tooltip />
-                                    <Area type="monotone" dataKey="score" stroke="#3b82f6" fillOpacity={1} fill="url(#colorScore)" />
-                                </AreaChart>
-                            </ResponsiveContainer>
+                        {/* Notes Section */}
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Driver Coaching & Notes</h3>
+
+                            <div className="mb-4">
+                                <textarea
+                                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none h-24"
+                                    placeholder="Add a new note..."
+                                    value={newNote}
+                                    onChange={(e) => setNewNote(e.target.value)}
+                                />
+                                <div className="flex justify-end mt-2">
+                                    <button
+                                        onClick={handleAddNote}
+                                        disabled={!newNote.trim()}
+                                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                                    >
+                                        <Save className="w-4 h-4 mr-2" />
+                                        Save Note
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 max-h-96 overflow-y-auto">
+                                {(driver.notes || []).map((note: any) => (
+                                    <div key={note.id} className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <span className="font-medium text-gray-900">{note.author}</span>
+                                            <span className="text-xs text-gray-500">{new Date(note.date).toLocaleDateString()}</span>
+                                        </div>
+                                        <p className="text-gray-700 whitespace-pre-wrap">{note.text}</p>
+                                    </div>
+                                ))}
+                                {(!driver.notes || driver.notes.length === 0) && (
+                                    <p className="text-center text-gray-500 py-8">No notes added yet.</p>
+                                )}
+                            </div>
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Activity</h3>
-                        <div className="space-y-4">
-                            {/* Show Risk Events First/Alongside */}
-                            {driver.riskEvents && driver.riskEvents.length > 0 && driver.riskEvents.map((event: any) => (
-                                <div key={event.id} className="flex items-start p-4 bg-red-50 rounded-md border border-red-100">
-                                    <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 mr-3" />
-                                    <div>
-                                        <h4 className="text-sm font-medium text-red-800">{event.type} (+{event.points})</h4>
-                                        <p className="text-sm text-red-600 mt-1">{new Date(event.date).toLocaleDateString()} • {event.notes}</p>
-                                    </div>
-                                </div>
-                            ))}
+                    <div className="space-y-6">
+                        {/* Risk Score Chart */}
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Risk Score Trend</h3>
+                            <div className="h-64">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={riskData}>
+                                        <defs>
+                                            <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />
+                                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                        <XAxis dataKey="month" />
+                                        <YAxis />
+                                        <Tooltip />
+                                        <Area type="monotone" dataKey="score" stroke="#3b82f6" fillOpacity={1} fill="url(#colorScore)" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
-                            {/* Fallback Legacy Display if using mock data without riskEvents */}
-                            {(!driver.riskEvents || driver.riskEvents.length === 0) && driver.accidents && driver.accidents.length > 0 && (
-                                driver.accidents.map((accident: any) => (
-                                    <div key={accident.id} className="flex items-start p-4 bg-red-50 rounded-md border border-red-100">
+            {/* Safety Tab Content */}
+            {activeTab === 'safety' && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 space-y-6">
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Activity</h3>
+                            <div className="space-y-4">
+                                {driver.riskEvents && driver.riskEvents.length > 0 && driver.riskEvents.map((event: any) => (
+                                    <div key={event.id} className="flex items-start p-4 bg-red-50 rounded-md border border-red-100">
                                         <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 mr-3" />
                                         <div>
-                                            <h4 className="text-sm font-medium text-red-800">Accident: {accident.type}</h4>
-                                            <p className="text-sm text-red-600 mt-1">
-                                                Severity: {accident.severity} • {accident.preventable ? 'Preventable' : 'Non-Preventable'} • {accident.date}
-                                            </p>
+                                            <h4 className="text-sm font-medium text-red-800">{event.type} (+{event.points})</h4>
+                                            <p className="text-sm text-red-600 mt-1">{new Date(event.date).toLocaleDateString()} • {event.notes}</p>
                                         </div>
                                     </div>
-                                ))
-                            )}
-
-                            {(!driver.riskEvents || driver.riskEvents.length === 0) && driver.citations && driver.citations.length > 0 && (
-                                driver.citations.map((citation: any) => (
-                                    <div key={citation.id} className="flex items-start p-4 bg-yellow-50 rounded-md border border-yellow-100">
-                                        <FileText className="w-5 h-5 text-yellow-500 mt-0.5 mr-3" />
-                                        <div>
-                                            <h4 className="text-sm font-medium text-yellow-800">Citation: {citation.details}</h4>
-                                            <p className="text-sm text-yellow-600 mt-1">{citation.date}</p>
-                                        </div>
+                                ))}
+                                {(!driver.riskEvents || driver.riskEvents.length === 0) && (
+                                    <div className="text-sm text-gray-500 italic">No recent risk activity</div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="space-y-6">
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Score Factors</h3>
+                            <div className="space-y-3">
+                                <div className="p-3 bg-gray-50 rounded-md">
+                                    <span className="text-sm text-gray-600">Base Score</span>
+                                    <div className="font-bold text-gray-900">20</div>
+                                </div>
+                                <div className="p-3 bg-gray-50 rounded-md">
+                                    <span className="text-sm text-gray-600">Risk Events Impact</span>
+                                    <div className="font-bold text-red-600">
+                                        +{driver.riskEvents ? driver.riskEvents.reduce((s: number, e: any) => s + e.points, 0) : 0}
                                     </div>
-                                ))
-                            )}
-
-                            {(!driver.riskEvents?.length && !driver.accidents?.length && !driver.citations?.length) && (
-                                <div className="text-sm text-gray-500 italic">No recent risk activity</div>
-                            )}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+            )}
 
+            {/* Documents Tab Content */}
+            {activeTab === 'documents' && (
                 <div className="space-y-6">
-                    {/* Score Factors simplified for brevity since we're using dynamic score mostly */}
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Score Factors</h3>
-                        <div className="space-y-3">
-                            <div className="p-3 bg-gray-50 rounded-md">
-                                <span className="text-sm text-gray-600">Base Score</span>
-                                <div className="font-bold text-gray-900">20</div>
-                            </div>
-                            <div className="p-3 bg-gray-50 rounded-md">
-                                <span className="text-sm text-gray-600">Risk Events Impact</span>
-                                <div className="font-bold text-red-600">
-                                    +{driver.riskEvents
-                                        ? driver.riskEvents.reduce((s: number, e: any) => s + e.points, 0)
-                                        : (driver.accidents?.length || 0 * 20 + driver.citations?.length || 0 * 10)}
-                                </div>
-                            </div>
-                            <div className="p-3 bg-gray-50 rounded-md">
-                                <span className="text-sm text-gray-600">Coaching Credits</span>
-                                <div className="font-bold text-green-600">
-                                    -{(driver.coachingPlans?.filter((p: any) => p.status === 'Completed').length || 0) * 5}
-                                </div>
-                            </div>
-                            <div className="p-3 bg-gray-50 rounded-md">
-                                <span className="text-sm text-gray-600">Safe Time Discount</span>
-                                <div className="font-bold text-green-600">-{driver.yearsOfService * 2}</div>
-                            </div>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-semibold text-gray-800">Driver Documents</h3>
+                            <button
+                                onClick={() => setIsDocumentModalOpen(true)}
+                                className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 flex items-center"
+                            >
+                                <Upload className="w-4 h-4 mr-2" />
+                                Upload Document
+                            </button>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Upload Date</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiry</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {driverDocuments.map((doc) => (
+                                        <tr key={doc.id}>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center">
+                                                    <FileText className="w-5 h-5 text-gray-400 mr-2" />
+                                                    <span className="text-sm font-medium text-gray-900">{doc.name}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                    {doc.type}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {new Date(doc.date).toLocaleDateString()}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {doc.expiryDate ? new Date(doc.expiryDate).toLocaleDateString() : '-'}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {doc.notes || '-'}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <button onClick={() => handleDeleteDocument(doc.id)} className="text-red-600 hover:text-red-900">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {driverDocuments.length === 0 && (
+                                        <tr>
+                                            <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                                                No documents uploaded.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
-            </div>
+            )}
 
+            {/* Modals */}
             <Modal
                 isOpen={isCoachingModalOpen}
                 onClose={() => setIsCoachingModalOpen(false)}
                 title={`Create Coaching Plan for ${driver.name}`}
             >
-                <form onSubmit={handleSavePlan} className="space-y-4">
+                <form onSubmit={handleCreateCoachingPlanSubmit} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Coaching Type</label>
                         <select
@@ -602,19 +763,22 @@ const DriverProfile: React.FC = () => {
                             <option value="Harsh Braking">Harsh Braking</option>
                             <option value="Distracted Driving">Distracted Driving</option>
                             <option value="HOS Violation">HOS Violation</option>
+                            <option value="Pre-Trip Inspection">Pre-Trip Inspection</option>
+                            <option value="General Safety">General Safety</option>
                         </select>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Duration (Weeks)</label>
-                        <input
-                            type="number"
-                            min="1"
-                            max="12"
-                            required
+                        <select
                             className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                             value={newPlan.duration}
                             onChange={(e) => setNewPlan({ ...newPlan, duration: parseInt(e.target.value) })}
-                        />
+                        >
+                            <option value={2}>2 Weeks</option>
+                            <option value={4}>4 Weeks</option>
+                            <option value={6}>6 Weeks</option>
+                            <option value={8}>8 Weeks</option>
+                        </select>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
@@ -644,7 +808,6 @@ const DriverProfile: React.FC = () => {
                 </form>
             </Modal>
 
-            {/* Risk Event Modal */}
             <Modal
                 isOpen={isRiskModalOpen}
                 onClose={() => setIsRiskModalOpen(false)}
@@ -678,10 +841,10 @@ const DriverProfile: React.FC = () => {
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Points</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Points Impact</label>
                             <input
                                 type="number"
-                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="w-full border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-gray-500"
                                 value={
                                     newRiskEvent.type === 'Speeding' ? 10 :
                                         newRiskEvent.type === 'Hard Braking' ? 5 :
@@ -748,7 +911,71 @@ const DriverProfile: React.FC = () => {
                     </div>
                 </form>
             </Modal>
-            {/* Edit Driver Modal */}
+
+            <Modal
+                isOpen={isDocumentModalOpen}
+                onClose={() => setIsDocumentModalOpen(false)}
+                title="Upload Driver Document"
+            >
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Document Name</label>
+                        <input
+                            type="text"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            placeholder="e.g., Medical Certificate"
+                            value={newDocument.name}
+                            onChange={(e) => setNewDocument({ ...newDocument, name: e.target.value })}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                        <select
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            value={newDocument.type}
+                            onChange={(e) => setNewDocument({ ...newDocument, type: e.target.value })}
+                        >
+                            <option value="License">License</option>
+                            <option value="Medical">Medical</option>
+                            <option value="Certification">Certification</option>
+                            <option value="Training">Training</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date (Optional)</label>
+                        <input
+                            type="date"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            value={newDocument.expiryDate}
+                            onChange={(e) => setNewDocument({ ...newDocument, expiryDate: e.target.value })}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">File</label>
+                        <input
+                            type="file"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            onChange={(e) => e.target.files && setNewDocument({ ...newDocument, file: e.target.files[0] })}
+                        />
+                    </div>
+                    <div className="flex justify-end space-x-3 mt-6">
+                        <button
+                            onClick={() => setIsDocumentModalOpen(false)}
+                            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleUploadDocument}
+                            className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700"
+                        >
+                            Upload
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
             <Modal
                 isOpen={isEditModalOpen}
                 onClose={() => setIsEditModalOpen(false)}
@@ -776,6 +1003,16 @@ const DriverProfile: React.FC = () => {
                                 onChange={(e) => setEditDriverData({ ...editDriverData, employeeId: e.target.value })}
                             />
                         </div>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Driver Manager</label>
+                        <input
+                            type="text"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            placeholder="e.g. John Doe"
+                            value={editDriverData.driverManager}
+                            onChange={(e) => setEditDriverData({ ...editDriverData, driverManager: e.target.value })}
+                        />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -859,7 +1096,7 @@ const DriverProfile: React.FC = () => {
                     </div>
                 </form>
             </Modal>
-        </div >
+        </div>
     );
 };
 

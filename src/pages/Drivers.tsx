@@ -29,6 +29,7 @@ const Drivers: React.FC = () => {
         ssn: '',
         phone: '',
         driverCode: '',
+        driverManager: '',
         terminal: '',
         licenseNumber: '',
         hireDate: new Date().toISOString().split('T')[0],
@@ -69,6 +70,7 @@ const Drivers: React.FC = () => {
             ssn: '',
             phone: '',
             driverCode: '',
+            driverManager: '',
             terminal: '',
             licenseNumber: '',
             hireDate: new Date().toISOString().split('T')[0],
@@ -96,6 +98,7 @@ const Drivers: React.FC = () => {
                 // I should update driverService to map columns or use 'select' alias.
                 // Let's assume for this step I'm just replacing logic, I will fix the mapping in service.
                 terminal: driver.terminal || '',
+                driverManager: driver.driverManager || '',
                 licenseNumber: driver.licenseNumber || '', // Check snake case
                 hireDate: driver.hireDate || new Date().toISOString().split('T')[0],
                 image: driver.image
@@ -126,6 +129,7 @@ const Drivers: React.FC = () => {
             risk_score: 20, // Default for new
             years_of_service: yearsOfService,
             employee_id: formData.driverCode, // Map to DB column
+            driver_manager: formData.driverManager,
             image: typeof image === 'string' ? image : '',
             address: formData.address,
             ssn: formData.ssn,
@@ -530,6 +534,17 @@ const Drivers: React.FC = () => {
                                 <option value="Cleveland">Cleveland</option>
                             </select>
                         </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Driver Manager</label>
+                        <input
+                            type="text"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            placeholder="Manager Name"
+                            value={formData.driverManager}
+                            onChange={(e) => setFormData({ ...formData, driverManager: e.target.value })}
+                        />
                     </div>
 
                     <div>

@@ -6,11 +6,21 @@ const mapDriverData = (data: any): Driver => {
         ...data,
         riskScore: data.risk_score,
         yearsOfService: data.years_of_service,
+        driverManager: data.driver_manager,
         employeeId: data.employee_id,
         licenseNumber: data.license_number,
         hireDate: data.hire_date,
-        riskEvents: data.risk_events,
-        coachingPlans: data.coaching_plans,
+        riskEvents: data.risk_events ? data.risk_events.map((e: any) => ({
+            ...e,
+            driverId: e.driver_id
+        })) : [],
+        coachingPlans: data.coaching_plans ? data.coaching_plans.map((p: any) => ({
+            ...p,
+            driverId: p.driver_id,
+            startDate: p.start_date,
+            durationWeeks: p.duration_weeks,
+            weeklyCheckIns: p.weekly_check_ins
+        })) : [],
         // trainingHistory vs training_history? Assuming simple match or missing for now
         trainingHistory: data.training_history
     };
@@ -60,7 +70,8 @@ export const driverService = {
             phone: driver.phone,
             license_number: driver.licenseNumber,
             email: driver.email,
-            hire_date: driver.hireDate
+            hire_date: driver.hireDate,
+            driver_manager: driver.driverManager
         };
 
         const { data, error } = await supabase
@@ -88,6 +99,7 @@ export const driverService = {
         if (updates.licenseNumber) dbUpdates.license_number = updates.licenseNumber;
         if (updates.email) dbUpdates.email = updates.email;
         if (updates.hireDate) dbUpdates.hire_date = updates.hireDate;
+        if (updates.driverManager) dbUpdates.driver_manager = updates.driverManager;
 
         // Notes or arrays might need special handling if stored as JSONB
         if (updates.notes) dbUpdates.notes = updates.notes;
@@ -173,6 +185,64 @@ export const driverService = {
         }
 
         return planData;
+    },
+
+    async deleteCoachingPlan(planId: string) {
+        // Also delete related tasks? Supabase might define cascade, but let's assume cascade or leave tasks.
+        // Usually safe to just delete the plan if tasks have on delete cascade.
+        const { error } = await supabase
+            .from('coaching_plans')
+            .delete()
+            .eq('id', planId);
+
+        if (error) throw error;
+    },
+
+    async getDriverDocuments(driverId: string): Promise<any[]> {
+        const { data, error } = await supabase
+            .from('driver_documents')
+            .select('*')
+            .eq('driver_id', driverId)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return data.map((d: any) => ({
+            id: d.id,
+            driverId: d.driver_id,
+            name: d.name,
+            type: d.type,
+            url: d.url,
+            notes: d.notes,
+            expiryDate: d.expiry_date,
+            date: d.created_at
+        }));
+    },
+
+    async uploadDocument(driverId: string, doc: { name: string, type: string, notes?: string, expiryDate?: string, url?: string }) {
+        const { data, error } = await supabase
+            .from('driver_documents')
+            .insert([{
+                driver_id: driverId,
+                name: doc.name,
+                type: doc.type,
+                notes: doc.notes,
+                expiry_date: doc.expiryDate,
+                url: doc.url
+            }])
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    },
+
+    async deleteDocument(docId: string) {
+        const { error } = await supabase
+            .from('driver_documents')
+            .delete()
+            .eq('id', docId);
+
+        if (error) throw error;
     },
 
     async updateCoachingPlan(planId: string, updates: any) {
