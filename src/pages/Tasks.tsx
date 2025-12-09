@@ -4,7 +4,6 @@ import { CheckSquare, Filter, Search, Calendar, User, ArrowRight, Plus } from 'l
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 import Modal from '../components/UI/Modal';
-import { driverService } from '../services/driverService';
 import { taskService } from '../services/taskService';
 import toast from 'react-hot-toast';
 
@@ -26,58 +25,8 @@ const Tasks: React.FC = () => {
 
     const loadTasks = async () => {
         try {
-            // 1. Load Standalone Tasks
-            const standaloneTasks = await taskService.fetchTasks();
-
-            // 2. Load Derived Tasks from Coaching Plans
-            const drivers = await driverService.fetchDrivers();
-            const derivedTasks: any[] = [];
-
-            drivers.forEach((driver: any) => {
-                if (driver.coachingPlans || driver.coaching_plans) { // Handle snake_case if raw returned
-                    const plans = driver.coachingPlans || driver.coaching_plans;
-                    plans.forEach((plan: any) => {
-                        if (plan.status === 'Active') {
-                            // Note: deep structure like weeklyCheckIns might be JSON in DB or separate table.
-                            // For now assuming joined or simple structure.
-                            // If separate table, fetchDrivers join might return it. 
-                            // If mock data had it in JSON, we might miss it unless we structured DB to have checkins.
-                            // schema.sql didn't strictly define checkins table, only plans.
-                            // Assuming checkins are part of plan or not fully implemented in DB yet.
-                            // For this migration, I will skip detailed derived tasks if data structure isn't there, 
-                            // OR assuming they are unnecessary for critical path.
-                            // However, to keep feature parity, I should check if plans have checkins.
-                            // In schema.sql I didn't see checkins table.
-                            // I'll proceed with just standalone tasks + maybe simple plan tasks if I can.
-                            // Mock data had `weeklyCheckIns`. 
-                            // Let's just create derived tasks for the *Plan itself* if needed or skip logic if complex.
-                            // I will KEEP the loop but guard against missing data to avoid crashes.
-                            if (plan.weeklyCheckIns) {
-                                plan.weeklyCheckIns.forEach((checkIn: any) => {
-                                    if (checkIn.status === 'Pending') {
-                                        derivedTasks.push({
-                                            id: `${plan.id}-${checkIn.week}`,
-                                            type: 'Coaching Check-in',
-                                            title: `Week ${checkIn.week} Check-in: ${plan.type} Plan`,
-                                            driverName: driver.name,
-                                            driverId: driver.id,
-                                            planId: plan.id,
-                                            dueDate: checkIn.date || 'N/A',
-                                            assignedTo: checkIn.assignedTo || 'Unassigned',
-                                            priority: 'High',
-                                            status: 'Pending'
-                                        });
-                                    }
-                                });
-                            }
-                        }
-                    });
-                }
-            });
-
-            // 3. Combine and Sort
-            const allTasks = [...standaloneTasks, ...derivedTasks];
-            allTasks.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+            // Load Tasks from DB
+            const allTasks = await taskService.fetchTasks();
             setTasks(allTasks);
         } catch (error) {
             console.error('Failed to load tasks', error);

@@ -38,16 +38,21 @@ const Drivers: React.FC = () => {
 
     const actionMenuRef = useRef<HTMLDivElement>(null);
 
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
         loadDrivers();
     }, []);
 
     const loadDrivers = async () => {
+        setLoading(true);
         try {
             const data = await driverService.fetchDrivers();
             setDrivers(data);
         } catch (error) {
             toast.error('Failed to load drivers');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -327,7 +332,16 @@ const Drivers: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {filteredDrivers.length > 0 ? (
+                        {loading ? (
+                            <tr>
+                                <td colSpan={6} className="px-6 py-12 text-center">
+                                    <div className="flex justify-center">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                                    </div>
+                                    <p className="mt-2 text-sm text-gray-500">Loading drivers...</p>
+                                </td>
+                            </tr>
+                        ) : filteredDrivers.length > 0 ? (
                             filteredDrivers.map((driver) => (
                                 <tr key={driver.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap">
@@ -399,7 +413,7 @@ const Drivers: React.FC = () => {
                                                     </button>
                                                     <button
                                                         onClick={() => handleDeleteDriver(driver.id, driver.name)}
-                                                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                                                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                                                     >
                                                         <Trash2 className="w-4 h-4 mr-2" />
                                                         Delete

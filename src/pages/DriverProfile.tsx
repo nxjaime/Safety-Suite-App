@@ -99,15 +99,18 @@ const DriverProfile: React.FC = () => {
             if (!id) return;
             setLoading(true);
             try {
-                const data = await driverService.getDriverById(id);
-                if (data) {
-                    setDriver(data);
-                    // Fetch documents
-                    const docs = await driverService.getDriverDocuments(id);
-                    setDriverDocuments(docs);
+                // Fetch driver and documents in parallel
+                const [driverData, docs] = await Promise.all([
+                    driverService.getDriverById(id),
+                    driverService.getDriverDocuments(id)
+                ]);
+
+                if (driverData) {
+                    setDriver(driverData);
                 }
+                setDriverDocuments(docs);
             } catch (error) {
-                console.error("Failed to fetch driver", error);
+                console.error("Failed to fetch driver data", error);
                 toast.error("Failed to load driver profile");
             } finally {
                 setLoading(false);

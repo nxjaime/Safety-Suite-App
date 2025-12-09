@@ -26,7 +26,7 @@ const Safety: React.FC = () => {
     const loadData = async () => {
         try {
             setLoading(true);
-            const fetchedDrivers = await driverService.fetchDrivers();
+            const fetchedDrivers = await driverService.fetchDriversDetailed();
             setDriverList(fetchedDrivers);
 
             // Calculate aggregate stats

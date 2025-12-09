@@ -1,20 +1,24 @@
+import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout/Layout';
-import Dashboard from './pages/Dashboard';
-import Drivers from './pages/Drivers';
-import DriverProfile from './pages/DriverProfile';
-import Tasks from './pages/Tasks';
-import Safety from './pages/Safety';
-import Training from './pages/Training';
-import Compliance from './pages/Compliance';
-import Equipment from './pages/Equipment';
-import SafeView from './pages/SafeView';
-import Documents from './pages/Documents';
-import FMCSA from './pages/FMCSA';
-import Settings from './pages/Settings';
-import Login from './pages/Login';
-import UserProfile from './pages/UserProfile';
+
+// Lazy load pages
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Drivers = lazy(() => import('./pages/Drivers'));
+const DriverProfile = lazy(() => import('./pages/DriverProfile'));
+const Tasks = lazy(() => import('./pages/Tasks'));
+const Safety = lazy(() => import('./pages/Safety'));
+const Training = lazy(() => import('./pages/Training'));
+const Compliance = lazy(() => import('./pages/Compliance'));
+const Equipment = lazy(() => import('./pages/Equipment'));
+const SafeView = lazy(() => import('./pages/SafeView'));
+const Documents = lazy(() => import('./pages/Documents'));
+const FMCSA = lazy(() => import('./pages/FMCSA'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Login = lazy(() => import('./pages/Login'));
+const UserProfile = lazy(() => import('./pages/UserProfile'));
+
 
 // Simple Protected Route Component
 const ProtectedRoute = () => {
@@ -32,19 +36,19 @@ function App() {
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="drivers" element={<Drivers />} />
-            <Route path="drivers/:id" element={<DriverProfile />} />
-            <Route path="tasks" element={<Tasks />} />
-            <Route path="safety" element={<Safety />} />
-            <Route path="training" element={<Training />} />
-            <Route path="compliance" element={<Compliance />} />
-            <Route path="equipment" element={<Equipment />} />
-            <Route path="safeview" element={<SafeView />} />
-            <Route path="documents" element={<Documents />} />
-            <Route path="fmcsa" element={<FMCSA />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="profile" element={<UserProfile />} />
+            <Route index element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Dashboard /></Suspense>} />
+            <Route path="drivers" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Drivers /></Suspense>} />
+            <Route path="drivers/:id" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><DriverProfile /></Suspense>} />
+            <Route path="tasks" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Tasks /></Suspense>} />
+            <Route path="safety" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Safety /></Suspense>} />
+            <Route path="training" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Training /></Suspense>} />
+            <Route path="compliance" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Compliance /></Suspense>} />
+            <Route path="equipment" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Equipment /></Suspense>} />
+            <Route path="safeview" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><SafeView /></Suspense>} />
+            <Route path="documents" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Documents /></Suspense>} />
+            <Route path="fmcsa" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><FMCSA /></Suspense>} />
+            <Route path="settings" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Settings /></Suspense>} />
+            <Route path="profile" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><UserProfile /></Suspense>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Route>
