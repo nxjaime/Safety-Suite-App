@@ -163,10 +163,10 @@ const Safety: React.FC = () => {
                     </div>
                 </Link>
 
-                <Link to="/safeview" className="block transform transition-transform hover:scale-[1.02]">
+                <Link to="/drivers?filter=incidents" className="block transform transition-transform hover:scale-[1.02]">
                     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex items-center cursor-pointer hover:shadow-md transition-shadow">
-                        <div className="p-3 bg-green-100 rounded-full mr-4 border border-green-200">
-                            <AlertTriangle className="w-6 h-6 text-green-800" />
+                        <div className="p-3 bg-orange-100 rounded-full mr-4 border border-orange-200">
+                            <AlertTriangle className="w-6 h-6 text-orange-600" />
                         </div>
                         <div>
                             <p className="text-sm text-gray-500">Total Incidents</p>

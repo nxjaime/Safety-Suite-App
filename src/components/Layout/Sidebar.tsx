@@ -14,6 +14,7 @@ import {
     Settings
 } from 'lucide-react';
 import clsx from 'clsx';
+import CarrierHealthWidget from './CarrierHealthWidget';
 
 const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -61,6 +62,11 @@ const Sidebar: React.FC = () => {
                 </ul>
             </nav>
 
+            {/* Carrier Health Section */}
+            <div className="border-t border-green-800">
+                <CarrierHealthWidget />
+            </div>
+
             <div className="p-4 border-t border-green-800">
                 <NavLink
                     to="/settings"
@@ -86,3 +92,4 @@ const Sidebar: React.FC = () => {
 };
 
 export default Sidebar;
+

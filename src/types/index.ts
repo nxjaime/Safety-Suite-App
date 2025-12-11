@@ -32,9 +32,12 @@ export interface TaskItem {
     priority: 'High' | 'Medium' | 'Low';
     status: 'Pending' | 'In Progress' | 'Completed';
     assignee: string;
-    type: 'General' | 'Coaching Check-in';
+    type: 'General' | 'Coaching Check-in' | 'Coaching';
     relatedId?: string; // driver ID or plan ID
     driverName?: string;
+    driverId?: string;
+    closedNotes?: string;
+    closedAt?: string;
 }
 
 export interface CoachingPlan {

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Plus, MoreHorizontal, User, Mail, Shield, Lock, Database, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, MoreHorizontal, User, Mail, Shield, Lock, Database, Trash2, Truck, Building } from 'lucide-react';
 import Modal from '../components/UI/Modal';
 import clsx from 'clsx';
 
@@ -12,9 +12,6 @@ interface AppUser {
     lastLogin: string;
 }
 
-// SystemDataItem interface might be unused now too if we are fully switching to SystemOption, checking usage below.
-// Actually SystemDataItem was used for types that are now SystemOption. removing if unused.
-
 const initialUsers: AppUser[] = [
     { id: '1', name: 'Sarah Connor', email: 'sarah.connor@safetyhub.com', role: 'Admin', status: 'Active', lastLogin: '2023-10-24 09:15 AM' },
     { id: '2', name: 'John Smith', email: 'john.smith@safetyhub.com', role: 'Manager', status: 'Active', lastLogin: '2023-10-23 04:30 PM' },
@@ -23,12 +20,13 @@ const initialUsers: AppUser[] = [
 
 import { settingsService } from '../services/settingsService';
 import type { SystemOption } from '../services/settingsService';
+import { carrierService, type CarrierSettings } from '../services/carrierService';
 import toast from 'react-hot-toast';
 
 const Settings: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'users' | 'system'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'system' | 'carrier'>('users');
 
-    // User Management State (Mock for now as per original, or could be RLS/Auth admin later)
+    // User Management State
     const [users, setUsers] = useState<AppUser[]>(initialUsers);
     const [isUserModalOpen, setIsUserModalOpen] = useState(false);
     const [newUser, setNewUser] = useState({
@@ -45,10 +43,21 @@ const Settings: React.FC = () => {
     const [isDataModalOpen, setIsDataModalOpen] = useState(false);
     const [newDataItem, setNewDataItem] = useState({ label: '', value: '' });
 
+    // Carrier Settings State
+    const [carrierSettings, setCarrierSettings] = useState<CarrierSettings>({
+        dotNumber: '',
+        mcNumber: '',
+        companyName: ''
+    });
+    const [savingCarrier, setSavingCarrier] = useState(false);
+
     // Fetch Options
-    React.useEffect(() => {
+    useEffect(() => {
         if (activeTab === 'system') {
             fetchOptions();
+        }
+        if (activeTab === 'carrier') {
+            loadCarrierSettings();
         }
     }, [activeTab, systemDataType]);
 
@@ -59,9 +68,19 @@ const Settings: React.FC = () => {
             setSystemOptions(data || []);
         } catch (error) {
             console.error('Failed to fetch system options', error);
-            // toast.error('Failed to load system data');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadCarrierSettings = async () => {
+        try {
+            const settings = await carrierService.getCarrierSettings();
+            if (settings) {
+                setCarrierSettings(settings);
+            }
+        } catch (error) {
+            console.error('Failed to load carrier settings', error);
         }
     };
 
@@ -89,7 +108,7 @@ const Settings: React.FC = () => {
             await settingsService.addOption({
                 category: systemDataType,
                 label: newDataItem.label,
-                value: newDataItem.label, // Default value same as label for simplicity
+                value: newDataItem.label,
             });
             await fetchOptions();
             setIsDataModalOpen(false);
@@ -114,12 +133,30 @@ const Settings: React.FC = () => {
         }
     };
 
+    // Carrier Settings Handler
+    const handleSaveCarrierSettings = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSavingCarrier(true);
+        try {
+            await carrierService.saveCarrierSettings({
+                id: 'default',
+                ...carrierSettings
+            });
+            toast.success('Carrier settings saved successfully');
+        } catch (error) {
+            console.error('Failed to save carrier settings', error);
+            toast.error('Failed to save carrier settings');
+        } finally {
+            setSavingCarrier(false);
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
                     <h2 className="text-2xl font-bold text-gray-800">Settings</h2>
-                    <p className="text-gray-500 text-sm mt-1">Manage application users and system data configuration</p>
+                    <p className="text-gray-500 text-sm mt-1">Manage application users, system data, and carrier configuration</p>
                 </div>
             </div>
 
@@ -150,6 +187,18 @@ const Settings: React.FC = () => {
                         <Database className="w-4 h-4 mr-2" />
                         System Data
                     </button>
+                    <button
+                        onClick={() => setActiveTab('carrier')}
+                        className={clsx(
+                            "whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center",
+                            activeTab === 'carrier'
+                                ? "border-green-500 text-green-600"
+                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        )}
+                    >
+                        <Truck className="w-4 h-4 mr-2" />
+                        Carrier Settings
+                    </button>
                 </nav>
             </div>
 
@@ -167,7 +216,6 @@ const Settings: React.FC = () => {
                     </div>
 
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                        {/* Table kept same as before for users... */}
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
@@ -298,6 +346,85 @@ const Settings: React.FC = () => {
                 </div>
             )}
 
+            {/* Carrier Settings Tab */}
+            {activeTab === 'carrier' && (
+                <div className="space-y-6">
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                        <div className="flex items-center mb-6">
+                            <div className="p-3 bg-green-100 rounded-full mr-4">
+                                <Building className="w-6 h-6 text-green-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-800">Carrier Information</h3>
+                                <p className="text-sm text-gray-500">Enter your USDOT and MC numbers to enable carrier health monitoring</p>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleSaveCarrierSettings} className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        placeholder="Enter company name"
+                                        value={carrierSettings.companyName || ''}
+                                        onChange={(e) => setCarrierSettings({ ...carrierSettings, companyName: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">USDOT Number</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        placeholder="e.g. 1234567"
+                                        value={carrierSettings.dotNumber || ''}
+                                        onChange={(e) => setCarrierSettings({ ...carrierSettings, dotNumber: e.target.value })}
+                                    />
+                                    <p className="mt-1 text-xs text-gray-500">Your 7-digit FMCSA USDOT number</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">MC Number (Optional)</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        placeholder="e.g. MC-123456"
+                                        value={carrierSettings.mcNumber || ''}
+                                        onChange={(e) => setCarrierSettings({ ...carrierSettings, mcNumber: e.target.value })}
+                                    />
+                                    <p className="mt-1 text-xs text-gray-500">Motor carrier operating authority number</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <h4 className="text-sm font-medium text-blue-800 mb-2">About Carrier Health Monitoring</h4>
+                                <p className="text-sm text-blue-700">
+                                    Once you save your USDOT number, SafetyHub Connect will automatically fetch your SAFER rating and CSA scores
+                                    from FMCSA. This information will be displayed in the Carrier Health section of the sidebar for quick access.
+                                </p>
+                            </div>
+
+                            <div className="flex justify-end">
+                                <button
+                                    type="submit"
+                                    disabled={savingCarrier}
+                                    className="px-6 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center"
+                                >
+                                    {savingCarrier ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                            Saving...
+                                        </>
+                                    ) : (
+                                        'Save Carrier Settings'
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             {/* Add User Modal */}
             <Modal
                 isOpen={isUserModalOpen}
@@ -305,7 +432,6 @@ const Settings: React.FC = () => {
                 title="Add New User"
             >
                 <form onSubmit={handleAddUser} className="space-y-4">
-                    {/* ... (Kept same user inputs) ... */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                         <div className="relative">

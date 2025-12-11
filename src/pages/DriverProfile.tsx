@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Save, ChevronDown, ChevronRight, UserPlus, AlertTriangle, FileText, Trash2, Upload } from 'lucide-react';
+import { Save, ChevronDown, ChevronRight, UserPlus, AlertTriangle, FileText, Trash2, Upload, Mail } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Modal from '../components/UI/Modal';
 // import { storage } from '../utils/storage';
 import { driverService } from '../services/driverService';
+import { emailService } from '../services/emailService';
 import { generateCheckIns } from '../utils/riskLogic';
 import type { Driver } from '../types';
 import toast from 'react-hot-toast';
@@ -99,16 +100,21 @@ const DriverProfile: React.FC = () => {
             if (!id) return;
             setLoading(true);
             try {
-                // Fetch driver and documents in parallel
-                const [driverData, docs] = await Promise.all([
-                    driverService.getDriverById(id),
-                    driverService.getDriverDocuments(id)
-                ]);
+                // Fetch driver first (critical)
+                const driverData = await driverService.getDriverById(id);
 
                 if (driverData) {
                     setDriver(driverData);
                 }
-                setDriverDocuments(docs);
+
+                // Fetch documents separately (non-critical - can fail silently)
+                try {
+                    const docs = await driverService.getDriverDocuments(id);
+                    setDriverDocuments(docs);
+                } catch (docError) {
+                    console.warn("Failed to fetch driver documents", docError);
+                    setDriverDocuments([]);
+                }
             } catch (error) {
                 console.error("Failed to fetch driver data", error);
                 toast.error("Failed to load driver profile");
@@ -372,6 +378,44 @@ const DriverProfile: React.FC = () => {
         }
     };
 
+    const handleSendEmailNotification = async () => {
+        if (!driver || !driver.email) {
+            toast.error('No email address on file for this driver');
+            return;
+        }
+
+        // Check for active coaching plans
+        const activeCoaching = driver.coachingPlans?.filter((p: any) => p.status === 'Active') || [];
+
+        if (activeCoaching.length === 0) {
+            toast.error('No active coaching plans to notify about');
+            return;
+        }
+
+        try {
+            // Send coaching reminder email
+            const plan = activeCoaching[0];
+            const nextCheckIn = plan.weeklyCheckIns?.find((c: any) => c.status !== 'Complete');
+
+            const success = await emailService.sendCoachingReminder({
+                driverName: driver.name,
+                driverEmail: driver.email,
+                coachingType: plan.type,
+                checkInDate: nextCheckIn?.date || 'Upcoming',
+                week: nextCheckIn?.week || 1
+            });
+
+            if (success) {
+                toast.success(`Email notification sent to ${driver.email}`);
+            } else {
+                toast.error('Failed to send email notification');
+            }
+        } catch (error) {
+            console.error('Email send error:', error);
+            toast.error('Failed to send email notification');
+        }
+    };
+
     if (loading) return <div className="p-6 flex justify-center items-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div></div>;
     if (!driver) return (
         <div className="p-6 text-center">
@@ -481,24 +525,33 @@ const DriverProfile: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2 space-y-6">
                         {/* Quick Actions */}
-                        <div className="flex space-x-4">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                             <button
                                 onClick={handleCreateCoachingPlan}
-                                className="flex-1 py-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-center text-green-800 font-medium hover:bg-green-100"
+                                className="py-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-center text-green-800 font-medium hover:bg-green-100"
                             >
                                 <UserPlus className="w-5 h-5 mr-2" />
-                                Create Coaching Plan
+                                Coaching Plan
                             </button>
                             <button
                                 onClick={() => setIsRiskModalOpen(true)}
-                                className="flex-1 py-3 bg-red-50 border border-red-200 rounded-lg flex items-center justify-center text-red-800 font-medium hover:bg-red-100"
+                                className="py-3 bg-red-50 border border-red-200 rounded-lg flex items-center justify-center text-red-800 font-medium hover:bg-red-100"
                             >
                                 <AlertTriangle className="w-5 h-5 mr-2" />
                                 Log Risk Event
                             </button>
                             <button
+                                onClick={handleSendEmailNotification}
+                                disabled={!driver.email}
+                                className="py-3 bg-purple-50 border border-purple-200 rounded-lg flex items-center justify-center text-purple-800 font-medium hover:bg-purple-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title={driver.email ? 'Send email notification' : 'No email on file'}
+                            >
+                                <Mail className="w-5 h-5 mr-2" />
+                                Send Email
+                            </button>
+                            <button
                                 onClick={() => setActiveTab('documents')}
-                                className="flex-1 py-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-blue-800 font-medium hover:bg-blue-100"
+                                className="py-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-blue-800 font-medium hover:bg-blue-100"
                             >
                                 <FileText className="w-5 h-5 mr-2" />
                                 All Files

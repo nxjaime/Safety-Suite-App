@@ -52,18 +52,37 @@ export const driverService = {
     },
 
     async getDriverById(id: string): Promise<Driver | null> {
-        const { data, error } = await supabase
-            .from('drivers')
-            .select(`
-                *,
-                risk_events (*),
-                coaching_plans (*)
-            `)
-            .eq('id', id)
-            .single();
+        try {
+            const { data, error } = await supabase
+                .from('drivers')
+                .select(`
+                    *,
+                    risk_events (*),
+                    coaching_plans (*)
+                `)
+                .eq('id', id)
+                .single();
 
-        if (error) throw error;
-        return mapDriverData(data);
+            if (error) {
+                console.error('Error fetching driver by ID:', error);
+                // Try without the joins if there's an error
+                const { data: simpleData, error: simpleError } = await supabase
+                    .from('drivers')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
+
+                if (simpleError) {
+                    console.error('Error fetching driver (simple):', simpleError);
+                    return null;
+                }
+                return mapDriverData({ ...simpleData, risk_events: [], coaching_plans: [] });
+            }
+            return mapDriverData(data);
+        } catch (error) {
+            console.error('Exception in getDriverById:', error);
+            return null;
+        }
     },
 
     async createDriver(driver: Omit<Driver, 'id'> | any) {

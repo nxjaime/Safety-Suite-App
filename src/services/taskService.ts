@@ -12,7 +12,10 @@ const mapTaskData = (data: any): TaskItem => {
         assignee: data.assignee,
         type: data.type,
         relatedId: data.related_id,
-        driverName: data.driver_name // If joined view, or just undefined
+        driverName: data.driver_name,
+        driverId: data.driver_id,
+        closedNotes: data.closed_notes,
+        closedAt: data.closed_at
     };
 };
 
@@ -41,13 +44,68 @@ export const taskService = {
                 status: task.status,
                 assignee: task.assignee,
                 type: task.type,
-                related_id: task.relatedId
+                related_id: task.relatedId,
+                driver_id: task.driverId
             }])
             .select()
             .single();
 
         if (error) throw error;
         return mapTaskData(data);
+    },
+
+    async updateTask(id: string, updates: Partial<{
+        title: string;
+        description: string;
+        dueDate: string;
+        priority: string;
+        status: string;
+        assignee: string;
+        driverId: string;
+    }>) {
+        const dbUpdates: any = {};
+        if (updates.title) dbUpdates.title = updates.title;
+        if (updates.description) dbUpdates.description = updates.description;
+        if (updates.dueDate) dbUpdates.due_date = updates.dueDate;
+        if (updates.priority) dbUpdates.priority = updates.priority;
+        if (updates.status) dbUpdates.status = updates.status;
+        if (updates.assignee) dbUpdates.assignee = updates.assignee;
+        if (updates.driverId) dbUpdates.driver_id = updates.driverId;
+
+        const { data, error } = await supabase
+            .from('tasks')
+            .update(dbUpdates)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return mapTaskData(data);
+    },
+
+    async closeTask(id: string, notes: string) {
+        const { data, error } = await supabase
+            .from('tasks')
+            .update({
+                status: 'Completed',
+                closed_notes: notes,
+                closed_at: new Date().toISOString()
+            })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return mapTaskData(data);
+    },
+
+    async deleteTask(id: string) {
+        const { error } = await supabase
+            .from('tasks')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
     },
 
     async updateTaskStatus(id: string, status: TaskItem['status']) {
@@ -59,3 +117,4 @@ export const taskService = {
         if (error) throw error;
     }
 };
+

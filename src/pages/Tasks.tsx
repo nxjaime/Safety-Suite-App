@@ -1,31 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { CheckSquare, Filter, Search, Calendar, User, ArrowRight, Plus } from 'lucide-react';
-// import { storage } from '../utils/storage';
+import { CheckSquare, Filter, Search, Calendar, User, ArrowRight, Plus, Edit } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 import Modal from '../components/UI/Modal';
 import { taskService } from '../services/taskService';
+import { driverService } from '../services/driverService';
 import toast from 'react-hot-toast';
+import type { TaskItem, Driver } from '../types';
 
 const Tasks: React.FC = () => {
-    const [tasks, setTasks] = useState<any[]>([]);
+    const [tasks, setTasks] = useState<TaskItem[]>([]);
+    const [drivers, setDrivers] = useState<Driver[]>([]);
     const [filterPriority, setFilterPriority] = useState<string>('All');
     const [filterStatus, setFilterStatus] = useState<string>('All');
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Modal State
+    // Modal States
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
+    const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
+    const [closeNotes, setCloseNotes] = useState('');
+
     const [newTask, setNewTask] = useState({
         title: '',
         assignee: 'Safety Manager',
         dueDate: new Date().toISOString().split('T')[0],
         priority: 'Medium',
-        description: ''
+        description: '',
+        driverId: ''
+    });
+
+    const [editTask, setEditTask] = useState({
+        assignee: '',
+        dueDate: '',
+        priority: ''
     });
 
     const loadTasks = async () => {
         try {
-            // Load Tasks from DB
             const allTasks = await taskService.fetchTasks();
             setTasks(allTasks);
         } catch (error) {
@@ -34,21 +47,34 @@ const Tasks: React.FC = () => {
         }
     };
 
+    const loadDrivers = async () => {
+        try {
+            const { data } = await driverService.fetchDriversPaginated(1, 100, {});
+            setDrivers(data);
+        } catch (error) {
+            console.error('Failed to load drivers');
+        }
+    };
+
     useEffect(() => {
         loadTasks();
+        loadDrivers();
     }, []);
 
     const handleCreateTask = async (e: React.FormEvent) => {
         e.preventDefault();
+        const selectedDriver = drivers.find(d => d.id === newTask.driverId);
+
         const taskData = {
             title: newTask.title,
             description: newTask.description,
             dueDate: newTask.dueDate,
             priority: newTask.priority as 'High' | 'Medium' | 'Low',
-            status: 'Pending' as 'Pending',
+            status: 'Pending' as const,
             assignee: newTask.assignee,
-            type: 'General' as 'General',
-            // driverName: 'N/A' // Not in DB schema, computed on join or separate
+            type: 'General' as const,
+            driverId: newTask.driverId || undefined,
+            driverName: selectedDriver?.name
         };
 
         try {
@@ -60,11 +86,58 @@ const Tasks: React.FC = () => {
                 assignee: 'Safety Manager',
                 dueDate: new Date().toISOString().split('T')[0],
                 priority: 'Medium',
-                description: ''
+                description: '',
+                driverId: ''
             });
             loadTasks();
         } catch (error) {
             toast.error('Failed to create task');
+        }
+    };
+
+    const handleEditTask = (task: TaskItem) => {
+        setSelectedTask(task);
+        setEditTask({
+            assignee: task.assignee,
+            dueDate: task.dueDate,
+            priority: task.priority
+        });
+        setIsEditModalOpen(true);
+    };
+
+    const handleSaveEdit = async () => {
+        if (!selectedTask) return;
+
+        try {
+            await taskService.updateTask(selectedTask.id, {
+                assignee: editTask.assignee,
+                dueDate: editTask.dueDate,
+                priority: editTask.priority
+            });
+            toast.success('Task updated');
+            setIsEditModalOpen(false);
+            loadTasks();
+        } catch (error) {
+            toast.error('Failed to update task');
+        }
+    };
+
+    const handleOpenCloseModal = (task: TaskItem) => {
+        setSelectedTask(task);
+        setCloseNotes('');
+        setIsCloseModalOpen(true);
+    };
+
+    const handleCloseTask = async () => {
+        if (!selectedTask) return;
+
+        try {
+            await taskService.closeTask(selectedTask.id, closeNotes);
+            toast.success('Task marked as completed');
+            setIsCloseModalOpen(false);
+            loadTasks();
+        } catch (error) {
+            toast.error('Failed to close task');
         }
     };
 
@@ -90,7 +163,6 @@ const Tasks: React.FC = () => {
                             <Filter className="w-4 h-4 mr-2" />
                             Filter
                         </button>
-                        {/* Simple Hover Dropdown for Demo */}
                         <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg hidden group-hover:block z-20 p-2">
                             <div className="text-xs font-semibold text-gray-500 mb-1 px-2">Priority</div>
                             <select
@@ -145,38 +217,44 @@ const Tasks: React.FC = () => {
                         <thead className="bg-gray-50">
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Related To</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Related Driver</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {filteredTasks.map((task) => (
-                                <tr key={task.id} className="hover:bg-gray-50">
+                                <tr key={task.id} className={clsx("hover:bg-gray-50", task.status === 'Completed' && "opacity-60")}>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
                                             <div className={clsx(
                                                 "flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center",
-                                                task.type === 'General' ? "bg-purple-100 text-purple-600" : "bg-blue-100 text-blue-600"
+                                                task.status === 'Completed' ? "bg-green-100 text-green-600" :
+                                                    task.type === 'General' ? "bg-purple-100 text-purple-600" : "bg-blue-100 text-blue-600"
                                             )}>
                                                 <CheckSquare className="w-4 h-4" />
                                             </div>
                                             <div className="ml-4">
-                                                <div className="text-sm font-medium text-gray-900">{task.title}</div>
+                                                <div className={clsx("text-sm font-medium", task.status === 'Completed' ? "text-gray-500 line-through" : "text-gray-900")}>{task.title}</div>
                                                 <div className="text-xs text-gray-500">{task.type}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center">
-                                            <User className="w-4 h-4 text-gray-400 mr-2" />
-                                            <span className="text-sm text-gray-900">{task.driverName === 'N/A' ? '-' : task.driverName}</span>
-                                        </div>
+                                        {task.driverId ? (
+                                            <Link to={`/drivers/${task.driverId}`} className="flex items-center text-green-600 hover:text-green-800">
+                                                <User className="w-4 h-4 mr-2" />
+                                                <span className="text-sm">{task.driverName || 'View Driver'}</span>
+                                            </Link>
+                                        ) : (
+                                            <span className="text-sm text-gray-400">-</span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {task.assignedTo || task.assignee}
+                                        {task.assignee}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         <div className="flex items-center">
@@ -194,17 +272,46 @@ const Tasks: React.FC = () => {
                                             {task.priority || 'Medium'}
                                         </span>
                                     </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className={clsx(
+                                            "px-2 inline-flex text-xs leading-5 font-semibold rounded-full",
+                                            task.status === 'Completed' ? "bg-green-100 text-green-800" :
+                                                task.status === 'In Progress' ? "bg-blue-100 text-blue-800" :
+                                                    "bg-gray-100 text-gray-800"
+                                        )}>
+                                            {task.status}
+                                        </span>
+                                    </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        {task.driverId ? (
-                                            <Link
-                                                to={`/drivers/${task.driverId}${task.planId ? `?openPlan=${task.planId}` : ''}`}
-                                                className="text-green-600 hover:text-green-900 flex items-center justify-end"
-                                            >
-                                                Go to {task.planId ? 'Plan' : 'Profile'} <ArrowRight className="w-4 h-4 ml-1" />
-                                            </Link>
-                                        ) : (
-                                            <span className="text-gray-400">-</span>
-                                        )}
+                                        <div className="flex items-center justify-end space-x-2">
+                                            {task.status !== 'Completed' && (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleEditTask(task)}
+                                                        className="text-blue-600 hover:text-blue-800 p-1"
+                                                        title="Edit Task"
+                                                    >
+                                                        <Edit className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleOpenCloseModal(task)}
+                                                        className="text-green-600 hover:text-green-800 p-1"
+                                                        title="Close Task"
+                                                    >
+                                                        <CheckSquare className="w-4 h-4" />
+                                                    </button>
+                                                </>
+                                            )}
+                                            {task.driverId && (
+                                                <Link
+                                                    to={`/drivers/${task.driverId}`}
+                                                    className="text-gray-500 hover:text-gray-700 p-1"
+                                                    title="Go to Driver"
+                                                >
+                                                    <ArrowRight className="w-4 h-4" />
+                                                </Link>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -244,6 +351,19 @@ const Tasks: React.FC = () => {
                             onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
                             rows={3}
                         />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Related Driver (Optional)</label>
+                        <select
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            value={newTask.driverId}
+                            onChange={(e) => setNewTask({ ...newTask, driverId: e.target.value })}
+                        >
+                            <option value="">No Driver Selected</option>
+                            {drivers.map(driver => (
+                                <option key={driver.id} value={driver.id}>{driver.name}</option>
+                            ))}
+                        </select>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -298,6 +418,106 @@ const Tasks: React.FC = () => {
                         </button>
                     </div>
                 </form>
+            </Modal>
+
+            {/* Edit Task Modal */}
+            <Modal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                title="Edit Task"
+            >
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Task</label>
+                        <p className="text-gray-900 font-medium">{selectedTask?.title}</p>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Assign To</label>
+                        <select
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            value={editTask.assignee}
+                            onChange={(e) => setEditTask({ ...editTask, assignee: e.target.value })}
+                        >
+                            <option value="Safety Manager">Safety Manager</option>
+                            <option value="Fleet Manager">Fleet Manager</option>
+                            <option value="Dispatcher">Dispatcher</option>
+                            <option value="Admin">Admin</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                        <input
+                            type="date"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            value={editTask.dueDate}
+                            onChange={(e) => setEditTask({ ...editTask, dueDate: e.target.value })}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                        <select
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            value={editTask.priority}
+                            onChange={(e) => setEditTask({ ...editTask, priority: e.target.value })}
+                        >
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                    </div>
+                    <div className="flex justify-end space-x-3 mt-6">
+                        <button
+                            onClick={() => setIsEditModalOpen(false)}
+                            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleSaveEdit}
+                            className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700"
+                        >
+                            Save Changes
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Close Task Modal */}
+            <Modal
+                isOpen={isCloseModalOpen}
+                onClose={() => setIsCloseModalOpen(false)}
+                title="Close Task"
+            >
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Task</label>
+                        <p className="text-gray-900 font-medium">{selectedTask?.title}</p>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Closing Notes</label>
+                        <textarea
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            value={closeNotes}
+                            onChange={(e) => setCloseNotes(e.target.value)}
+                            rows={4}
+                            placeholder="Add notes about task completion..."
+                        />
+                    </div>
+                    <div className="flex justify-end space-x-3 mt-6">
+                        <button
+                            onClick={() => setIsCloseModalOpen(false)}
+                            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleCloseTask}
+                            className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700"
+                        >
+                            Mark as Completed
+                        </button>
+                    </div>
+                </div>
             </Modal>
         </div>
     );
