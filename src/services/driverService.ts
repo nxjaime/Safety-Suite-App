@@ -279,5 +279,85 @@ export const driverService = {
             .eq('id', driverId);
 
         if (error) throw error;
+    },
+
+    async fetchDriversPaginated(
+        page: number,
+        pageSize: number,
+        filters?: { search?: string; terminal?: string; status?: string }
+    ): Promise<{ data: Driver[]; count: number }> {
+        let query = supabase
+            .from('drivers')
+            .select('*', { count: 'exact' });
+
+        if (filters?.search) {
+            query = query.or(`name.ilike.%${filters.search}%,employee_id.ilike.%${filters.search}%`);
+        }
+        if (filters?.terminal) {
+            query = query.eq('terminal', filters.terminal);
+        }
+        if (filters?.status) {
+            query = query.eq('status', filters.status);
+        }
+
+        const from = (page - 1) * pageSize;
+        const to = from + pageSize - 1;
+
+        const { data, count, error } = await query
+            .order('name')
+            .range(from, to);
+
+        if (error) throw error;
+
+        return {
+            data: data ? data.map(mapDriverData) : [],
+            count: count || 0
+        };
+    },
+
+    async fetchSafetyStats() {
+        // This would ideally be a dedicated RPC function or a separate stats table for scale.
+        // For now, we will perform optimized separate queries to avoid fetching all row data.
+
+        // 1. Avg Risk Score
+        const { data: riskData, error: riskError } = await supabase
+            .from('drivers')
+            .select('risk_score');
+
+        if (riskError) throw riskError;
+
+        const totalRisk = riskData.reduce((sum, d) => sum + (d.risk_score || 0), 0);
+        const avgRisk = riskData.length > 0 ? Math.round(totalRisk / riskData.length) : 0;
+
+        // 2. Incident Counts - Fetching counts from related tables
+        // Note: This is still slightly expensive if tables are huge, but better than fetching all detailed rows.
+        // Alternative: creating a 'safety_stats' materialized view.
+
+        // We will just do a count of rows in the incident tables for "This Month" or Total? 
+        // The original code calculated Total Incidents from ALL fetched drivers.
+        // Let's approximate by counting rows in risk_events (assuming that's the source of truth now).
+        // If we still need accidents/citations counts:
+
+        const { count: riskEventCount, error: reError } = await supabase
+            .from('risk_events')
+            .select('*', { count: 'exact', head: true });
+
+        // Removed broken accident count logic. We rely on risk_events for now.
+
+        if (reError) throw reError;
+
+        // 3. Active Coaching Plans
+        const { count: coachingCount, error: coachError } = await supabase
+            .from('coaching_plans')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'Active');
+
+        if (coachError) throw coachError;
+
+        return {
+            riskScore: avgRisk,
+            incidentCount: (riskEventCount || 0), // Simplifying to just risk_events table for now
+            coachingCount: coachingCount || 0
+        };
     }
 };

@@ -11,6 +11,9 @@ import type { Driver } from '../types';
 const Drivers: React.FC = () => {
     const navigate = useNavigate();
     const [drivers, setDrivers] = useState<Driver[]>([]);
+    const [totalCount, setTotalCount] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize] = useState(10);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingDriverId, setEditingDriverId] = useState<string | null>(null);
 
@@ -42,13 +45,18 @@ const Drivers: React.FC = () => {
 
     useEffect(() => {
         loadDrivers();
-    }, []);
+    }, [currentPage, searchTerm, filterTerminal, filterStatus]);
 
     const loadDrivers = async () => {
         setLoading(true);
         try {
-            const data = await driverService.fetchDrivers();
+            const { data, count } = await driverService.fetchDriversPaginated(currentPage, pageSize, {
+                search: searchTerm,
+                terminal: filterTerminal,
+                status: filterStatus
+            });
             setDrivers(data);
+            setTotalCount(count);
         } catch (error) {
             toast.error('Failed to load drivers');
         } finally {
@@ -193,45 +201,57 @@ const Drivers: React.FC = () => {
         }
     };
 
-    const handleExportCSV = () => {
-        if (filteredDrivers.length === 0) {
-            toast.error("No drivers to export");
-            return;
+    const handleExportCSV = async () => { // Changed to async to fetch all for export if needed, or just current view
+        // For export, we probably want ALL matching filter, not just current page.
+        // We can reuse the filter logic but with a large page size or separate export endpoint.
+        // For simplicity now, let's fetch all matching filters.
+        try {
+            // Fetch all by using a large page size or existing endpoint if filters can be applied there?
+            // Since we added filters to paginated, let's use that with a big limit.
+            const { data } = await driverService.fetchDriversPaginated(1, 10000, {
+                search: searchTerm,
+                terminal: filterTerminal,
+                status: filterStatus
+            });
+
+            if (data.length === 0) {
+                toast.error("No drivers to export");
+                return;
+            }
+
+            const headers = ['Name', 'Employee ID', 'Terminal', 'Risk Score', 'Status', 'Plan Status', 'Phone', 'Email'];
+            const rows = data.map(d => [
+                d.name,
+                d.employeeId,
+                d.terminal,
+                d.riskScore.toString(),
+                d.status,
+                d.riskScore > 80 ? 'Plan Assigned' : 'No Plan Assigned',
+                d.phone,
+                d.email
+            ]);
+
+            const csvContent = [
+                headers.join(','),
+                ...rows.map(row => row.map(cell => `"${cell || ''}"`).join(','))
+            ].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `drivers_export_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            toast.success("Drivers exported to CSV");
+        } catch (e) {
+            toast.error("Failed to export");
         }
-
-        const headers = ['Name', 'Employee ID', 'Terminal', 'Risk Score', 'Status', 'Plan Status', 'Phone', 'Email'];
-        const rows = filteredDrivers.map(d => [
-            d.name,
-            d.employeeId,
-            d.terminal,
-            d.riskScore.toString(),
-            d.status,
-            d.riskScore > 80 ? 'Plan Assigned' : 'No Plan Assigned',
-            d.phone,
-            d.email
-        ]);
-
-        const csvContent = [
-            headers.join(','),
-            ...rows.map(row => row.map(cell => `"${cell || ''}"`).join(','))
-        ].join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `drivers_export_${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
-        toast.success("Drivers exported to CSV");
     };
 
-    // Filtering Logic
-    const filteredDrivers = drivers.filter(driver => {
-        const matchesSearch = driver.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            driver.employeeId.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesTerminal = filterTerminal ? driver.terminal === filterTerminal : true;
-        const matchesStatus = filterStatus ? driver.status === filterStatus : true;
-        return matchesSearch && matchesTerminal && matchesStatus;
-    });
+    // Filtering Logic - Now handled by effect dependencies re-triggering loadDrivers
+    // const filteredDrivers = drivers; // In this new model, 'drivers' IS the filtered list for the current page.
+
+    // Pagination helpers
+    const totalPages = Math.ceil(totalCount / pageSize);
 
     return (
         <div className="space-y-6">
@@ -341,8 +361,8 @@ const Drivers: React.FC = () => {
                                     <p className="mt-2 text-sm text-gray-500">Loading drivers...</p>
                                 </td>
                             </tr>
-                        ) : filteredDrivers.length > 0 ? (
-                            filteredDrivers.map((driver) => (
+                        ) : drivers.length > 0 ? (
+                            drivers.map((driver) => (
                                 <tr key={driver.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
@@ -438,6 +458,64 @@ const Drivers: React.FC = () => {
                     </tbody>
                 </table>
             </div>
+
+            {/* Pagination Controls */}
+            {drivers.length > 0 && (
+                <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-lg shadow-sm">
+                    <div className="flex flex-1 justify-between sm:hidden">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                        >
+                            Previous
+                        </button>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                        >
+                            Next
+                        </button>
+                    </div>
+                    <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                        <div>
+                            <p className="text-sm text-gray-700">
+                                Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(currentPage * pageSize, totalCount)}</span> of{' '}
+                                <span className="font-medium">{totalCount}</span> results
+                            </p>
+                        </div>
+                        <div>
+                            <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                    className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                                >
+                                    <span className="sr-only">Previous</span>
+                                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+                                    </svg>
+                                </button>
+                                {/* Simple Page Numbers - can be robust if needed but keeping simple 1..N or current */}
+                                <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">
+                                    Page {currentPage} of {totalPages}
+                                </span>
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                    className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                                >
+                                    <span className="sr-only">Next</span>
+                                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                                    </svg>
+                                </button>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <Modal
                 isOpen={isModalOpen}
@@ -625,7 +703,7 @@ const Drivers: React.FC = () => {
                     </div>
                 </form>
             </Modal>
-        </div>
+        </div >
     );
 };
 

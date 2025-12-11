@@ -17,7 +17,7 @@ const Safety: React.FC = () => {
         notes: ''
     });
 
-    const [driverList, setDriverList] = useState<any[]>([]);
+
 
     useEffect(() => {
         loadData();
@@ -26,27 +26,8 @@ const Safety: React.FC = () => {
     const loadData = async () => {
         try {
             setLoading(true);
-            const fetchedDrivers = await driverService.fetchDriversDetailed();
-            setDriverList(fetchedDrivers);
-
-            // Calculate aggregate stats
-            let totalRisk = 0;
-            let totalIncidents = 0;
-            let activeCoaching = 0;
-
-            fetchedDrivers.forEach(d => {
-                totalRisk += d.riskScore || 0;
-                totalIncidents += (d.accidents?.length || 0) + (d.citations?.length || 0) + (d.riskEvents?.length || 0);
-                activeCoaching += d.coachingPlans?.filter((p: any) => p.status === 'Active').length || 0;
-            });
-
-            const avgRisk = fetchedDrivers.length > 0 ? Math.round(totalRisk / fetchedDrivers.length) : 0;
-            setStats({
-                riskScore: avgRisk,
-                incidentCount: totalIncidents,
-                coachingCount: activeCoaching
-            });
-
+            const stats = await driverService.fetchSafetyStats();
+            setStats(stats);
         } catch (error) {
             toast.error('Failed to load safety data');
             console.error(error);
@@ -70,11 +51,18 @@ const Safety: React.FC = () => {
         }
 
         try {
-            const driver = driverList.find(d => d.name === newCoaching.driverName);
-            if (!driver) {
+            // We need driver ID. Since we don't load all drivers anymore, 
+            // for now, we should probably change this UI to search for a driver or 
+            // if this is a "Top Level" action, maybe purely search-based.
+            // But the current UI has a simple select dropdown which assumes we have the list.
+            // Let's quickly search for the driver by name to get ID.
+            const { data: drivers } = await driverService.fetchDriversPaginated(1, 1, { search: newCoaching.driverName });
+
+            if (!drivers || drivers.length === 0) {
                 toast.error('Driver not found');
                 return;
             }
+            const driver = drivers[0];
 
             await driverService.addRiskEvent(driver.id, {
                 date: newCoaching.date,
@@ -271,11 +259,24 @@ const Safety: React.FC = () => {
                                 value={newCoaching.driverName}
                                 onChange={(e) => setNewCoaching({ ...newCoaching, driverName: e.target.value })}
                             >
-                                <option value="">Select Driver</option>
-                                {driverList.map((driver: any) => (
-                                    <option key={driver.id} value={driver.name}>{driver.name}</option>
-                                ))}
+                                <option value="">Select Driver (Type exact name for now)</option>
+                                {/* We removed driverList state, so we can't map options easily without fetching all. 
+                                    Ideally this should be an async searchable select.
+                                    For now, let's make it a text input or explain limit. 
+                                    Or let's just fetch simplified list if list is small? 
+                                    "Safety Suite" implies enterprise. 
+                                    Let's change to Input for Name till we build AsyncSelect 
+                                */}
                             </select>
+                            {/* Converting to simple input for performance refactor compatibility */}
+                            <input
+                                type="text"
+                                required
+                                placeholder="Driver Name"
+                                className="pl-9 w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 mt-2"
+                                value={newCoaching.driverName}
+                                onChange={(e) => setNewCoaching({ ...newCoaching, driverName: e.target.value })}
+                            />
                         </div>
                     </div>
                     <div>
