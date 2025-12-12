@@ -217,14 +217,17 @@ export const driverService = {
     },
 
     async deleteCoachingPlan(planId: string) {
-        // Also delete related tasks? Supabase might define cascade, but let's assume cascade or leave tasks.
-        // Usually safe to just delete the plan if tasks have on delete cascade.
+        // Delete the coaching plan (cascade should also delete related tasks if configured)
         const { error } = await supabase
             .from('coaching_plans')
             .delete()
             .eq('id', planId);
 
-        if (error) throw error;
+        if (error) {
+            console.error('Failed to delete coaching plan:', error);
+            console.error('Plan ID was:', planId);
+            throw new Error(`Failed to delete coaching plan: ${error.message}`);
+        }
     },
 
     async getDriverDocuments(driverId: string): Promise<any[]> {

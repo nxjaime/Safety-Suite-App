@@ -49,15 +49,35 @@ const UserProfile: React.FC = () => {
                 <div className="h-32 bg-green-700"></div>
                 <div className="px-6 pb-6">
                     <div className="relative flex justify-between items-end -mt-12 mb-6">
-                        <div className="relative">
+                        <div className="relative group">
                             <img
                                 src={user.avatarUrl}
                                 alt={user.name}
                                 className="w-24 h-24 rounded-full border-4 border-white shadow-md object-cover"
                             />
-                            <button className="absolute bottom-0 right-0 p-1.5 bg-white rounded-full border border-gray-200 shadow-sm hover:bg-gray-50 text-gray-600">
+                            <button
+                                onClick={() => document.getElementById('profile-photo-input')?.click()}
+                                className="absolute bottom-0 right-0 p-1.5 bg-white rounded-full border border-gray-200 shadow-sm hover:bg-gray-50 text-gray-600 cursor-pointer"
+                                title="Change profile picture"
+                            >
                                 <Camera className="w-4 h-4" />
                             </button>
+                            <input
+                                type="file"
+                                id="profile-photo-input"
+                                className="hidden"
+                                accept="image/*"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                        const reader = new FileReader();
+                                        reader.onloadend = () => {
+                                            handleChange('avatarUrl', reader.result as string);
+                                        };
+                                        reader.readAsDataURL(file);
+                                    }
+                                }}
+                            />
                         </div>
                         <button
                             onClick={handleSave}

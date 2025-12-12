@@ -24,7 +24,7 @@ const navItems = [
     { name: 'Training', path: '/training', icon: GraduationCap },
     { name: 'Compliance', path: '/compliance', icon: FileText },
     { name: 'Equipment', path: '/equipment', icon: Truck },
-    { name: 'Reporting', path: '/safeview', icon: BarChart2 },
+    { name: 'Reporting', path: '/reporting', icon: BarChart2 },
     { name: 'Document Library', path: '/documents', icon: Files },
     { name: 'Regulations', path: '/fmcsa', icon: BookOpen },
 ];

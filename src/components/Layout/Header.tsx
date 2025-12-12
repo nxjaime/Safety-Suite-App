@@ -37,7 +37,7 @@ const Header: React.FC = () => {
         if (path.startsWith('/training')) return { title: 'Training', path: 'Reporting > Training' };
         if (path.startsWith('/compliance')) return { title: 'Compliance', path: 'Reporting > Compliance' };
         if (path.startsWith('/equipment')) return { title: 'Equipment', path: 'Reporting > Equipment' };
-        if (path.startsWith('/safeview')) return { title: 'Reporting', path: 'Reporting > Analytics' };
+        if (path.startsWith('/reporting')) return { title: 'Reporting', path: 'Reporting > Analytics' };
         if (path.startsWith('/documents')) return { title: 'Document Library', path: 'Reporting > Documents' };
         if (path.startsWith('/fmcsa')) return { title: 'FMCSA Regulations', path: 'Resources > FMCSA' };
         if (path.startsWith('/settings')) return { title: 'Settings', path: 'Reporting > Settings' };

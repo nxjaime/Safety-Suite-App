@@ -1,11 +1,11 @@
 import React from 'react';
 import { BarChart2, PieChart, TrendingUp, Download } from 'lucide-react';
 
-const SafeView: React.FC = () => {
+const Reporting: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-800">SafeView Analytics</h2>
+                <h2 className="text-2xl font-bold text-gray-800">Reporting & Analytics</h2>
                 <div className="flex space-x-2">
                     <select className="border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white">
                         <option>Last 12 Months</option>
@@ -68,4 +68,4 @@ const SafeView: React.FC = () => {
     );
 };
 
-export default SafeView;
+export default Reporting;

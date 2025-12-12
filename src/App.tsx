@@ -12,7 +12,7 @@ const Safety = lazy(() => import('./pages/Safety'));
 const Training = lazy(() => import('./pages/Training'));
 const Compliance = lazy(() => import('./pages/Compliance'));
 const Equipment = lazy(() => import('./pages/Equipment'));
-const SafeView = lazy(() => import('./pages/SafeView'));
+const Reporting = lazy(() => import('./pages/Reporting'));
 const Documents = lazy(() => import('./pages/Documents'));
 const FMCSA = lazy(() => import('./pages/FMCSA'));
 const Settings = lazy(() => import('./pages/Settings'));
@@ -44,7 +44,7 @@ function App() {
             <Route path="training" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Training /></Suspense>} />
             <Route path="compliance" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Compliance /></Suspense>} />
             <Route path="equipment" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Equipment /></Suspense>} />
-            <Route path="safeview" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><SafeView /></Suspense>} />
+            <Route path="reporting" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Reporting /></Suspense>} />
             <Route path="documents" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Documents /></Suspense>} />
             <Route path="fmcsa" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><FMCSA /></Suspense>} />
             <Route path="settings" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Settings /></Suspense>} />

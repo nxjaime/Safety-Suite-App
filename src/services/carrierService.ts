@@ -37,17 +37,23 @@ import { supabase } from '../lib/supabase';
 export const carrierService = {
     // Save carrier settings to database
     async saveCarrierSettings(settings: CarrierSettings): Promise<void> {
+        const payload = {
+            id: settings.id || 'default',
+            dot_number: settings.dotNumber || null,
+            mc_number: settings.mcNumber || null,
+            company_name: settings.companyName || null,
+            updated_at: new Date().toISOString()
+        };
+
         const { error } = await supabase
             .from('carrier_settings')
-            .upsert([{
-                id: settings.id || 'default',
-                dot_number: settings.dotNumber,
-                mc_number: settings.mcNumber,
-                company_name: settings.companyName,
-                updated_at: new Date().toISOString()
-            }], { onConflict: 'id' });
+            .upsert([payload], { onConflict: 'id' });
 
-        if (error) throw error;
+        if (error) {
+            console.error('Failed to save carrier settings:', error);
+            console.error('Payload was:', payload);
+            throw new Error(`Failed to save carrier settings: ${error.message}`);
+        }
     },
 
     // Get carrier settings from database

@@ -131,6 +131,12 @@ const Tasks: React.FC = () => {
     const handleCloseTask = async () => {
         if (!selectedTask) return;
 
+        // Validate minimum 25 characters for closing notes
+        if (closeNotes.trim().length < 25) {
+            toast.error('Closing notes must be at least 25 characters');
+            return;
+        }
+
         try {
             await taskService.closeTask(selectedTask.id, closeNotes);
             toast.success('Task marked as completed');
@@ -494,14 +500,26 @@ const Tasks: React.FC = () => {
                         <p className="text-gray-900 font-medium">{selectedTask?.title}</p>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Closing Notes</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Closing Notes <span className="text-red-500">*</span>
+                        </label>
                         <textarea
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className={clsx(
+                                "w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500",
+                                closeNotes.trim().length < 25 ? "border-orange-300" : "border-gray-300"
+                            )}
                             value={closeNotes}
                             onChange={(e) => setCloseNotes(e.target.value)}
                             rows={4}
-                            placeholder="Add notes about task completion..."
+                            placeholder="Add notes about task completion (minimum 25 characters required)..."
                         />
+                        <div className={clsx(
+                            "text-xs mt-1 flex justify-between",
+                            closeNotes.trim().length < 25 ? "text-orange-500" : "text-green-600"
+                        )}>
+                            <span>{closeNotes.trim().length < 25 ? `Minimum 25 characters required` : 'Character requirement met ✓'}</span>
+                            <span>{closeNotes.trim().length}/25</span>
+                        </div>
                     </div>
                     <div className="flex justify-end space-x-3 mt-6">
                         <button
@@ -512,7 +530,8 @@ const Tasks: React.FC = () => {
                         </button>
                         <button
                             onClick={handleCloseTask}
-                            className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700"
+                            disabled={closeNotes.trim().length < 25}
+                            className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Mark as Completed
                         </button>

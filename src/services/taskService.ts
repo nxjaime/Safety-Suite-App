@@ -45,12 +45,16 @@ export const taskService = {
                 assignee: task.assignee,
                 type: task.type,
                 related_id: task.relatedId,
-                driver_id: task.driverId
+                driver_id: task.driverId,
+                driver_name: task.driverName
             }])
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            console.error('Error creating task:', error);
+            throw error;
+        }
         return mapTaskData(data);
     },
 
@@ -95,7 +99,11 @@ export const taskService = {
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            console.error('Error closing task:', error);
+            console.error('Task ID was:', id);
+            throw new Error(`Failed to close task: ${error.message}`);
+        }
         return mapTaskData(data);
     },
 

@@ -44,13 +44,29 @@ export const emailService = {
                 })
             });
 
+            // Handle non-OK responses with detailed error logging
             if (!response.ok) {
-                throw new Error('Failed to send email');
+                const errorText = await response.text();
+                console.error('Email API Error:', response.status, errorText);
+
+                // In development, show a more helpful message
+                if (response.status === 404 || response.status === 500) {
+                    console.warn('Email API may not be available. Ensure the /api/send-email endpoint is deployed.');
+                    // Return false but don't throw - let caller handle gracefully
+                    return false;
+                }
+
+                throw new Error(`Failed to send email: ${response.status}`);
             }
 
             return true;
         } catch (error) {
             console.error('Email send failed:', error);
+            // Check if we're in development mode
+            if (import.meta.env.DEV) {
+                console.info('DEV MODE: Email would have been sent to:', options.to);
+                console.info('Subject:', options.subject);
+            }
             return false;
         }
     },

@@ -10,9 +10,12 @@ const Safety: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [stats, setStats] = useState({ riskScore: 32, incidentCount: 12, coachingCount: 8 });
     const [loading, setLoading] = useState(true);
+    const [drivers, setDrivers] = useState<{ id: string; name: string }[]>([]);
+    const [loadingDrivers, setLoadingDrivers] = useState(false);
     const [newCoaching, setNewCoaching] = useState({
+        driverId: '',
         driverName: '',
-        date: '',
+        date: new Date().toISOString().split('T')[0],
         type: '',
         notes: ''
     });
@@ -22,6 +25,25 @@ const Safety: React.FC = () => {
     useEffect(() => {
         loadData();
     }, []);
+
+    // Load active drivers when modal opens
+    useEffect(() => {
+        if (isModalOpen && drivers.length === 0) {
+            loadDrivers();
+        }
+    }, [isModalOpen]);
+
+    const loadDrivers = async () => {
+        setLoadingDrivers(true);
+        try {
+            const { data } = await driverService.fetchDriversPaginated(1, 200, { status: 'Active' });
+            setDrivers(data.map(d => ({ id: d.id, name: d.name })));
+        } catch (error) {
+            console.error('Failed to load drivers', error);
+        } finally {
+            setLoadingDrivers(false);
+        }
+    };
 
     const loadData = async () => {
         try {
@@ -39,6 +61,12 @@ const Safety: React.FC = () => {
     const handleAddCoaching = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        // Validate driver is selected
+        if (!newCoaching.driverId) {
+            toast.error('Please select a driver');
+            return;
+        }
+
         // Calculate points based on type
         let points = 0;
         switch (newCoaching.type) {
@@ -51,33 +79,19 @@ const Safety: React.FC = () => {
         }
 
         try {
-            // We need driver ID. Since we don't load all drivers anymore, 
-            // for now, we should probably change this UI to search for a driver or 
-            // if this is a "Top Level" action, maybe purely search-based.
-            // But the current UI has a simple select dropdown which assumes we have the list.
-            // Let's quickly search for the driver by name to get ID.
-            const { data: drivers } = await driverService.fetchDriversPaginated(1, 1, { search: newCoaching.driverName });
-
-            if (!drivers || drivers.length === 0) {
-                toast.error('Driver not found');
-                return;
-            }
-            const driver = drivers[0];
-
-            await driverService.addRiskEvent(driver.id, {
+            await driverService.addRiskEvent(newCoaching.driverId, {
                 date: newCoaching.date,
                 type: newCoaching.type,
                 points,
                 notes: newCoaching.notes
             });
 
-            // Optimistic update or refetch
-            // For now, simple refetch to ensure consistency
+            // Refetch to ensure consistency
             await loadData();
 
-            toast.success('Risk event logged to Supabase');
+            toast.success(`Risk event logged for ${newCoaching.driverName}`);
             setIsModalOpen(false);
-            setNewCoaching({ driverName: '', date: '', type: '', notes: '' });
+            setNewCoaching({ driverId: '', driverName: '', date: new Date().toISOString().split('T')[0], type: '', notes: '' });
 
         } catch (error) {
             toast.error('Failed to log event');
@@ -250,34 +264,35 @@ const Safety: React.FC = () => {
             >
                 <form onSubmit={handleAddCoaching} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Driver Name</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Select Driver <span className="text-red-500">*</span></label>
                         <div className="relative">
-                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
                             <select
                                 required
-                                className="pl-9 w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                                value={newCoaching.driverName}
-                                onChange={(e) => setNewCoaching({ ...newCoaching, driverName: e.target.value })}
+                                className="pl-9 w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                                value={newCoaching.driverId}
+                                onChange={(e) => {
+                                    const selectedDriver = drivers.find(d => d.id === e.target.value);
+                                    setNewCoaching({
+                                        ...newCoaching,
+                                        driverId: e.target.value,
+                                        driverName: selectedDriver?.name || ''
+                                    });
+                                }}
                             >
-                                <option value="">Select Driver (Type exact name for now)</option>
-                                {/* We removed driverList state, so we can't map options easily without fetching all. 
-                                    Ideally this should be an async searchable select.
-                                    For now, let's make it a text input or explain limit. 
-                                    Or let's just fetch simplified list if list is small? 
-                                    "Safety Suite" implies enterprise. 
-                                    Let's change to Input for Name till we build AsyncSelect 
-                                */}
+                                <option value="">
+                                    {loadingDrivers ? 'Loading drivers...' : 'Select an active driver'}
+                                </option>
+                                {drivers.map(driver => (
+                                    <option key={driver.id} value={driver.id}>
+                                        {driver.name}
+                                    </option>
+                                ))}
                             </select>
-                            {/* Converting to simple input for performance refactor compatibility */}
-                            <input
-                                type="text"
-                                required
-                                placeholder="Driver Name"
-                                className="pl-9 w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 mt-2"
-                                value={newCoaching.driverName}
-                                onChange={(e) => setNewCoaching({ ...newCoaching, driverName: e.target.value })}
-                            />
                         </div>
+                        {drivers.length === 0 && !loadingDrivers && (
+                            <p className="text-xs text-gray-500 mt-1">No active drivers found in the roster.</p>
+                        )}
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
