@@ -31,8 +31,18 @@ export const emailService = {
     // In production, this would be a server-side call
 
     async sendEmail(options: EmailOptions): Promise<boolean> {
+        // In development mode, simulate email sending
+        if (import.meta.env.DEV) {
+            console.info('📧 DEV MODE: Simulating email send');
+            console.info('To:', options.to);
+            console.info('Subject:', options.subject);
+            console.info('✅ Email would be sent in production');
+            // Return true so the UI shows success feedback
+            return true;
+        }
+
         try {
-            // Using Supabase Edge Function endpoint
+            // Using Vercel serverless function endpoint
             const response = await fetch('/api/send-email', {
                 method: 'POST',
                 headers: {
@@ -49,10 +59,9 @@ export const emailService = {
                 const errorText = await response.text();
                 console.error('Email API Error:', response.status, errorText);
 
-                // In development, show a more helpful message
-                if (response.status === 404 || response.status === 500) {
-                    console.warn('Email API may not be available. Ensure the /api/send-email endpoint is deployed.');
-                    // Return false but don't throw - let caller handle gracefully
+                // Check if API endpoint is not deployed
+                if (response.status === 404) {
+                    console.warn('Email API endpoint not found. Ensure the /api/send-email endpoint is deployed on Vercel.');
                     return false;
                 }
 
@@ -62,11 +71,6 @@ export const emailService = {
             return true;
         } catch (error) {
             console.error('Email send failed:', error);
-            // Check if we're in development mode
-            if (import.meta.env.DEV) {
-                console.info('DEV MODE: Email would have been sent to:', options.to);
-                console.info('Subject:', options.subject);
-            }
             return false;
         }
     },
