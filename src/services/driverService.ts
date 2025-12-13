@@ -217,7 +217,18 @@ export const driverService = {
     },
 
     async deleteCoachingPlan(planId: string) {
-        // Delete the coaching plan (cascade should also delete related tasks if configured)
+        // First, delete all related tasks (coaching check-ins linked to this plan)
+        const { error: tasksError } = await supabase
+            .from('tasks')
+            .delete()
+            .eq('related_id', planId);
+
+        if (tasksError) {
+            console.error('Failed to delete related tasks:', tasksError);
+            // Continue anyway - we still want to delete the plan
+        }
+
+        // Then delete the coaching plan itself
         const { error } = await supabase
             .from('coaching_plans')
             .delete()
