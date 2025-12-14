@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Bell, Search } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+    theme: string;
+    setTheme: (theme: string) => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ theme, setTheme }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const [user, setUser] = useState({
@@ -48,12 +53,52 @@ const Header: React.FC = () => {
 
     const { title, path } = getBreadcrumbs();
 
+    const getHeaderClass = () => {
+        switch (theme) {
+            case 'teal': return 'bg-gradient-to-r from-teal-600 to-teal-500';
+            case 'slate': return 'bg-gradient-to-r from-slate-800 to-slate-700';
+            case 'blue': return 'bg-gradient-to-r from-blue-600 to-blue-500';
+            case 'dark': return 'bg-gray-900 border-b border-gray-800';
+            default: return 'bg-gradient-to-r from-emerald-500 to-emerald-400';
+        }
+    };
+
     return (
-        <header className="h-16 bg-gradient-to-r from-green-700 to-green-600 text-white flex items-center justify-between px-6 fixed top-0 left-64 right-0 z-10 shadow-md">
+        <header className={`h-16 ${getHeaderClass()} text-white flex items-center justify-between px-6 fixed top-0 left-64 right-0 z-10 shadow-md transition-colors duration-300`}>
             <div className="flex items-center">
                 <h1 className="text-lg font-semibold">{title}</h1>
-                <span className="mx-2 text-blue-300">/</span>
-                <span className="text-sm text-blue-100">{path}</span>
+                <span className="mx-2 text-white/50">/</span>
+                <span className="text-sm text-white/70">{path}</span>
+            </div>
+
+            {/* Theme Switcher - Temporary */}
+            <div className="flex items-center space-x-2 mr-4 bg-white/10 px-3 py-1 rounded-full">
+                <span className="text-xs font-medium uppercase tracking-wider opacity-80">Theme:</span>
+                <button
+                    onClick={() => setTheme('emerald')}
+                    className={`w-4 h-4 rounded-full bg-emerald-500 ring-2 ${theme === 'emerald' ? 'ring-white' : 'ring-transparent'}`}
+                    title="Emerald"
+                />
+                <button
+                    onClick={() => setTheme('teal')}
+                    className={`w-4 h-4 rounded-full bg-teal-500 ring-2 ${theme === 'teal' ? 'ring-white' : 'ring-transparent'}`}
+                    title="Teal"
+                />
+                <button
+                    onClick={() => setTheme('slate')}
+                    className={`w-4 h-4 rounded-full bg-slate-700 ring-2 ${theme === 'slate' ? 'ring-white' : 'ring-transparent'}`}
+                    title="Slate"
+                />
+                <button
+                    onClick={() => setTheme('blue')}
+                    className={`w-4 h-4 rounded-full bg-blue-500 ring-2 ${theme === 'blue' ? 'ring-white' : 'ring-transparent'}`}
+                    title="Blue"
+                />
+                <button
+                    onClick={() => setTheme('dark')}
+                    className={`w-4 h-4 rounded-full bg-gray-900 ring-2 ${theme === 'dark' ? 'ring-white' : 'ring-transparent'}`}
+                    title="Dark Mode"
+                />
             </div>
 
             <div className="flex items-center space-x-4">

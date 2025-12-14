@@ -22,6 +22,13 @@ export interface CarrierHealth {
         hazmat?: number;
         crashIndicator?: number;
     };
+    csaDetails?: {
+        [key: string]: {
+            alert: boolean;
+            violations?: number;
+            measure?: string;
+        }
+    };
     lastUpdated: string;
 }
 
@@ -52,6 +59,11 @@ export const carrierService = {
         if (error) {
             console.error('Failed to save carrier settings:', error);
             console.error('Payload was:', payload);
+
+            if (error.code === 'PGRST205' || error.message.includes('relation "public.carrier_settings" does not exist')) {
+                throw new Error('Database configuration error: Carrier Settings table not found. Please contact support to run migrations.');
+            }
+
             throw new Error(`Failed to save carrier settings: ${error.message}`);
         }
     },

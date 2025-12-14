@@ -143,9 +143,9 @@ const Settings: React.FC = () => {
                 ...carrierSettings
             });
             toast.success('Carrier settings saved successfully');
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to save carrier settings', error);
-            toast.error('Failed to save carrier settings');
+            toast.error(error.message || 'Failed to save carrier settings');
         } finally {
             setSavingCarrier(false);
         }

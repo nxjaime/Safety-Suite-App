@@ -12,7 +12,7 @@ const Tasks: React.FC = () => {
     const [tasks, setTasks] = useState<TaskItem[]>([]);
     const [drivers, setDrivers] = useState<Driver[]>([]);
     const [filterPriority, setFilterPriority] = useState<string>('All');
-    const [filterStatus, setFilterStatus] = useState<string>('All');
+    const [filterStatus, setFilterStatus] = useState<string>('Pending');
     const [searchTerm, setSearchTerm] = useState('');
 
     // Modal States
@@ -152,8 +152,9 @@ const Tasks: React.FC = () => {
         const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (task.driverName && task.driverName.toLowerCase().includes(searchTerm.toLowerCase()));
         const matchesPriority = filterPriority === 'All' || task.priority === filterPriority;
+        // 'Pending' filter shows all active tasks (Pending + In Progress)
         const matchesStatus = filterStatus === 'All' ||
-            (filterStatus === 'Pending' && task.status === 'Pending') ||
+            (filterStatus === 'Pending' && (task.status === 'Pending' || task.status === 'In Progress')) ||
             (filterStatus === 'Completed' && task.status === 'Completed');
 
         return matchesSearch && matchesPriority && matchesStatus;
@@ -187,9 +188,9 @@ const Tasks: React.FC = () => {
                                 value={filterStatus}
                                 onChange={(e) => setFilterStatus(e.target.value)}
                             >
-                                <option value="All">All Statuses</option>
-                                <option value="Pending">Pending</option>
-                                <option value="Completed">Completed</option>
+                                <option value="Pending">Active (default)</option>
+                                <option value="All">All Tasks</option>
+                                <option value="Completed">Completed Only</option>
                             </select>
                         </div>
                     </div>

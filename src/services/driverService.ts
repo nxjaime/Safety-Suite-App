@@ -9,6 +9,13 @@ const mapDriverData = (data: any): Driver => {
         driverManager: data.driver_manager,
         employeeId: data.employee_id,
         licenseNumber: data.license_number,
+        licenseState: data.license_state,
+        licenseRestrictions: data.license_restrictions,
+        licenseEndorsements: data.license_endorsements,
+        licenseExpirationDate: data.license_expiration_date,
+        medicalCardIssueDate: data.medical_card_issue_date,
+        medicalCardExpirationDate: data.medical_card_expiration_date,
+        cpapRequired: data.cpap_required,
         hireDate: data.hire_date,
         riskEvents: data.risk_events ? data.risk_events.map((e: any) => ({
             ...e,
@@ -86,7 +93,10 @@ export const driverService = {
     },
 
     async createDriver(driver: Omit<Driver, 'id'> | any) {
+        const orgId = await this._getOrgId();
+
         const dbDriver = {
+            organization_id: orgId,
             name: driver.name,
             status: driver.status,
             terminal: driver.terminal,
@@ -98,6 +108,13 @@ export const driverService = {
             ssn: driver.ssn,
             phone: driver.phone,
             license_number: driver.licenseNumber,
+            license_state: driver.licenseState,
+            license_restrictions: driver.licenseRestrictions,
+            license_endorsements: driver.licenseEndorsements,
+            license_expiration_date: driver.licenseExpirationDate,
+            medical_card_issue_date: driver.medicalCardIssueDate,
+            medical_card_expiration_date: driver.medicalCardExpirationDate,
+            cpap_required: driver.cpapRequired,
             email: driver.email,
             hire_date: driver.hireDate,
             driver_manager: driver.driverManager
@@ -113,6 +130,45 @@ export const driverService = {
         return mapDriverData(data);
     },
 
+    async createDriversBulk(drivers: Partial<Driver>[]) {
+        const orgId = await this._getOrgId();
+
+        const dbDrivers = drivers.map(d => ({
+            organization_id: orgId,
+            name: d.name,
+            status: d.status || 'Active',
+            terminal: d.terminal,
+            risk_score: d.riskScore || 0,
+            years_of_service: d.yearsOfService || 0,
+            employee_id: d.employeeId,
+            phone: d.phone,
+            license_number: d.licenseNumber,
+            email: d.email,
+            hire_date: d.hireDate,
+        }));
+
+        const { data, error } = await supabase
+            .from('drivers')
+            .insert(dbDrivers)
+            .select();
+
+        if (error) throw error;
+        return data.map(mapDriverData);
+    },
+
+    async _getOrgId() {
+        // Helper to get org ID, defaulting for now if not set
+        // In real app, this might come from a context or the auth user
+        // validating strict multi-tenancy.
+
+        // For MVP/Demo:
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return null; // Or throw error
+
+        const { data } = await supabase.from('profiles').select('organization_id').eq('id', user.id).single();
+        return data?.organization_id;
+    },
+
     async updateDriver(id: string, updates: Partial<Driver> | any) {
         const dbUpdates: any = {};
         if (updates.name) dbUpdates.name = updates.name;
@@ -126,6 +182,13 @@ export const driverService = {
         if (updates.ssn) dbUpdates.ssn = updates.ssn;
         if (updates.phone) dbUpdates.phone = updates.phone;
         if (updates.licenseNumber) dbUpdates.license_number = updates.licenseNumber;
+        if (updates.licenseState) dbUpdates.license_state = updates.licenseState;
+        if (updates.licenseRestrictions) dbUpdates.license_restrictions = updates.licenseRestrictions;
+        if (updates.licenseEndorsements) dbUpdates.license_endorsements = updates.licenseEndorsements;
+        if (updates.licenseExpirationDate) dbUpdates.license_expiration_date = updates.licenseExpirationDate;
+        if (updates.medicalCardIssueDate) dbUpdates.medical_card_issue_date = updates.medicalCardIssueDate;
+        if (updates.medicalCardExpirationDate) dbUpdates.medical_card_expiration_date = updates.medicalCardExpirationDate;
+        if (updates.cpapRequired !== undefined) dbUpdates.cpap_required = updates.cpapRequired;
         if (updates.email) dbUpdates.email = updates.email;
         if (updates.hireDate) dbUpdates.hire_date = updates.hireDate;
         if (updates.driverManager) dbUpdates.driver_manager = updates.driverManager;
@@ -143,6 +206,7 @@ export const driverService = {
         if (error) throw error;
         return mapDriverData(data);
     },
+
 
     async deleteDriver(id: string) {
         const { error } = await supabase
@@ -319,9 +383,16 @@ export const driverService = {
         pageSize: number,
         filters?: { search?: string; terminal?: string; status?: string }
     ): Promise<{ data: Driver[]; count: number }> {
+        const orgId = await this._getOrgId();
+
         let query = supabase
             .from('drivers')
             .select('*', { count: 'exact' });
+
+        if (orgId) {
+            query = query.eq('organization_id', orgId);
+        }
+
 
         if (filters?.search) {
             query = query.or(`name.ilike.%${filters.search}%,employee_id.ilike.%${filters.search}%`);

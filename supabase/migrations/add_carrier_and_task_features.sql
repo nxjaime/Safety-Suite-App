@@ -52,11 +52,14 @@ ALTER TABLE carrier_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE carrier_health_cache ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for carrier_settings (allow all for authenticated users for now)
-CREATE POLICY IF NOT EXISTS "Allow all for carrier_settings" ON carrier_settings
+-- Create policies for carrier_settings (allow all for authenticated users for now)
+DROP POLICY IF EXISTS "Allow all for carrier_settings" ON carrier_settings;
+CREATE POLICY "Allow all for carrier_settings" ON carrier_settings
     FOR ALL USING (true) WITH CHECK (true);
 
 -- Create policies for carrier_health_cache
-CREATE POLICY IF NOT EXISTS "Allow all for carrier_health_cache" ON carrier_health_cache
+DROP POLICY IF EXISTS "Allow all for carrier_health_cache" ON carrier_health_cache;
+CREATE POLICY "Allow all for carrier_health_cache" ON carrier_health_cache
     FOR ALL USING (true) WITH CHECK (true);
 
 -- Create index for faster task lookups by driver

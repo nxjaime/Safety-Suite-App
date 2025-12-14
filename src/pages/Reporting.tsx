@@ -59,9 +59,9 @@ const Reporting: React.FC = () => {
                     </div>
                     <h3 className="text-lg font-medium text-gray-900">CSA Score Predictor</h3>
                     <p className="text-gray-500 mt-2 max-w-xs">Predict future CSA scores based on current inspection and violation trends.</p>
-                    <button className="mt-6 px-4 py-2 bg-green-100 text-green-800 border border-green-200 rounded-md text-sm font-medium hover:bg-green-200">
+                    <a href="/reporting/csa-predictor" className="mt-6 px-4 py-2 bg-green-100 text-green-800 border border-green-200 rounded-md text-sm font-medium hover:bg-green-200 inline-block">
                         View Report
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>

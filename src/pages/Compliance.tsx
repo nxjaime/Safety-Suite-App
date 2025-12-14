@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
-import { AlertCircle, CheckCircle, Clock, FileText, Plus, User, Calendar } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { AlertCircle, CheckCircle, Clock, FileText, Plus, User, Calendar, Trash2, AlertTriangle, Truck } from 'lucide-react';
 import Modal from '../components/UI/Modal';
+import { inspectionService } from '../services/inspectionService';
+import type { Inspection, ViolationItem } from '../services/inspectionService';
+import { driverService } from '../services/driverService';
+import type { Driver } from '../types';
 
 const Compliance: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -10,7 +14,161 @@ const Compliance: React.FC = () => {
         expirationDate: ''
     });
 
-    const [view, setView] = useState<'overview' | 'hos' | 'dq' | 'cdl' | 'audit'>('overview');
+    const [view, setView] = useState<'overview' | 'hos' | 'dq' | 'cdl' | 'audit' | 'inspections'>('overview');
+
+    // Inspections State
+    const [inspections, setInspections] = useState<Inspection[]>([]);
+    const [loadingInspections, setLoadingInspections] = useState(false);
+    const [drivers, setDrivers] = useState<Driver[]>([]); // New state for drivers
+
+    // Form State
+    const [isInspectionModalOpen, setIsInspectionModalOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState<'admin' | 'carrier' | 'vehicle' | 'violations'>('admin');
+
+    // Initial Form State
+    const initialInspectionState: Partial<Inspection> = {
+        date: new Date().toISOString().split('T')[0],
+        report_number: '',
+
+        // Admin
+        time_started: '',
+        time_ended: '',
+        location: '',
+        inspection_level: 'Level I',
+        officer_name: '',
+        badge_number: '',
+
+        // Carrier
+        carrier_name: 'Safety First Logistics', // Default
+        usdot_number: '3844435', // Default
+        carrier_address: '',
+
+        // Driver
+        driver_name: '',
+        driver_license_number: '',
+        driver_license_state: '',
+        medical_cert_status: 'Valid',
+
+        // Vehicle
+        vehicle_type: 'Tractor-Trailer',
+        // unit_number removed, using vehicle_name
+        vehicle_name: '', // alias for unit_number
+        plate_number: '',
+        plate_state: '',
+        vin: '',
+        odometer: '',
+        cargo_info: '',
+
+        // Violations
+        violations_data: []
+    };
+
+    const [newInspection, setNewInspection] = useState<Partial<Inspection>>(initialInspectionState);
+    const [currentViolation, setCurrentViolation] = useState<ViolationItem>({ code: '', description: '', type: 'Vehicle', oos: false });
+
+    // Fetch inspections when view changes to 'inspections' or on mount
+    useEffect(() => {
+        if (view === 'inspections') {
+            loadInspections();
+            loadDrivers(); // Fetch drivers when entering inspection view
+        }
+    }, [view]);
+
+    const loadDrivers = async () => {
+        try {
+            const data = await driverService.fetchDrivers();
+            setDrivers(data);
+        } catch (error) {
+            console.error('Failed to load drivers', error);
+        }
+    };
+
+    const loadInspections = async () => {
+        setLoadingInspections(true);
+        try {
+            const data = await inspectionService.getInspections();
+            // Transform data if needed to match UI expectations, currently direct mapping mostly
+            // We need to parse description back to driver/vehicle if we stored it there
+            const mappedData: Inspection[] = data.map((item: any) => {
+                // Parse description "Driver: Name, Vehicle: Unit"
+                const desc = item.description || '';
+                const driverMatch = desc.match(/Driver: (.*?),/);
+                const vehicleMatch = desc.match(/Vehicle: (.*)/);
+
+                // Calculate violations count if not present
+                const vCount = item.violations_data ? item.violations_data.length : parseInt(item.violation_code || '0');
+
+                return {
+                    ...item,
+                    id: item.id,
+                    driver_name: item.driver_name || (driverMatch ? driverMatch[1] : 'Unknown'),
+                    vehicle_name: item.vehicle_name || (vehicleMatch ? vehicleMatch[1] : 'Unknown'),
+                    violations_count: vCount,
+                    status: 'Uploaded'
+                };
+            });
+            setInspections(mappedData);
+        } catch (error) {
+            console.error('Failed to load inspections', error);
+        } finally {
+            setLoadingInspections(false);
+        }
+    };
+
+    const handleAddViolation = () => {
+        if (!currentViolation.description) return;
+        setNewInspection(prev => ({
+            ...prev,
+            violations_data: [...(prev.violations_data || []), currentViolation]
+        }));
+        setCurrentViolation({ code: '', description: '', type: 'Vehicle', oos: false });
+    };
+
+    const removeViolation = (idx: number) => {
+        setNewInspection(prev => ({
+            ...prev,
+            violations_data: (prev.violations_data || []).filter((_, i) => i !== idx)
+        }));
+    };
+
+    const handleDriverSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const selectedDriverId = e.target.value;
+        const driver = drivers.find(d => d.id === selectedDriverId);
+
+        if (driver) {
+            setNewInspection(prev => ({
+                ...prev,
+                driver_name: driver.name,
+                driver_license_number: driver.licenseNumber || '',
+                // driver_license_state: driver.licenseState || '', // Not currently in Driver type
+            }));
+        } else {
+            // Handle "manual" or empty case if needed, or just clear
+            setNewInspection(prev => ({
+                ...prev,
+                driver_name: '',
+                driver_license_number: '',
+            }));
+        }
+    };
+
+    const handleAddInspection = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await inspectionService.createInspection({
+                ...newInspection,
+                vehicle_name: newInspection.vehicle_name, // Ensure basic UI field is populated
+                violations_count: (newInspection.violations_data || []).length
+            });
+            await loadInspections();
+            setIsInspectionModalOpen(false);
+            setNewInspection(initialInspectionState);
+            setActiveTab('admin');
+        } catch (error) {
+            console.error('Failed to create inspection', error);
+            alert('Failed to save inspection.');
+        }
+    };
 
     const handleAddDQFile = (e: React.FormEvent) => {
         e.preventDefault();
@@ -58,6 +216,17 @@ const Compliance: React.FC = () => {
                     </div>
                     <p className="text-2xl font-bold text-gray-900">12</p>
                     <p className="text-xs text-red-600 mt-1">+2 from last week</p>
+                </div>
+                <div
+                    onClick={() => setView('inspections')}
+                    className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+                >
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-medium text-gray-500">DOT Inspections</h3>
+                        <FileText className="w-5 h-5 text-blue-500" />
+                    </div>
+                    <p className="text-2xl font-bold text-gray-900">8</p>
+                    <p className="text-xs text-blue-600 mt-1">Last 30 days</p>
                 </div>
                 <div
                     onClick={() => setView('dq')}
@@ -163,6 +332,20 @@ const Compliance: React.FC = () => {
         </div>
     );
 
+    const TabButton = ({ id, label, icon: Icon }: any) => (
+        <button
+            type="button"
+            onClick={() => setActiveTab(id)}
+            className={`flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === id
+                ? 'bg-blue-50 text-blue-700'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+        >
+            <Icon className="w-4 h-4 mr-2" />
+            {label}
+        </button>
+    );
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -230,6 +413,319 @@ const Compliance: React.FC = () => {
                         </td>
                     </tr>
                 )
+            )}
+
+            {view === 'inspections' && (
+                <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                        <button
+                            onClick={() => setView('overview')}
+                            className="text-sm text-gray-500 hover:text-gray-700 flex items-center"
+                        >
+                            ← Back to Overview
+                        </button>
+                        <button
+                            onClick={() => setIsInspectionModalOpen(true)}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 flex items-center"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Upload Inspection
+                        </button>
+                    </div>
+
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="px-6 py-4 border-b border-gray-200">
+                            <h3 className="text-lg font-bold text-gray-800">DOT Inspections</h3>
+                        </div>
+                        {loadingInspections ? (
+                            <div className="p-8 text-center text-gray-500">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                                Loading inspections...
+                            </div>
+                        ) : (
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Report #</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
+                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Violations</th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">File</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {inspections.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={6} className="px-6 py-4 text-center text-gray-500 text-sm">
+                                                No inspections found. Upload one to get started.
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        inspections.map((item) => (
+                                            <tr key={item.id} className="hover:bg-gray-50">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.date}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{item.report_number}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.driver_name || 'Unknown'}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.vehicle_name || 'Unknown'}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${(item.violations_count || 0) > 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                                                        }`}>
+                                                        {item.violations_count}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                    <button className="text-blue-600 hover:text-blue-900 flex items-center justify-end w-full">
+                                                        <FileText className="w-4 h-4 mr-1" /> PDF
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+
+                    {/* Add Inspection Modal */}
+                    <Modal
+                        isOpen={isInspectionModalOpen}
+                        onClose={() => setIsInspectionModalOpen(false)}
+                        title="New Driver Vehicle Examination Report (DVER)"
+                        className="max-w-4xl" // Wider modal
+                    >
+                        <form onSubmit={handleAddInspection} className="space-y-6">
+                            {/* Tabs */}
+                            <div className="flex space-x-2 border-b border-gray-200 pb-2">
+                                <TabButton id="admin" label="Administrative" icon={FileText} />
+                                <TabButton id="carrier" label="Carrier & Driver" icon={User} />
+                                <TabButton id="vehicle" label="Vehicle" icon={Truck} />
+                                <TabButton id="violations" label="Violations" icon={AlertTriangle} />
+                            </div>
+
+                            <div className="min-h-[300px]">
+                                {/* Admin Tab */}
+                                {activeTab === 'admin' && (
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Date</label>
+                                            <input type="date" required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                                value={newInspection.date} onChange={e => setNewInspection({ ...newInspection, date: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Report #</label>
+                                            <input type="text" required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                                value={newInspection.report_number} onChange={e => setNewInspection({ ...newInspection, report_number: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Time Started</label>
+                                            <input type="time" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                                value={newInspection.time_started} onChange={e => setNewInspection({ ...newInspection, time_started: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Time Ended</label>
+                                            <input type="time" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                                value={newInspection.time_ended} onChange={e => setNewInspection({ ...newInspection, time_ended: e.target.value })} />
+                                        </div>
+                                        <div className="col-span-2">
+                                            <label className="block text-sm font-medium text-gray-700">Location</label>
+                                            <input type="text" placeholder="City, State (e.g. Dallas, TX)" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                                value={newInspection.location} onChange={e => setNewInspection({ ...newInspection, location: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Inspection Level</label>
+                                            <select className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                                value={newInspection.inspection_level} onChange={e => setNewInspection({ ...newInspection, inspection_level: e.target.value })}>
+                                                <option>Level I</option>
+                                                <option>Level II</option>
+                                                <option>Level III</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Officer Name / Badge</label>
+                                            <input type="text" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                                value={newInspection.officer_name} onChange={e => setNewInspection({ ...newInspection, officer_name: e.target.value })} />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Carrier & Driver Tab */}
+                                {activeTab === 'carrier' && (
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="col-span-2">
+                                            <h4 className="font-medium text-gray-900 border-b pb-1 mb-3">Carrier Information</h4>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Carrier Name</label>
+                                            <input type="text" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                                value={newInspection.carrier_name} onChange={e => setNewInspection({ ...newInspection, carrier_name: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">USDOT #</label>
+                                            <input type="text" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                                value={newInspection.usdot_number} onChange={e => setNewInspection({ ...newInspection, usdot_number: e.target.value })} />
+                                        </div>
+
+                                        <div className="col-span-2 mt-4">
+                                            <h4 className="font-medium text-gray-900 border-b pb-1 mb-3">Driver Information</h4>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Driver Name</label>
+                                            <select
+                                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                                value={drivers.find(d => d.name === newInspection.driver_name)?.id || ''}
+                                                onChange={handleDriverSelect}
+                                            >
+                                                <option value="">Select Driver</option>
+                                                {drivers.map(d => (
+                                                    <option key={d.id} value={d.id}>{d.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">License #</label>
+                                            <input type="text" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                                value={newInspection.driver_license_number} onChange={e => setNewInspection({ ...newInspection, driver_license_number: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">State</label>
+                                            <input type="text" maxLength={2} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                                value={newInspection.driver_license_state} onChange={e => setNewInspection({ ...newInspection, driver_license_state: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Med Cert Status</label>
+                                            <select className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                                value={newInspection.medical_cert_status} onChange={e => setNewInspection({ ...newInspection, medical_cert_status: e.target.value })}>
+                                                <option>Valid</option>
+                                                <option>Expired</option>
+                                                <option>Not Required</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Vehicle Tab */}
+                                {activeTab === 'vehicle' && (
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Unit Number</label>
+                                            <input type="text" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                                value={newInspection.vehicle_name}
+                                                onChange={e => setNewInspection({ ...newInspection, vehicle_name: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Type</label>
+                                            <select className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                                value={newInspection.vehicle_type} onChange={e => setNewInspection({ ...newInspection, vehicle_type: e.target.value })}>
+                                                <option>Tractor-Trailer</option>
+                                                <option>Straight Truck</option>
+                                                <option>Bus</option>
+                                                <option>Passenger Car</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Plate Number</label>
+                                            <input type="text" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                                value={newInspection.plate_number} onChange={e => setNewInspection({ ...newInspection, plate_number: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Plate State</label>
+                                            <input type="text" maxLength={2} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                                value={newInspection.plate_state} onChange={e => setNewInspection({ ...newInspection, plate_state: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">VIN</label>
+                                            <input type="text" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                                value={newInspection.vin} onChange={e => setNewInspection({ ...newInspection, vin: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Odometer</label>
+                                            <input type="text" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                                value={newInspection.odometer} onChange={e => setNewInspection({ ...newInspection, odometer: e.target.value })} />
+                                        </div>
+                                        <div className="col-span-2">
+                                            <label className="block text-sm font-medium text-gray-700">Cargo Information</label>
+                                            <input type="text" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                                placeholder="Commodity, BOL #"
+                                                value={newInspection.cargo_info} onChange={e => setNewInspection({ ...newInspection, cargo_info: e.target.value })} />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Violations Tab */}
+                                {activeTab === 'violations' && (
+                                    <div className="space-y-4">
+                                        <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
+                                            <h4 className="text-sm font-medium text-gray-900 mb-2">Add Violation</h4>
+                                            <div className="grid grid-cols-12 gap-2">
+                                                <div className="col-span-3">
+                                                    <input type="text" placeholder="Code (e.g. 395.8)" className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                                        value={currentViolation.code} onChange={e => setCurrentViolation({ ...currentViolation, code: e.target.value })} />
+                                                </div>
+                                                <div className="col-span-5">
+                                                    <input type="text" placeholder="Description" className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                                        value={currentViolation.description} onChange={e => setCurrentViolation({ ...currentViolation, description: e.target.value })} />
+                                                </div>
+                                                <div className="col-span-2">
+                                                    <select className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                                        value={currentViolation.type} onChange={e => setCurrentViolation({ ...currentViolation, type: e.target.value as any })}>
+                                                        <option>Vehicle</option>
+                                                        <option>Driver</option>
+                                                    </select>
+                                                </div>
+                                                <div className="col-span-2 flex items-center space-x-2">
+                                                    <label className="flex items-center space-x-1 text-sm text-gray-700">
+                                                        <input type="checkbox" className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                                                            checked={currentViolation.oos} onChange={e => setCurrentViolation({ ...currentViolation, oos: e.target.checked })} />
+                                                        <span className="text-xs font-bold text-red-600">OOS</span>
+                                                    </label>
+                                                    <button type="button" onClick={handleAddViolation} className="p-1 bg-blue-600 text-white rounded hover:bg-blue-700">
+                                                        <Plus className="w-5 h-5" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                                            {(newInspection.violations_data || []).length === 0 && (
+                                                <p className="text-center text-gray-500 text-sm py-4">No violations recorded.</p>
+                                            )}
+                                            {newInspection.violations_data?.map((v, idx) => (
+                                                <div key={idx} className={`flex items-center justify-between p-3 rounded-md border ${v.oos ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200'}`}>
+                                                    <div className="flex items-center space-x-3">
+                                                        {v.oos && <AlertTriangle className="w-4 h-4 text-red-500" />}
+                                                        <span className="font-mono text-sm font-bold text-gray-700">{v.code}</span>
+                                                        <span className="text-sm text-gray-600">{v.description}</span>
+                                                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{v.type}</span>
+                                                    </div>
+                                                    <button type="button" onClick={() => removeViolation(idx)} className="text-gray-400 hover:text-red-500">
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsInspectionModalOpen(false)}
+                                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+                                >
+                                    Save Report
+                                </button>
+                            </div>
+                        </form>
+                    </Modal>
+                </div>
             )}
 
             {view === 'audit' && renderDetailView(

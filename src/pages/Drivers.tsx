@@ -6,7 +6,7 @@ import Modal from '../components/UI/Modal';
 import toast from 'react-hot-toast';
 import { driverService } from '../services/driverService';
 import type { Driver } from '../types';
-// import { storage } from '../utils/storage';
+import { DriverImportModal } from '../components/drivers/DriverImportModal';
 
 const Drivers: React.FC = () => {
     const navigate = useNavigate();
@@ -15,6 +15,7 @@ const Drivers: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize] = useState(10);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [editingDriverId, setEditingDriverId] = useState<string | null>(null);
 
     // Filters State
@@ -35,6 +36,13 @@ const Drivers: React.FC = () => {
         driverManager: '',
         terminal: '',
         licenseNumber: '',
+        licenseState: '',
+        licenseRestrictions: '',
+        licenseEndorsements: '',
+        licenseExpirationDate: '',
+        medicalCardIssueDate: '',
+        medicalCardExpirationDate: '',
+        cpapRequired: false,
         hireDate: new Date().toISOString().split('T')[0],
         image: null as File | null | string
     });
@@ -86,6 +94,13 @@ const Drivers: React.FC = () => {
             driverManager: '',
             terminal: '',
             licenseNumber: '',
+            licenseState: '',
+            licenseRestrictions: '',
+            licenseEndorsements: '',
+            licenseExpirationDate: '',
+            medicalCardIssueDate: '',
+            medicalCardExpirationDate: '',
+            cpapRequired: false,
             hireDate: new Date().toISOString().split('T')[0],
             image: null
         });
@@ -102,17 +117,17 @@ const Drivers: React.FC = () => {
                 address: driver.address || '',
                 ssn: driver.ssn || '',
                 phone: driver.phone || '',
-                driverCode: driver.employeeId || '', // Note: DB uses employee_id but service maps it usually, wait. Supabase returns snake_case but we cast to Driver. 
-                // IMPORTANT: The driverService casts data as Driver. If DB has snake_case, the frontend interface expects camelCase.
-                // Supabase JS client doesn't auto-convert case unless configured.
-                // Setup assumes direct mapping or I need to map it in service. 
-                // For now, I'll assume the simple structure matches enough or I'll fix the service to map snake_case to camelCase.
-                // Actually, schema.sql uses snake_case (employee_id). Driver interface uses employeeId.
-                // I should update driverService to map columns or use 'select' alias.
-                // Let's assume for this step I'm just replacing logic, I will fix the mapping in service.
+                driverCode: driver.employeeId || '',
                 terminal: driver.terminal || '',
                 driverManager: driver.driverManager || '',
-                licenseNumber: driver.licenseNumber || '', // Check snake case
+                licenseNumber: driver.licenseNumber || '',
+                licenseState: driver.licenseState || '',
+                licenseRestrictions: driver.licenseRestrictions || '',
+                licenseEndorsements: driver.licenseEndorsements || '',
+                licenseExpirationDate: driver.licenseExpirationDate || '',
+                medicalCardIssueDate: driver.medicalCardIssueDate || '',
+                medicalCardExpirationDate: driver.medicalCardExpirationDate || '',
+                cpapRequired: driver.cpapRequired || false,
                 hireDate: driver.hireDate || new Date().toISOString().split('T')[0],
                 image: driver.image
             });
@@ -147,7 +162,15 @@ const Drivers: React.FC = () => {
             address: formData.address,
             ssn: formData.ssn,
             phone: formData.phone,
+
             license_number: formData.licenseNumber,
+            license_state: formData.licenseState,
+            license_restrictions: formData.licenseRestrictions,
+            license_endorsements: formData.licenseEndorsements,
+            license_expiration_date: formData.licenseExpirationDate,
+            medical_card_issue_date: formData.medicalCardIssueDate,
+            medical_card_expiration_date: formData.medicalCardExpirationDate,
+            cpap_required: formData.cpapRequired,
             email: `${formData.firstName.toLowerCase()}.${formData.lastName.toLowerCase()}@example.com`,
             hire_date: formData.hireDate
         };
@@ -201,13 +224,8 @@ const Drivers: React.FC = () => {
         }
     };
 
-    const handleExportCSV = async () => { // Changed to async to fetch all for export if needed, or just current view
-        // For export, we probably want ALL matching filter, not just current page.
-        // We can reuse the filter logic but with a large page size or separate export endpoint.
-        // For simplicity now, let's fetch all matching filters.
+    const handleExportCSV = async () => {
         try {
-            // Fetch all by using a large page size or existing endpoint if filters can be applied there?
-            // Since we added filters to paginated, let's use that with a big limit.
             const { data } = await driverService.fetchDriversPaginated(1, 10000, {
                 search: searchTerm,
                 terminal: filterTerminal,
@@ -247,10 +265,6 @@ const Drivers: React.FC = () => {
         }
     };
 
-    // Filtering Logic - Now handled by effect dependencies re-triggering loadDrivers
-    // const filteredDrivers = drivers; // In this new model, 'drivers' IS the filtered list for the current page.
-
-    // Pagination helpers
     const totalPages = Math.ceil(totalCount / pageSize);
 
     return (
@@ -277,6 +291,13 @@ const Drivers: React.FC = () => {
                     >
                         <Filter className="w-4 h-4 mr-2" />
                         Filter
+                    </button>
+                    <button
+                        onClick={() => setIsImportModalOpen(true)}
+                        className="flex items-center px-4 py-2 border border-gray-300 bg-white rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    >
+                        <Upload className="w-4 h-4 mr-2" />
+                        Import CSV
                     </button>
                     <button
                         onClick={handleExportCSV}
@@ -517,6 +538,15 @@ const Drivers: React.FC = () => {
                 </div>
             )}
 
+            <DriverImportModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+                onSuccess={() => {
+                    toast.success('Drivers imported successfully');
+                    loadDrivers();
+                }}
+            />
+
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
@@ -639,16 +669,95 @@ const Drivers: React.FC = () => {
                         />
                     </div>
 
+
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">License Number</label>
+                            <input
+                                type="text"
+                                required
+                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                placeholder="DL-12345678"
+                                value={formData.licenseNumber}
+                                onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">License State</label>
+                            <input
+                                type="text"
+                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                placeholder="TX"
+                                value={formData.licenseState}
+                                onChange={(e) => setFormData({ ...formData, licenseState: e.target.value })}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Restrictions</label>
+                            <input
+                                type="text"
+                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                placeholder="None"
+                                value={formData.licenseRestrictions}
+                                onChange={(e) => setFormData({ ...formData, licenseRestrictions: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Endorsements</label>
+                            <input
+                                type="text"
+                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                placeholder="None"
+                                value={formData.licenseEndorsements}
+                                onChange={(e) => setFormData({ ...formData, licenseEndorsements: e.target.value })}
+                            />
+                        </div>
+                    </div>
+
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">License Number</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">License Expiration Date</label>
                         <input
-                            type="text"
-                            required
+                            type="date"
                             className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                            placeholder="DL-12345678"
-                            value={formData.licenseNumber}
-                            onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })}
+                            value={formData.licenseExpirationDate}
+                            onChange={(e) => setFormData({ ...formData, licenseExpirationDate: e.target.value })}
                         />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Medical Card Issue Date</label>
+                            <input
+                                type="date"
+                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                value={formData.medicalCardIssueDate}
+                                onChange={(e) => setFormData({ ...formData, medicalCardIssueDate: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Medical Card Expiration</label>
+                            <input
+                                type="date"
+                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                value={formData.medicalCardExpirationDate}
+                                onChange={(e) => setFormData({ ...formData, medicalCardExpirationDate: e.target.value })}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                        <input
+                            type="checkbox"
+                            id="cpapRequired"
+                            className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                            checked={formData.cpapRequired}
+                            onChange={(e) => setFormData({ ...formData, cpapRequired: e.target.checked })}
+                        />
+                        <label htmlFor="cpapRequired" className="text-sm font-medium text-gray-700">CPAP Required</label>
                     </div>
 
                     <div>

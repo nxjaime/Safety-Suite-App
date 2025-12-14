@@ -1,5 +1,3 @@
-// Vercel Serverless Function for fetching carrier health data from FMCSA SAFER
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 interface CarrierHealth {
     dotNumber: string;
@@ -22,15 +20,31 @@ interface CarrierHealth {
         hazmat?: number;
         crashIndicator?: number;
     };
+    csaDetails?: {
+        [key: string]: {
+            alert: boolean;
+            violations?: number;
+            measure?: string;
+        }
+    };
     lastUpdated: string;
 }
 
+const BASICS_MAP: Record<string, string> = {
+    "UnsafeDriving": "unsafeDriving",
+    "HOSCompliance": "hoursOfService",
+    "DriverFitness": "driverFitness",
+    "DrugsAlcohol": "controlledSubstances",
+    "VehicleMaint": "vehicleMaintenance",
+    "HMCompliance": "hazmat",
+    "CrashIndicator": "crashIndicator",
+};
+
 async function scrapeCarrierData(dotNumber: string): Promise<CarrierHealth | null> {
     try {
-        // FMCSA SAFER website URL
-        const url = `https://safer.fmcsa.dot.gov/query.asp?searchtype=ANY&query_type=queryCarrierSnapshot&query_param=USDOT&query_string=${dotNumber}`;
+        const overviewUrl = `https://ai.fmcsa.dot.gov/SMS/Carrier/${dotNumber}/Overview.aspx`;
 
-        const response = await fetch(url, {
+        const response = await fetch(overviewUrl, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -44,28 +58,35 @@ async function scrapeCarrierData(dotNumber: string): Promise<CarrierHealth | nul
 
         const html = await response.text();
 
-        // Parse the HTML to extract carrier data
-        // Note: This is a simplified parser - real implementation would need more robust parsing
+        // Regex Helpers
+        const extractValue = (sourceVal: string, label: string): string => {
+            const regex = new RegExp(`${label}[:\\s]*<\\/(?:th|td)>\\s*<td[^>]*>([^<]+)`, 'i');
+            const match = sourceVal.match(regex);
+            if (match) return match[1].trim();
 
-        const extractValue = (html: string, label: string): string => {
-            const regex = new RegExp(`${label}[:\\s]*</td>\\s*<td[^>]*>([^<]+)`, 'i');
-            const match = html.match(regex);
-            return match ? match[1].trim() : '';
+            const regex2 = new RegExp(`${label}[^<]*<\\/(?:td|th|font)>\\s*<(?:td|th)[^>]*>(?:<font[^>]*>)?([^<]+)`, 'i');
+            const match2 = sourceVal.match(regex2);
+            if (match2) return match2[1].trim();
+
+            return '';
         };
 
-        const extractNumber = (html: string, label: string): number => {
-            const value = extractValue(html, label);
-            return parseInt(value.replace(/,/g, '')) || 0;
+        const extractNumber = (sourceVal: string, label: string): number => {
+            const value = extractValue(sourceVal, label);
+            const cleanValue = value.replace(/[,a-zA-Z\s]/g, '');
+            return parseInt(cleanValue) || 0;
         };
 
-        // Extract basic info
-        const legalName = extractValue(html, 'Legal Name') || extractValue(html, 'Name');
-        const operatingStatus = extractValue(html, 'Operating Status') || 'UNKNOWN';
-        const entityType = extractValue(html, 'Entity Type') || extractValue(html, 'Carrier Operation');
+        // Extract Basic Info
+        let legalName = extractValue(html, 'Legal Name');
+        if (!legalName) legalName = extractValue(html, 'Entity Name');
+        let operatingStatus = extractValue(html, 'Operating Status');
+        if (!operatingStatus) operatingStatus = extractValue(html, 'Status');
+        const entityType = extractValue(html, 'Entity Type') || extractValue(html, 'Operation Classification');
         const powerUnits = extractNumber(html, 'Power Units');
         const drivers = extractNumber(html, 'Drivers');
 
-        // Extract SAFER rating if available
+        // Extract SAFER rating
         let saferRating: string | undefined;
         if (html.includes('SATISFACTORY')) saferRating = 'SATISFACTORY';
         else if (html.includes('CONDITIONAL')) saferRating = 'CONDITIONAL';
@@ -75,27 +96,61 @@ async function scrapeCarrierData(dotNumber: string): Promise<CarrierHealth | nul
         const mcMatch = html.match(/MC-?\d+/);
         const mcNumber = mcMatch ? mcMatch[0] : undefined;
 
-        // For CSA scores, we would need to scrape a different page or use the CSA API
-        // For now, we'll return mock CSA data as a placeholder
-        // In production, you'd want to integrate with a proper CSA data source
-        const csaScores = {
-            unsafeDriving: Math.floor(Math.random() * 60) + 20,
-            hoursOfService: Math.floor(Math.random() * 60) + 20,
-            driverFitness: Math.floor(Math.random() * 40) + 10,
-            vehicleMaintenance: Math.floor(Math.random() * 60) + 20,
-            crashIndicator: Math.floor(Math.random() * 50) + 15,
-        };
+
+        // Extract CSA Data (Alerts & Violations)
+        const csaDetails: CarrierHealth['csaDetails'] = {};
+
+        // 1. Alerts from Overview
+        for (const [key, propName] of Object.entries(BASICS_MAP)) {
+            // Regex for <li class=" UnsafeDriving Alert">
+            const regex = new RegExp(`<li class="\\s*${key}([^"]*)"`, 'i');
+            const match = html.match(regex);
+            const isAlert = match ? match[1].includes("Alert") : false;
+
+            csaDetails[propName] = { alert: isAlert };
+        }
+
+        // 2. Fetch Details for Violations (Parallel)
+        // Only fetch a few major ones to avoid timeout? Let's try all.
+        const detailPromises = Object.entries(BASICS_MAP).map(async ([key, propName]) => {
+            if (key === 'CrashIndicator') return; // Crash often hidden or diff structure
+
+            const detailUrl = `https://ai.fmcsa.dot.gov/SMS/Carrier/${dotNumber}/BASIC/${key}.aspx`;
+            try {
+                const r = await fetch(detailUrl, {
+                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+                });
+                if (!r.ok) return;
+                const dHtml = await r.text();
+
+                // Extract Violations Count
+                // "Unsafe Driving Violations: 4" or just regex for "Violations: X" near headers
+                const violRegex = /(?:Violations|Relevant Inspections)[:\s]*<[^>]+>\s*(\d+)/i;
+                // Simplified regex based on observation "Unsafe Driving Violations: 4" text presence
+                const textViolRegex = /Violations:?\s*(\d+)/i;
+
+                const match = dHtml.match(textViolRegex);
+                if (match && csaDetails[propName]) {
+                    csaDetails[propName].violations = parseInt(match[1]);
+                }
+            } catch (e) {
+                console.warn(`Failed to fetch detail for ${key}`, e);
+            }
+        });
+
+        await Promise.all(detailPromises);
 
         return {
             dotNumber,
             mcNumber,
-            legalName: legalName || `Carrier DOT ${dotNumber}`,
+            legalName: legalName || `Carrier ${dotNumber}`,
             entityType: entityType || 'CARRIER',
             operatingStatus: operatingStatus.toUpperCase().includes('AUTHORIZED') ? 'AUTHORIZED' : operatingStatus,
             saferRating,
             powerUnits,
             drivers,
-            csaScores,
+            csaScores: {}, // Returning empty scores as they are likely hidden. UI should fallback to csaDetails.
+            csaDetails,
             lastUpdated: new Date().toISOString()
         };
 
@@ -125,33 +180,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'Missing or invalid DOT number' });
     }
 
-    // Validate DOT number format (should be numeric)
-    if (!/^\d+$/.test(dot)) {
-        return res.status(400).json({ error: 'DOT number must be numeric' });
-    }
-
     try {
         const carrierData = await scrapeCarrierData(dot);
 
         if (!carrierData) {
-            // Return mock data if scraping fails
-            return res.status(200).json({
-                dotNumber: dot,
-                legalName: `Carrier ${dot}`,
-                entityType: 'CARRIER',
-                operatingStatus: 'AUTHORIZED',
-                saferRating: 'SATISFACTORY',
-                powerUnits: 25,
-                drivers: 30,
-                csaScores: {
-                    unsafeDriving: 45,
-                    hoursOfService: 52,
-                    driverFitness: 28,
-                    vehicleMaintenance: 55,
-                    crashIndicator: 38
-                },
-                lastUpdated: new Date().toISOString()
-            });
+            return res.status(404).json({ error: 'Carrier not found or data unavailable' });
         }
 
         return res.status(200).json(carrierData);
@@ -160,3 +193,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(500).json({ error: 'Internal server error' });
     }
 }
+

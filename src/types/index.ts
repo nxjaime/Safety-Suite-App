@@ -1,5 +1,18 @@
+export interface Organization {
+    id: string;
+    name: string;
+}
+
+export interface UserProfile {
+    id: string; // matches auth.users.id
+    organizationId: string;
+    role: 'admin' | 'manager' | 'viewer';
+    fullName: string;
+}
+
 export interface TrainingRecord {
     id: string;
+    organizationId?: string;
     moduleName: string;
     date: string; // Assignment date
     dueDate: string;
@@ -26,6 +39,7 @@ export interface WeeklyCheckIn {
 
 export interface TaskItem {
     id: string;
+    organizationId?: string;
     title: string;
     description?: string;
     dueDate: string;
@@ -42,6 +56,7 @@ export interface TaskItem {
 
 export interface CoachingPlan {
     id: string;
+    organizationId?: string;
     driverId: string;
     type: string;
     startDate: string;
@@ -52,6 +67,7 @@ export interface CoachingPlan {
 
 export interface DriverDocument {
     id: string;
+    organizationId?: string;
     driverId: string;
     name: string;
     type: string;
@@ -63,6 +79,7 @@ export interface DriverDocument {
 
 export interface RiskEvent {
     id: string;
+    organizationId?: string;
     date: string;
     type: string;
     points: number;
@@ -71,6 +88,7 @@ export interface RiskEvent {
 
 export interface Accident {
     id: string;
+    organizationId?: string;
     date: string;
     type: string;
     preventable: boolean;
@@ -79,12 +97,14 @@ export interface Accident {
 
 export interface Citation {
     id: string;
+    organizationId?: string;
     date: string;
     details: string;
 }
 
 export interface Driver {
     id: string;
+    organizationId?: string;
     name: string;
     driverManager?: string;
     status: 'Active' | 'Inactive' | 'On Leave';
@@ -102,7 +122,15 @@ export interface Driver {
     trainingHistory?: TrainingRecord[];
     coachingPlans?: CoachingPlan[];
     licenseNumber?: string;
+    licenseState?: string;
+    licenseRestrictions?: string;
+    licenseEndorsements?: string;
+    licenseExpirationDate?: string;
+    medicalCardIssueDate?: string;
+    medicalCardExpirationDate?: string;
+    cpapRequired?: boolean;
     email?: string;
     hireDate?: string;
     riskEvents?: RiskEvent[];
 }
+

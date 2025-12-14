@@ -123,6 +123,36 @@ export const taskService = {
             .eq('id', id);
 
         if (error) throw error;
+    },
+
+    // Mark a coaching check-in task as complete based on the plan ID and week
+    async markCheckInTaskComplete(planId: string, week: number, driverName: string) {
+        // Find the task matching this coaching check-in
+        const { data, error: fetchError } = await supabase
+            .from('tasks')
+            .select('id')
+            .eq('related_id', planId)
+            .ilike('title', `%Week ${week}%`)
+            .single();
+
+        if (fetchError || !data) {
+            console.log(`No matching task found for plan ${planId} week ${week}`);
+            return; // Task might not exist, that's OK
+        }
+
+        // Update the task status to Completed
+        const { error } = await supabase
+            .from('tasks')
+            .update({
+                status: 'Completed',
+                closed_notes: `Check-in completed for ${driverName}`,
+                closed_at: new Date().toISOString()
+            })
+            .eq('id', data.id);
+
+        if (error) {
+            console.error('Failed to update check-in task:', error);
+        }
     }
 };
 
