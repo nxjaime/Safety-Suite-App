@@ -126,7 +126,6 @@ async function scrapeCarrierData(dotNumber: string): Promise<CarrierHealth | nul
 
                 // Extract Violations Count
                 // "Unsafe Driving Violations: 4" or just regex for "Violations: X" near headers
-                const violRegex = /(?:Violations|Relevant Inspections)[:\s]*<[^>]+>\s*(\d+)/i;
                 // Simplified regex based on observation "Unsafe Driving Violations: 4" text presence
                 const textViolRegex = /Violations:?\s*(\d+)/i;
 

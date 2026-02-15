@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal } from '../../UI/Modal';
+import Modal from '../../UI/Modal';
 import { driverService } from '../../../services/driverService';
 import { generateCheckIns } from '../../../utils/riskLogic';
 import toast from 'react-hot-toast';

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal } from '../../UI/Modal';
+import Modal from '../../UI/Modal';
 import { driverService } from '../../../services/driverService';
 import type { Driver } from '../../../types';
 import toast from 'react-hot-toast';
