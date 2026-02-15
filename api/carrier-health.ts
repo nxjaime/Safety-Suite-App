@@ -1,3 +1,4 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 interface CarrierHealth {
     dotNumber: string;
@@ -160,11 +161,29 @@ async function scrapeCarrierData(dotNumber: string): Promise<CarrierHealth | nul
     }
 }
 
+
+
+const ALLOWED_ORIGINS = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    process.env.VITE_APP_URL || ''
+].filter(Boolean);
+
+import { z } from 'zod';
+
+export const querySchema = z.object({
+    dot: z.string().min(1, "DOT number is required").regex(/^\d+$/, "DOT number must be numeric")
+});
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    // Enable CORS
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // Enable CORS with specific origin check
+    const origin = req.headers.origin;
+    if (origin && ALLOWED_ORIGINS.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
@@ -174,11 +193,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { dot } = req.query;
+    // Validate Input with Zod
+    const result = querySchema.safeParse(req.query);
 
-    if (!dot || typeof dot !== 'string') {
-        return res.status(400).json({ error: 'Missing or invalid DOT number' });
+    if (!result.success) {
+        return res.status(400).json({
+            error: 'Invalid input',
+            details: result.error.format()
+        });
     }
+
+    const { dot } = result.data;
 
     try {
         const carrierData = await scrapeCarrierData(dot);

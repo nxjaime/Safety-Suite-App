@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Bell, Search } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
+
+import { useAuth } from '../../contexts/AuthContext';
 
 interface HeaderProps {
     theme: string;
@@ -10,25 +12,19 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ theme, setTheme }) => {
     const location = useLocation();
     const navigate = useNavigate();
-    const [user, setUser] = useState({
-        name: 'John Doe',
-        title: 'Safety Manager',
-        avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-    });
+    const { user, signOut } = useAuth();
 
-    useEffect(() => {
-        const loadUser = () => {
-            const storedUser = localStorage.getItem('safety_suite_user_profile');
-            if (storedUser) {
-                setUser(JSON.parse(storedUser));
-            }
-        };
+    // Derived user state
+    const displayUser = {
+        name: user?.user_metadata?.full_name || user?.email || 'User',
+        title: user?.user_metadata?.title || 'Safety Manager',
+        avatarUrl: user?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+    };
 
-        loadUser();
-        // Listen for profile updates
-        window.addEventListener('userProfileUpdated', loadUser);
-        return () => window.removeEventListener('userProfileUpdated', loadUser);
-    }, []);
+    const handleSignOut = async () => {
+        await signOut();
+        navigate('/login');
+    };
 
     const getBreadcrumbs = () => {
         const path = location.pathname;
@@ -117,17 +113,17 @@ const Header: React.FC<HeaderProps> = ({ theme, setTheme }) => {
                 </button>
 
                 <div
-                    onClick={() => navigate('/profile')}
+                    onClick={handleSignOut}
                     className="flex items-center space-x-2 pl-4 border-l border-green-600 cursor-pointer hover:bg-green-600 p-2 rounded-md transition-colors"
                 >
                     <img
-                        src={user.avatarUrl}
+                        src={displayUser.avatarUrl}
                         alt="User"
                         className="w-8 h-8 rounded-full border-2 border-white object-cover"
                     />
                     <div className="text-sm hidden md:block">
-                        <div className="font-medium">{user.name}</div>
-                        <div className="text-xs text-blue-200">{user.title}</div>
+                        <div className="font-medium">{displayUser.name}</div>
+                        <div className="text-xs text-blue-200">{displayUser.title}</div>
                     </div>
                 </div>
             </div>

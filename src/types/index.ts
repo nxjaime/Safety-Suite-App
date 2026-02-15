@@ -105,6 +105,7 @@ export interface Citation {
 export interface Driver {
     id: string;
     organizationId?: string;
+    motiveId?: string;
     name: string;
     driverManager?: string;
     status: 'Active' | 'Inactive' | 'On Leave';

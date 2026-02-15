@@ -26,11 +26,21 @@ interface CoachingReminder {
     week: number;
 }
 
+const escapeHtml = (unsafe: string): string => {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 export const emailService = {
     // For client-side, we'll use Supabase Edge Function or a simple fetch to an API route
     // In production, this would be a server-side call
 
     async sendEmail(options: EmailOptions): Promise<boolean> {
+        // ... (keep existing sendEmail logic)
         // In development mode, simulate email sending
         if (import.meta.env.DEV) {
             console.info('📧 DEV MODE: Simulating email send');
@@ -47,6 +57,7 @@ export const emailService = {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${import.meta.env.VITE_API_SECRET_KEY}`
                 },
                 body: JSON.stringify({
                     ...options,
@@ -76,6 +87,10 @@ export const emailService = {
     },
 
     async sendTrainingNotification(data: TrainingNotification): Promise<boolean> {
+        const safeName = escapeHtml(data.driverName);
+        const safeModule = escapeHtml(data.moduleName);
+        const safeDate = escapeHtml(data.dueDate);
+
         const html = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <div style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); padding: 20px; text-align: center;">
@@ -83,11 +98,11 @@ export const emailService = {
                 </div>
                 <div style="padding: 30px; background: #f9fafb;">
                     <h2 style="color: #1f2937;">Training Assignment Notification</h2>
-                    <p style="color: #4b5563;">Hello ${data.driverName},</p>
+                    <p style="color: #4b5563;">Hello ${safeName},</p>
                     <p style="color: #4b5563;">You have been assigned a new training module:</p>
                     <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #10B981;">
-                        <h3 style="color: #1f2937; margin: 0 0 10px 0;">${data.moduleName}</h3>
-                        <p style="color: #6b7280; margin: 0;">Due Date: <strong>${data.dueDate}</strong></p>
+                        <h3 style="color: #1f2937; margin: 0 0 10px 0;">${safeModule}</h3>
+                        <p style="color: #6b7280; margin: 0;">Due Date: <strong>${safeDate}</strong></p>
                     </div>
                     <p style="color: #4b5563;">Please complete this training before the due date.</p>
                     <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
@@ -105,6 +120,11 @@ export const emailService = {
     },
 
     async sendCoachingReminder(data: CoachingReminder): Promise<boolean> {
+        const safeName = escapeHtml(data.driverName);
+        const safeType = escapeHtml(data.coachingType);
+        const safeDate = escapeHtml(data.checkInDate);
+        const safeWeek = escapeHtml(data.week.toString());
+
         const html = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <div style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); padding: 20px; text-align: center;">
@@ -112,11 +132,11 @@ export const emailService = {
                 </div>
                 <div style="padding: 30px; background: #f9fafb;">
                     <h2 style="color: #1f2937;">Coaching Check-in Reminder</h2>
-                    <p style="color: #4b5563;">Hello ${data.driverName},</p>
+                    <p style="color: #4b5563;">Hello ${safeName},</p>
                     <p style="color: #4b5563;">This is a reminder about your upcoming coaching check-in:</p>
                     <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #3B82F6;">
-                        <h3 style="color: #1f2937; margin: 0 0 10px 0;">${data.coachingType} - Week ${data.week}</h3>
-                        <p style="color: #6b7280; margin: 0;">Scheduled: <strong>${data.checkInDate}</strong></p>
+                        <h3 style="color: #1f2937; margin: 0 0 10px 0;">${safeType} - Week ${safeWeek}</h3>
+                        <p style="color: #6b7280; margin: 0;">Scheduled: <strong>${safeDate}</strong></p>
                     </div>
                     <p style="color: #4b5563;">Please be prepared to discuss your progress and any challenges you've faced.</p>
                     <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">

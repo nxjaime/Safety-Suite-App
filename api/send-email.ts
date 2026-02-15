@@ -6,6 +6,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
+    // Security Check
+    const authHeader = req.headers.authorization;
+    const API_SECRET = process.env.API_SECRET_KEY;
+
+    if (!API_SECRET || authHeader !== `Bearer ${API_SECRET}`) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
     if (!RESEND_API_KEY) {

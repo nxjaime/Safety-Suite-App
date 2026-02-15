@@ -1,5 +1,23 @@
 import { supabase } from '../lib/supabase';
 import type { Driver, RiskEvent } from '../types';
+import { encryptData, decryptData } from '../utils/crypto';
+
+// Helper to handle encryption/decryption
+const processDriverForStorage = async (driver: any) => {
+    const processed = { ...driver };
+    if (processed.ssn) {
+        processed.ssn = await encryptData(processed.ssn);
+    }
+    return processed;
+};
+
+const processDriverFromStorage = async (driver: any) => {
+    const processed = { ...driver };
+    if (processed.ssn) {
+        processed.ssn = await decryptData(processed.ssn);
+    }
+    return processed;
+};
 
 const mapDriverData = (data: any): Driver => {
     return {
@@ -35,13 +53,20 @@ const mapDriverData = (data: any): Driver => {
 
 export const driverService = {
     async fetchDrivers(): Promise<Driver[]> {
+        // Enforce org isolation logic if not already applied by RLS (but RLS handles it now)
+        // Ideally we should also filter by org_id in query for performance, but let's rely on RLS for now 
+        // or add .eq('organization_id', orgId) if available.
+        // Since this method doesn't call _getOrgId, we rely on RLS.
+
         const { data, error } = await supabase
             .from('drivers')
             .select('*')
             .order('name');
 
         if (error) throw error;
-        return data.map(mapDriverData);
+
+        const decrypted = await Promise.all(data.map(d => processDriverFromStorage(d)));
+        return decrypted.map(mapDriverData);
     },
 
     async fetchDriversDetailed(): Promise<Driver[]> {
@@ -55,7 +80,8 @@ export const driverService = {
             .order('name');
 
         if (error) throw error;
-        return data.map(mapDriverData);
+        const decrypted = await Promise.all(data.map(d => processDriverFromStorage(d)));
+        return decrypted.map(mapDriverData);
     },
 
     async getDriverById(id: string): Promise<Driver | null> {
@@ -83,9 +109,11 @@ export const driverService = {
                     console.error('Error fetching driver (simple):', simpleError);
                     return null;
                 }
-                return mapDriverData({ ...simpleData, risk_events: [], coaching_plans: [] });
+                const decrypted = await processDriverFromStorage(simpleData);
+                return mapDriverData({ ...decrypted, risk_events: [], coaching_plans: [] });
             }
-            return mapDriverData(data);
+            const decrypted = await processDriverFromStorage(data);
+            return mapDriverData(decrypted);
         } catch (error) {
             console.error('Exception in getDriverById:', error);
             return null;
@@ -95,29 +123,32 @@ export const driverService = {
     async createDriver(driver: Omit<Driver, 'id'> | any) {
         const orgId = await this._getOrgId();
 
+        // Process encryption
+        const driverWithEncryption = await processDriverForStorage(driver);
+
         const dbDriver = {
             organization_id: orgId,
-            name: driver.name,
-            status: driver.status,
-            terminal: driver.terminal,
-            risk_score: driver.riskScore || 20,
-            years_of_service: driver.yearsOfService,
-            employee_id: driver.employeeId,
-            image: driver.image,
-            address: driver.address,
-            ssn: driver.ssn,
-            phone: driver.phone,
-            license_number: driver.licenseNumber,
-            license_state: driver.licenseState,
-            license_restrictions: driver.licenseRestrictions,
-            license_endorsements: driver.licenseEndorsements,
-            license_expiration_date: driver.licenseExpirationDate,
-            medical_card_issue_date: driver.medicalCardIssueDate,
-            medical_card_expiration_date: driver.medicalCardExpirationDate,
-            cpap_required: driver.cpapRequired,
-            email: driver.email,
-            hire_date: driver.hireDate,
-            driver_manager: driver.driverManager
+            name: driverWithEncryption.name,
+            status: driverWithEncryption.status,
+            terminal: driverWithEncryption.terminal,
+            risk_score: driverWithEncryption.riskScore || 20,
+            years_of_service: driverWithEncryption.yearsOfService,
+            employee_id: driverWithEncryption.employeeId,
+            image: driverWithEncryption.image,
+            address: driverWithEncryption.address,
+            ssn: driverWithEncryption.ssn,
+            phone: driverWithEncryption.phone,
+            license_number: driverWithEncryption.licenseNumber,
+            license_state: driverWithEncryption.licenseState,
+            license_restrictions: driverWithEncryption.licenseRestrictions,
+            license_endorsements: driverWithEncryption.licenseEndorsements,
+            license_expiration_date: driverWithEncryption.licenseExpirationDate,
+            medical_card_issue_date: driverWithEncryption.medicalCardIssueDate,
+            medical_card_expiration_date: driverWithEncryption.medicalCardExpirationDate,
+            cpap_required: driverWithEncryption.cpapRequired,
+            email: driverWithEncryption.email,
+            hire_date: driverWithEncryption.hireDate,
+            driver_manager: driverWithEncryption.driverManager
         };
 
         const { data, error } = await supabase
@@ -127,13 +158,53 @@ export const driverService = {
             .single();
 
         if (error) throw error;
-        return mapDriverData(data);
+
+        const decrypted = await processDriverFromStorage(data);
+        return mapDriverData(decrypted);
+    },
+
+    async upsertDrivers(drivers: Partial<Driver>[]) {
+        const orgId = await this._getOrgId();
+
+        // Process drivers in parallel to encrypt SSNs if present
+        const processedDrivers = await Promise.all(drivers.map(d => processDriverForStorage(d)));
+
+        const dbDrivers = processedDrivers.map(d => ({
+            organization_id: orgId,
+            motive_id: d.motive_id, // Ensure this is passed
+            name: d.name,
+            status: d.status || 'Active',
+            terminal: d.terminal,
+            risk_score: d.riskScore || 0,
+            years_of_service: d.yearsOfService || 0,
+            employee_id: d.employeeId,
+            image: d.image,
+            address: d.address,
+            ssn: d.ssn,
+            phone: d.phone,
+            license_number: d.licenseNumber,
+            email: d.email,
+            hire_date: d.hireDate,
+        }));
+
+        const { data, error } = await supabase
+            .from('drivers')
+            .upsert(dbDrivers, { onConflict: 'motive_id' }) // Upsert based on motive_id
+            .select();
+
+        if (error) throw error;
+
+        const decrypted = await Promise.all(data.map(d => processDriverFromStorage(d)));
+        return decrypted.map(mapDriverData);
     },
 
     async createDriversBulk(drivers: Partial<Driver>[]) {
         const orgId = await this._getOrgId();
 
-        const dbDrivers = drivers.map(d => ({
+        // Process drivers in parallel to encrypt SSNs
+        const processedDrivers = await Promise.all(drivers.map(d => processDriverForStorage(d)));
+
+        const dbDrivers = processedDrivers.map(d => ({
             organization_id: orgId,
             name: d.name,
             status: d.status || 'Active',
@@ -141,6 +212,9 @@ export const driverService = {
             risk_score: d.riskScore || 0,
             years_of_service: d.yearsOfService || 0,
             employee_id: d.employeeId,
+            image: d.image,
+            address: d.address,
+            ssn: d.ssn, // Encrypted
             phone: d.phone,
             license_number: d.licenseNumber,
             email: d.email,
@@ -153,7 +227,9 @@ export const driverService = {
             .select();
 
         if (error) throw error;
-        return data.map(mapDriverData);
+
+        const decrypted = await Promise.all(data.map(d => processDriverFromStorage(d)));
+        return decrypted.map(mapDriverData);
     },
 
     async _getOrgId() {
@@ -171,30 +247,32 @@ export const driverService = {
 
     async updateDriver(id: string, updates: Partial<Driver> | any) {
         const dbUpdates: any = {};
-        if (updates.name) dbUpdates.name = updates.name;
-        if (updates.status) dbUpdates.status = updates.status;
-        if (updates.terminal) dbUpdates.terminal = updates.terminal;
+        if (updates.name !== undefined) dbUpdates.name = updates.name;
+        if (updates.status !== undefined) dbUpdates.status = updates.status;
+        if (updates.terminal !== undefined) dbUpdates.terminal = updates.terminal;
         if (updates.riskScore !== undefined) dbUpdates.risk_score = updates.riskScore;
         if (updates.yearsOfService !== undefined) dbUpdates.years_of_service = updates.yearsOfService;
-        if (updates.employeeId) dbUpdates.employee_id = updates.employeeId;
-        if (updates.image) dbUpdates.image = updates.image;
-        if (updates.address) dbUpdates.address = updates.address;
-        if (updates.ssn) dbUpdates.ssn = updates.ssn;
-        if (updates.phone) dbUpdates.phone = updates.phone;
-        if (updates.licenseNumber) dbUpdates.license_number = updates.licenseNumber;
-        if (updates.licenseState) dbUpdates.license_state = updates.licenseState;
-        if (updates.licenseRestrictions) dbUpdates.license_restrictions = updates.licenseRestrictions;
-        if (updates.licenseEndorsements) dbUpdates.license_endorsements = updates.licenseEndorsements;
-        if (updates.licenseExpirationDate) dbUpdates.license_expiration_date = updates.licenseExpirationDate;
-        if (updates.medicalCardIssueDate) dbUpdates.medical_card_issue_date = updates.medicalCardIssueDate;
-        if (updates.medicalCardExpirationDate) dbUpdates.medical_card_expiration_date = updates.medicalCardExpirationDate;
+        if (updates.employeeId !== undefined) dbUpdates.employee_id = updates.employeeId;
+        if (updates.image !== undefined) dbUpdates.image = updates.image;
+        if (updates.address !== undefined) dbUpdates.address = updates.address;
+        if (updates.ssn !== undefined) {
+            dbUpdates.ssn = await encryptData(updates.ssn);
+        }
+        if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
+        if (updates.licenseNumber !== undefined) dbUpdates.license_number = updates.licenseNumber;
+        if (updates.licenseState !== undefined) dbUpdates.license_state = updates.licenseState;
+        if (updates.licenseRestrictions !== undefined) dbUpdates.license_restrictions = updates.licenseRestrictions;
+        if (updates.licenseEndorsements !== undefined) dbUpdates.license_endorsements = updates.licenseEndorsements;
+        if (updates.licenseExpirationDate !== undefined) dbUpdates.license_expiration_date = updates.licenseExpirationDate;
+        if (updates.medicalCardIssueDate !== undefined) dbUpdates.medical_card_issue_date = updates.medicalCardIssueDate;
+        if (updates.medicalCardExpirationDate !== undefined) dbUpdates.medical_card_expiration_date = updates.medicalCardExpirationDate;
         if (updates.cpapRequired !== undefined) dbUpdates.cpap_required = updates.cpapRequired;
-        if (updates.email) dbUpdates.email = updates.email;
-        if (updates.hireDate) dbUpdates.hire_date = updates.hireDate;
-        if (updates.driverManager) dbUpdates.driver_manager = updates.driverManager;
+        if (updates.email !== undefined) dbUpdates.email = updates.email;
+        if (updates.hireDate !== undefined) dbUpdates.hire_date = updates.hireDate;
+        if (updates.driverManager !== undefined) dbUpdates.driver_manager = updates.driverManager;
 
         // Notes or arrays might need special handling if stored as JSONB
-        if (updates.notes) dbUpdates.notes = updates.notes;
+        if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
 
         const { data, error } = await supabase
             .from('drivers')
@@ -204,7 +282,8 @@ export const driverService = {
             .single();
 
         if (error) throw error;
-        return mapDriverData(data);
+        const decrypted = await processDriverFromStorage(data);
+        return mapDriverData(decrypted);
     },
 
 
@@ -395,7 +474,9 @@ export const driverService = {
 
 
         if (filters?.search) {
-            query = query.or(`name.ilike.%${filters.search}%,employee_id.ilike.%${filters.search}%`);
+            // Sanitize search input to prevent injection in PostgREST filter
+            const safeSearch = filters.search.replace(/[.%]/g, '');
+            query = query.or(`name.ilike.%${safeSearch}%,employee_id.ilike.%${safeSearch}%`);
         }
         if (filters?.terminal) {
             query = query.eq('terminal', filters.terminal);

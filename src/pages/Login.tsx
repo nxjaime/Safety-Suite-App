@@ -2,34 +2,33 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, ArrowRight } from 'lucide-react';
 
+import { supabase } from '../lib/supabase';
+
 const Login: React.FC = () => {
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
 
-        // Simulate API call
-        setTimeout(() => {
-            localStorage.setItem('safety_suite_auth', 'true');
-            // Mock storing user profile on first login if not present
-            if (!localStorage.getItem('safety_suite_user_profile')) {
-                localStorage.setItem('safety_suite_user_profile', JSON.stringify({
-                    name: 'John Doe',
-                    title: 'Safety Manager',
-                    email: email || 'john.doe@safetyhub.com',
-                    phone: '555-0123',
-                    location: 'Headquarters',
-                    avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-                }));
-            }
+        try {
+            const { error } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            });
 
-            setIsLoading(false);
+            if (error) throw error;
+
             navigate('/');
-        }, 1000);
+        } catch (error: any) {
+            console.error('Error logging in:', error.message);
+            alert(error.message || 'Failed to login');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (

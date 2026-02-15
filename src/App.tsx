@@ -21,9 +21,24 @@ const Login = lazy(() => import('./pages/Login'));
 const UserProfile = lazy(() => import('./pages/UserProfile'));
 
 
+import { useAuth } from './contexts/AuthContext';
+
 // Simple Protected Route Component
 const ProtectedRoute = () => {
-  // Deactivating login for now as per user request
+  const { session, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <Navigate to="/login" replace />;
+  }
+
   return <Outlet />;
 };
 
