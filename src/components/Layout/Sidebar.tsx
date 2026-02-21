@@ -11,22 +11,60 @@ import {
     BarChart2,
     Files,
     BookOpen,
-    Settings
+    Settings,
+    ClipboardList,
+    Route,
+    Map
 } from 'lucide-react';
 import clsx from 'clsx';
 import CarrierHealthWidget from './CarrierHealthWidget';
 
-const navItems = [
-    { name: 'Dashboard', path: '/', icon: LayoutDashboard },
-    { name: 'Drivers', path: '/drivers', icon: Users },
-    { name: 'Tasks', path: '/tasks', icon: CheckSquare },
-    { name: 'Safety & Risk', path: '/safety', icon: ShieldAlert },
-    { name: 'Training', path: '/training', icon: GraduationCap },
-    { name: 'Compliance', path: '/compliance', icon: FileText },
-    { name: 'Equipment', path: '/equipment', icon: Truck },
-    { name: 'Reporting', path: '/reporting', icon: BarChart2 },
-    { name: 'Document Library', path: '/documents', icon: Files },
-    { name: 'Regulations', path: '/fmcsa', icon: BookOpen },
+type NavLinkItem = {
+    type: 'link';
+    name: string;
+    path: string;
+    icon: React.ComponentType<{ className?: string }>;
+    disabled?: boolean;
+};
+
+type NavSubheader = {
+    type: 'subheader';
+    name: string;
+};
+
+type NavItem = NavLinkItem | NavSubheader;
+
+export const navSections: Array<{ label: string; items: NavItem[] }> = [
+    {
+        label: 'Operations',
+        items: [
+            { type: 'link', name: 'Status Board', path: '/', icon: LayoutDashboard },
+            { type: 'link', name: 'Tasks', path: '/tasks', icon: CheckSquare },
+            { type: 'link', name: 'Orders', path: '/operations/orders', icon: ClipboardList, disabled: true },
+            { type: 'link', name: 'Dispatch', path: '/operations/dispatch', icon: Route, disabled: true },
+            { type: 'link', name: 'Routes', path: '/operations/routes', icon: Map, disabled: true },
+            { type: 'subheader', name: 'Fleet' },
+            { type: 'link', name: 'Equipment', path: '/equipment', icon: Truck },
+            { type: 'link', name: 'Documents', path: '/documents', icon: Files },
+        ],
+    },
+    {
+        label: 'Safety',
+        items: [
+            { type: 'link', name: 'Drivers', path: '/drivers', icon: Users },
+            { type: 'link', name: 'Risk & Coaching', path: '/safety', icon: ShieldAlert },
+            { type: 'link', name: 'Compliance', path: '/compliance', icon: FileText },
+            { type: 'link', name: 'Training', path: '/training', icon: GraduationCap },
+            { type: 'link', name: 'Regulations', path: '/fmcsa', icon: BookOpen },
+        ],
+    },
+    {
+        label: 'Reporting',
+        items: [
+            { type: 'link', name: 'Analytics', path: '/reporting', icon: BarChart2 },
+            { type: 'link', name: 'CSA Predictor', path: '/reporting/csa-predictor', icon: BarChart2 },
+        ],
+    },
 ];
 
 interface SidebarProps {
@@ -101,23 +139,53 @@ const Sidebar: React.FC<SidebarProps> = ({ theme }) => {
             </div>
 
             <nav className="flex-1 py-4">
-                <ul className="space-y-1">
-                    {navItems.map((item) => (
-                        <li key={item.name}>
-                            <NavLink
-                                to={item.path}
-                                className={({ isActive }) =>
-                                    clsx(
-                                        'flex items-center px-4 py-3 text-sm font-medium transition-colors',
-                                        isActive
-                                            ? styles.active
-                                            : `${styles.hover} border-l-4 border-transparent`
-                                    )
-                                }
-                            >
-                                <item.icon className="w-5 h-5 mr-3" />
-                                {item.name}
-                            </NavLink>
+                <ul className="space-y-4">
+                    {navSections.map((section) => (
+                        <li key={section.label}>
+                            <div className="px-4 text-xs uppercase tracking-wider text-white/60 font-semibold mb-2">
+                                {section.label}
+                            </div>
+                            <ul className="space-y-1">
+                                {section.items.map((item) => {
+                                    if (item.type === 'subheader') {
+                                        return (
+                                            <li key={item.name} className="px-4 pt-3 pb-1 text-[11px] uppercase tracking-widest text-white/40">
+                                                {item.name}
+                                            </li>
+                                        );
+                                    }
+
+                                    if (item.disabled) {
+                                        return (
+                                            <li key={item.name}>
+                                                <div className="flex items-center px-4 py-3 text-sm font-medium text-white/40 cursor-not-allowed">
+                                                    <item.icon className="w-5 h-5 mr-3 opacity-60" />
+                                                    {item.name}
+                                                </div>
+                                            </li>
+                                        );
+                                    }
+
+                                    return (
+                                        <li key={item.name}>
+                                            <NavLink
+                                                to={item.path}
+                                                className={({ isActive }) =>
+                                                    clsx(
+                                                        'flex items-center px-4 py-3 text-sm font-medium transition-colors',
+                                                        isActive
+                                                            ? styles.active
+                                                            : `${styles.hover} border-l-4 border-transparent`
+                                                    )
+                                                }
+                                            >
+                                                <item.icon className="w-5 h-5 mr-3" />
+                                                {item.name}
+                                            </NavLink>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
                         </li>
                     ))}
                 </ul>
@@ -153,4 +221,3 @@ const Sidebar: React.FC<SidebarProps> = ({ theme }) => {
 };
 
 export default Sidebar;
-

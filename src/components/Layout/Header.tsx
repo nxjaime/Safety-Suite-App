@@ -28,20 +28,20 @@ const Header: React.FC<HeaderProps> = ({ theme, setTheme }) => {
 
     const getBreadcrumbs = () => {
         const path = location.pathname;
-        if (path === '/') return { title: 'Dashboard', path: 'Overview > Dashboard' };
+        if (path === '/') return { title: 'Status Board', path: 'Operations > Status Board' };
         if (path.startsWith('/drivers')) return path.includes('/') && path.split('/').length > 2
             ? { title: 'Driver Profile', path: 'Drivers > Profile' }
-            : { title: 'Drivers', path: 'Reporting > Drivers' };
+            : { title: 'Drivers', path: 'Safety > Drivers' };
         if (path.startsWith('/watchlist')) return { title: 'Watch List', path: 'Reporting > Watch List' };
-        if (path.startsWith('/tasks')) return { title: 'Tasks', path: 'Reporting > Tasks' };
-        if (path.startsWith('/safety')) return { title: 'Safety & Risk', path: 'Reporting > Safety' };
-        if (path.startsWith('/training')) return { title: 'Training', path: 'Reporting > Training' };
-        if (path.startsWith('/compliance')) return { title: 'Compliance', path: 'Reporting > Compliance' };
-        if (path.startsWith('/equipment')) return { title: 'Equipment', path: 'Reporting > Equipment' };
+        if (path.startsWith('/tasks')) return { title: 'Tasks', path: 'Operations > Tasks' };
+        if (path.startsWith('/safety')) return { title: 'Risk & Coaching', path: 'Safety > Risk & Coaching' };
+        if (path.startsWith('/training')) return { title: 'Training', path: 'Safety > Training' };
+        if (path.startsWith('/compliance')) return { title: 'Compliance', path: 'Safety > Compliance' };
+        if (path.startsWith('/equipment')) return { title: 'Equipment', path: 'Operations > Fleet > Equipment' };
         if (path.startsWith('/reporting')) return { title: 'Reporting', path: 'Reporting > Analytics' };
-        if (path.startsWith('/documents')) return { title: 'Document Library', path: 'Reporting > Documents' };
-        if (path.startsWith('/fmcsa')) return { title: 'FMCSA Regulations', path: 'Resources > FMCSA' };
-        if (path.startsWith('/settings')) return { title: 'Settings', path: 'Reporting > Settings' };
+        if (path.startsWith('/documents')) return { title: 'Documents', path: 'Operations > Fleet > Documents' };
+        if (path.startsWith('/fmcsa')) return { title: 'Regulations', path: 'Safety > Regulations' };
+        if (path.startsWith('/settings')) return { title: 'Settings', path: 'Settings > System' };
         if (path.startsWith('/profile')) return { title: 'My Profile', path: 'Account > Profile' };
 
         return { title: 'Page', path: 'Reporting > Page' };
