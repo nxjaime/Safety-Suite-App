@@ -56,7 +56,9 @@ A release candidate is shippable when:
   - Sprint artifacts under `docs/sprint-<n>/`
   - Any CI/process updates required for that sprint
 - Commit message format: `sprint-<n>: <outcome summary>`
-- Push immediately to `origin/main` (or active release branch if defined).
+- Push only after all sprint checks/tests pass (build, tests, and any required CI gates).
+- Add a sprint-close reminder item under each sprint section: `Commit & push after checks/tests pass`.
+- Push immediately after the checks are green to `origin/main` (or active release branch if defined).
 - If push fails due auth/branch protection, resolve within the same sprint closeout window.
 
 ---
@@ -64,6 +66,7 @@ A release candidate is shippable when:
 ## 10-Sprint Roadmap
 
 ### Sprint 1: Release Baseline and Product Alignment
+Reminder: Commit & push after checks/tests pass.
 - Goal: Align team on Fleetio + Idelic scope and establish quality gates.
 - Scope:
   - Create release checklist and CI quality gates (lint, typecheck, tests).
@@ -74,6 +77,7 @@ A release candidate is shippable when:
   - Top launch blockers prioritized with owners.
 
 ### Sprint 2: UX System and Navigation Refactor
+Reminder: Commit & push after checks/tests pass.
 - Goal: Deliver a unified UX foundation across all modules.
 - Scope:
   - Define design tokens and component standards.
@@ -84,6 +88,7 @@ A release candidate is shippable when:
   - UX consistency baseline accepted by product/design.
 
 ### Sprint 3: Fleet Operations Core (Asset + Maintenance)
+Reminder: Commit & push after checks/tests pass.
 - Goal: Ship Fleetio-like operational core.
 - Scope:
   - Expand equipment/vehicle model and lifecycle states.
@@ -93,6 +98,7 @@ A release candidate is shippable when:
   - End-to-end asset-to-work-order workflow is functional and tested.
 
 ### Sprint 4: Safety Intelligence Core (Risk + Coaching)
+Reminder: Commit & push after checks/tests pass.
 - Goal: Ship Idelic-like safety core.
 - Scope:
   - Normalize driver risk model and scorecard definitions.
@@ -102,6 +108,7 @@ A release candidate is shippable when:
   - Driver scorecards and coaching lifecycle are production-ready.
 
 ### Sprint 5: Integrations Hardening (Motive/FMCSA/Email)
+Reminder: Commit & push after checks/tests pass.
 - Goal: Make external data and notification flows reliable.
 - Scope:
   - Add retries, timeouts, backoff, and error normalization.
@@ -111,6 +118,7 @@ A release candidate is shippable when:
   - Integration failures degrade gracefully with alerting.
 
 ### Sprint 6: Compliance + Documents + Inspection Workflows
+Reminder: Commit & push after checks/tests pass.
 - Goal: Close compliance execution loop.
 - Scope:
   - Productionize document upload/storage/access controls.
@@ -120,6 +128,7 @@ A release candidate is shippable when:
   - Compliance and document workflows are auditable end-to-end.
 
 ### Sprint 7: Security and Risk Hardening
+Reminder: Commit & push after checks/tests pass.
 - Goal: Remove high-risk technical debt and enforce trust boundaries.
 - Scope:
   - Replace insecure client-side secret patterns for PII handling.
@@ -129,6 +138,7 @@ A release candidate is shippable when:
   - No critical security issues open for release scope.
 
 ### Sprint 8: Database Optimization and Data Quality
+Reminder: Commit & push after checks/tests pass.
 - Goal: Scale performance and improve data correctness.
 - Scope:
   - Query profiling + index strategy for high-traffic paths.
@@ -138,6 +148,7 @@ A release candidate is shippable when:
   - Core queries meet latency targets; data QA checks in place.
 
 ### Sprint 9: Reporting, Testing, and Observability
+Reminder: Commit & push after checks/tests pass.
 - Goal: Build release confidence and operational visibility.
 - Scope:
   - Replace static dashboards with live metrics and filters.
@@ -148,6 +159,7 @@ A release candidate is shippable when:
   - Dashboards and alerts support on-call operations.
 
 ### Sprint 10: UAT, Launch Readiness, and Hypercare
+Reminder: Commit & push after checks/tests pass.
 - Goal: Execute controlled production launch.
 - Scope:
   - Pilot rollout + UAT sign-off.
