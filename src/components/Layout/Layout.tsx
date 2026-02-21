@@ -5,9 +5,14 @@ import Header from './Header';
 
 const Layout: React.FC = () => {
     const [theme, setTheme] = React.useState('emerald');
+    const isDark = theme === 'dark';
 
     return (
-        <div className={`flex min-h-screen font-sans transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100'}`}>
+        <div
+            className={`flex min-h-screen font-body transition-colors duration-300 ${
+                isDark ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900'
+            }`}
+        >
             <Sidebar theme={theme} />
             <div className="flex-1 ml-64">
                 <Header theme={theme} setTheme={setTheme} />
