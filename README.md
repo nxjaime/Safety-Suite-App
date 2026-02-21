@@ -1,5 +1,35 @@
 # React + TypeScript + Vite
 
+## MCP Setup (Supabase + Vercel)
+
+Project MCP servers are configured in `.mcp.json`.
+
+### Prerequisites
+
+- `node`, `npm`, `npx` installed
+- Claude Code CLI installed (`claude`)
+
+### Required environment variables
+
+```sh
+export SUPABASE_ACCESS_TOKEN="your_supabase_pat"
+export VERCEL_TOKEN="your_vercel_token"
+```
+
+### Verify MCP connectivity
+
+```sh
+claude mcp list
+claude mcp get supabase
+claude mcp get vercel
+```
+
+If `npx` is not on your path in this environment:
+
+```sh
+export PATH="$HOME/.local/node/bin:$PATH"
+```
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
