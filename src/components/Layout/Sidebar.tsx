@@ -158,7 +158,11 @@ const Sidebar: React.FC<SidebarProps> = ({ theme }) => {
                                     if (item.disabled) {
                                         return (
                                             <li key={item.name}>
-                                                <div className="flex items-center px-4 py-3 text-sm font-medium text-white/40 cursor-not-allowed">
+                                                <div
+                                                    className="flex items-center px-4 py-3 text-sm font-medium text-white/40 cursor-not-allowed"
+                                                    aria-disabled="true"
+                                                    title="Coming soon"
+                                                >
                                                     <item.icon className="w-5 h-5 mr-3 opacity-60" />
                                                     {item.name}
                                                 </div>

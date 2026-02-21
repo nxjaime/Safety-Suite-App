@@ -26,6 +26,13 @@ const Header: React.FC<HeaderProps> = ({ theme, setTheme }) => {
         navigate('/login');
     };
 
+    const handleSignOutKey = async (event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            await handleSignOut();
+        }
+    };
+
     const getBreadcrumbs = () => {
         const path = location.pathname;
         if (path === '/') return { title: 'Status Board', path: 'Operations > Status Board' };
@@ -74,26 +81,31 @@ const Header: React.FC<HeaderProps> = ({ theme, setTheme }) => {
                     onClick={() => setTheme('emerald')}
                     className={`w-4 h-4 rounded-full bg-emerald-500 ring-2 ${theme === 'emerald' ? 'ring-white' : 'ring-transparent'}`}
                     title="Emerald"
+                    aria-label="Use emerald theme"
                 />
                 <button
                     onClick={() => setTheme('teal')}
                     className={`w-4 h-4 rounded-full bg-teal-500 ring-2 ${theme === 'teal' ? 'ring-white' : 'ring-transparent'}`}
                     title="Teal"
+                    aria-label="Use teal theme"
                 />
                 <button
                     onClick={() => setTheme('slate')}
                     className={`w-4 h-4 rounded-full bg-slate-700 ring-2 ${theme === 'slate' ? 'ring-white' : 'ring-transparent'}`}
                     title="Slate"
+                    aria-label="Use slate theme"
                 />
                 <button
                     onClick={() => setTheme('blue')}
                     className={`w-4 h-4 rounded-full bg-blue-500 ring-2 ${theme === 'blue' ? 'ring-white' : 'ring-transparent'}`}
                     title="Blue"
+                    aria-label="Use blue theme"
                 />
                 <button
                     onClick={() => setTheme('dark')}
                     className={`w-4 h-4 rounded-full bg-gray-900 ring-2 ${theme === 'dark' ? 'ring-white' : 'ring-transparent'}`}
                     title="Dark Mode"
+                    aria-label="Use dark theme"
                 />
             </div>
 
@@ -103,18 +115,23 @@ const Header: React.FC<HeaderProps> = ({ theme, setTheme }) => {
                     <input
                         type="text"
                         placeholder="Search..."
+                        aria-label="Search"
                         className="bg-white text-gray-800 pl-10 pr-4 py-1.5 rounded-full text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
                     />
                 </div>
 
-                <button className="p-2 hover:bg-green-600 rounded-full relative">
+                <button className="p-2 hover:bg-green-600 rounded-full relative" aria-label="Notifications">
                     <Bell className="w-5 h-5" />
                     <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-green-700"></span>
                 </button>
 
                 <div
                     onClick={handleSignOut}
+                    onKeyDown={handleSignOutKey}
                     className="flex items-center space-x-2 pl-4 border-l border-green-600 cursor-pointer hover:bg-green-600 p-2 rounded-md transition-colors"
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Sign out"
                 >
                     <img
                         src={displayUser.avatarUrl}
