@@ -18,6 +18,45 @@ export const US_STATE_OPTIONS = [
     'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
 ] as const;
 
+export const VEHICLE_LEASING_FIELD_LABELS = [
+    'Vehicle #',
+    'VIN',
+    'License Plate #',
+    'State',
+    'City',
+    'Vehicle Type',
+    'Owner',
+    'Mth Lease Charge',
+    'Mileage Charge',
+    'Lease Expir. Year',
+    'Added to Fleet',
+    'Removed from Fleet',
+    'Follow Up',
+    'Gross Weight',
+    'Geotab',
+    'Toll Transponder',
+    'ELD Logging',
+    'IMEI #',
+    'ELD Notes',
+    'Driver',
+    'Rep Code',
+    'Driver Check #',
+    'MGR',
+    'Email',
+    'Ph #',
+    'Vehicle Value',
+    'Months In Service',
+    '2/1/2026',
+    'Avg Miles Per Month',
+    'Estimated Odometer 6 months',
+    'Div #',
+    'Div',
+    'Corp',
+    'GL Acct',
+    'Ins. Class',
+    'NOTES'
+] as const;
+
 type EquipmentCategory = 'Trucks' | 'Trailers' | 'Forklifts' | 'Pallet Jacks' | 'Sales Vehicles';
 type OwnLeaseOption = (typeof OWN_LEASE_OPTIONS)[number];
 type EldLoggingOption = (typeof ELD_LOGGING_OPTIONS)[number];
@@ -677,15 +716,15 @@ const Equipment: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Ownership</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Own / Lease / Rent</label>
                             <select
                                 className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                                value={newAsset.ownership}
-                                onChange={(e) => setNewAsset({ ...newAsset, ownership: e.target.value })}
+                                value={newAsset.ownLease}
+                                onChange={(e) => setNewAsset({ ...newAsset, ownLease: e.target.value as OwnLeaseOption })}
                             >
-                                <option value="owned">Owned</option>
-                                <option value="leased">Leased</option>
-                                <option value="rented">Rented</option>
+                                {OWN_LEASE_OPTIONS.map((option) => (
+                                    <option key={option} value={option}>{option}</option>
+                                ))}
                             </select>
                         </div>
                         <div>
@@ -788,6 +827,394 @@ const Equipment: React.FC = () => {
                                     <span>{option}</span>
                                 </label>
                             ))}
+                        </div>
+                    </div>
+
+                    <div className="border-t border-slate-200 pt-4 space-y-4">
+                        <div className="text-sm font-semibold text-slate-800">Vehicle & Leasing</div>
+
+                        <div className="space-y-3">
+                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Identity</div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Vehicle #</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.vehicleNumber}
+                                        onChange={(e) => setNewAsset({ ...newAsset, vehicleNumber: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">VIN</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.vin}
+                                        onChange={(e) => setNewAsset({ ...newAsset, vin: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">License Plate #</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.licensePlate}
+                                        onChange={(e) => setNewAsset({ ...newAsset, licensePlate: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">State</label>
+                                    <select
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.state}
+                                        onChange={(e) => setNewAsset({ ...newAsset, state: e.target.value as StateOption })}
+                                    >
+                                        <option value="">Select</option>
+                                        {US_STATE_OPTIONS.map((state) => (
+                                            <option key={state} value={state}>{state}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">City</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.city}
+                                        onChange={(e) => setNewAsset({ ...newAsset, city: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Vehicle Type</label>
+                                    <select
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.vehicleType}
+                                        onChange={(e) => setNewAsset({ ...newAsset, vehicleType: e.target.value as VehicleTypeOption })}
+                                    >
+                                        <option value="">Select</option>
+                                        {VEHICLE_TYPE_OPTIONS.map((option) => (
+                                            <option key={option} value={option}>{option}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Ownership & Leasing</div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Owner</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.owner}
+                                        onChange={(e) => setNewAsset({ ...newAsset, owner: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Mth Lease Charge</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.mthLeaseCharge}
+                                        onChange={(e) => setNewAsset({ ...newAsset, mthLeaseCharge: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Mileage Charge</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.mileageCharge}
+                                        onChange={(e) => setNewAsset({ ...newAsset, mileageCharge: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Lease Expir. Year</label>
+                                    <input
+                                        type="number"
+                                        min="1900"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.leaseExpirYear}
+                                        onChange={(e) => setNewAsset({ ...newAsset, leaseExpirYear: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Operations</div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Added to Fleet</label>
+                                    <input
+                                        type="date"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.addedToFleet}
+                                        onChange={(e) => setNewAsset({ ...newAsset, addedToFleet: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Removed from Fleet</label>
+                                    <input
+                                        type="date"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.removedFromFleet}
+                                        onChange={(e) => setNewAsset({ ...newAsset, removedFromFleet: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Follow Up</label>
+                                    <input
+                                        type="date"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.followUp}
+                                        onChange={(e) => setNewAsset({ ...newAsset, followUp: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Gross Weight</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.grossWeight}
+                                        onChange={(e) => setNewAsset({ ...newAsset, grossWeight: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Geotab</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.geotab}
+                                        onChange={(e) => setNewAsset({ ...newAsset, geotab: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Toll Transponder</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.tollTransponder}
+                                        onChange={(e) => setNewAsset({ ...newAsset, tollTransponder: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">ELD Logging</label>
+                                    <select
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.eldLogging}
+                                        onChange={(e) => setNewAsset({ ...newAsset, eldLogging: e.target.value as EldLoggingOption })}
+                                    >
+                                        <option value="">Select</option>
+                                        {ELD_LOGGING_OPTIONS.map((option) => (
+                                            <option key={option} value={option}>{option}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">IMEI #</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.imei}
+                                        onChange={(e) => setNewAsset({ ...newAsset, imei: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">ELD Notes</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.eldNotes}
+                                        onChange={(e) => setNewAsset({ ...newAsset, eldNotes: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Assignment</div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Driver</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.driver}
+                                        onChange={(e) => setNewAsset({ ...newAsset, driver: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Rep Code</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.repCode}
+                                        onChange={(e) => setNewAsset({ ...newAsset, repCode: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Driver Check #</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.driverCheckNumber}
+                                        onChange={(e) => setNewAsset({ ...newAsset, driverCheckNumber: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">MGR</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.mgr}
+                                        onChange={(e) => setNewAsset({ ...newAsset, mgr: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                                    <input
+                                        type="email"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.email}
+                                        onChange={(e) => setNewAsset({ ...newAsset, email: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Ph #</label>
+                                    <input
+                                        type="tel"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.phone}
+                                        onChange={(e) => setNewAsset({ ...newAsset, phone: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Metrics</div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Vehicle Value</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.vehicleValue}
+                                        onChange={(e) => setNewAsset({ ...newAsset, vehicleValue: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Months In Service</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.monthsInService}
+                                        onChange={(e) => setNewAsset({ ...newAsset, monthsInService: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">2/1/2026</label>
+                                    <input
+                                        type="date"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.asOfDate}
+                                        onChange={(e) => setNewAsset({ ...newAsset, asOfDate: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Avg Miles Per Month</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.avgMilesPerMonth}
+                                        onChange={(e) => setNewAsset({ ...newAsset, avgMilesPerMonth: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Estimated Odometer 6 months</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.estimatedOdometer6mo}
+                                        onChange={(e) => setNewAsset({ ...newAsset, estimatedOdometer6mo: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Accounting</div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Div #</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.divNumber}
+                                        onChange={(e) => setNewAsset({ ...newAsset, divNumber: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Div</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.division}
+                                        onChange={(e) => setNewAsset({ ...newAsset, division: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Corp</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.corp}
+                                        onChange={(e) => setNewAsset({ ...newAsset, corp: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">GL Acct</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.glAcct}
+                                        onChange={(e) => setNewAsset({ ...newAsset, glAcct: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Ins. Class</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={newAsset.insClass}
+                                        onChange={(e) => setNewAsset({ ...newAsset, insClass: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Notes</div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">NOTES</label>
+                                <textarea
+                                    rows={3}
+                                    className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                    value={newAsset.notes}
+                                    onChange={(e) => setNewAsset({ ...newAsset, notes: e.target.value })}
+                                />
+                            </div>
                         </div>
                     </div>
                     <div className="flex justify-end space-x-3 mt-6">

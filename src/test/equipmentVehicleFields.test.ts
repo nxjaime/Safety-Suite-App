@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildEquipmentRow, ELD_LOGGING_OPTIONS, OWN_LEASE_OPTIONS, US_STATE_OPTIONS, VEHICLE_TYPE_OPTIONS } from '../pages/Equipment';
+import { buildEquipmentRow, ELD_LOGGING_OPTIONS, OWN_LEASE_OPTIONS, US_STATE_OPTIONS, VEHICLE_TYPE_OPTIONS, VEHICLE_LEASING_FIELD_LABELS } from '../pages/Equipment';
 
 describe('equipment vehicle fields', () => {
   it('builds equipment row with numeric coercion', () => {
@@ -65,5 +65,11 @@ describe('equipment vehicle fields', () => {
     expect(ELD_LOGGING_OPTIONS).toContain('Enabled');
     expect(VEHICLE_TYPE_OPTIONS).toContain('Truck');
     expect(US_STATE_OPTIONS.length).toBe(50);
+  });
+
+  it('defines vehicle & leasing field labels', () => {
+    expect(VEHICLE_LEASING_FIELD_LABELS).toContain('Vehicle #');
+    expect(VEHICLE_LEASING_FIELD_LABELS).toContain('ELD Logging');
+    expect(VEHICLE_LEASING_FIELD_LABELS).toContain('Ins. Class');
   });
 });
