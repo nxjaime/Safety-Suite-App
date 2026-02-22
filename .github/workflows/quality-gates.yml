@@ -38,3 +38,6 @@ jobs:
 
       - name: UI smoke tests
         run: npm run test:smoke
+
+      - name: Layout regression tests
+        run: npm run test:layout

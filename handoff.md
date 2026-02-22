@@ -204,6 +204,7 @@ Reminder: Commit & push after checks/tests pass.
   - Add rate limits and strict request validation in API routes.
   - Implement integration health status and fallback behavior.
   - Backlog carry-over: verify and guard against fixed-header content clipping regressions across all routes.
+  - Backlog carry-over: add authenticated Playwright fixture and enable protected-route clipping assertions in `e2e/layout.spec.ts`.
 - Exit criteria:
   - Integration failures degrade gracefully with alerting.
 

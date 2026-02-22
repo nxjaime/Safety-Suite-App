@@ -17,3 +17,8 @@
 - In this environment, Playwright/dev-server execution requires elevated permissions due local port binding restrictions.
 - Smoke run results: `3 passed`.
 - Latest smoke run results: `4 passed`.
+- Post-completion regression checks:
+  - `npm run test:layout` passed (`1 passed`, `1 skipped` pending authenticated fixture)
+  - `npm run test:smoke` passed (`4 passed`)
+  - `npm run test:unit` passed
+  - `npm run build` passed
