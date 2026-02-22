@@ -8,6 +8,7 @@ import { driverService } from '../services/driverService';
 import type { Driver } from '../types';
 import { DriverImportModal } from '../components/drivers/DriverImportModal';
 import { motiveService } from '../services/motiveService';
+import { getBand } from '../services/riskService';
 
 const Drivers: React.FC = () => {
     const navigate = useNavigate();
@@ -23,6 +24,7 @@ const Drivers: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterTerminal, setFilterTerminal] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
+    const [filterBand, setFilterBand] = useState<'all' | 'green' | 'yellow' | 'red'>('all');
     const [showFilters, setShowFilters] = useState(false);
     const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
 
@@ -321,6 +323,16 @@ const Drivers: React.FC = () => {
             <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-slate-800">Drivers</h2>
                 <div className="flex space-x-3">
+                    <select
+                        value={filterBand}
+                        onChange={(e) => setFilterBand(e.target.value as any)}
+                        className="px-3 py-2 border border-slate-300 rounded-md text-sm bg-white"
+                    >
+                        <option value="all">All Bands</option>
+                        <option value="green">Green (0-49)</option>
+                        <option value="yellow">Yellow (50-79)</option>
+                        <option value="red">Red (80-100)</option>
+                    </select>
                     <div className="relative">
                         <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
                         <input
@@ -439,7 +451,14 @@ const Drivers: React.FC = () => {
                                 </td>
                             </tr>
                         ) : drivers.length > 0 ? (
-                            drivers.map((driver) => (
+                            drivers
+                                .filter((driver) => {
+                                    const score = driver.riskScore ?? 60;
+                                    const band = getBand(score);
+                                    if (filterBand === 'all') return true;
+                                    return band === filterBand;
+                                })
+                                .map((driver) => (
                                 <tr key={driver.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
@@ -459,13 +478,16 @@ const Drivers: React.FC = () => {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
-                                            <span className={clsx(
-                                                "text-lg font-bold",
-                                                driver.riskScore > 80 ? "text-red-600" :
-                                                    driver.riskScore > 50 ? "text-yellow-600" : "text-green-600"
-                                            )}>
-                                                {driver.riskScore}
-                                            </span>
+                                            {(() => {
+                                                const score = driver.riskScore ?? 60;
+                                                const band = getBand(score);
+                                                const bandClass = band === 'red' ? 'bg-red-100 text-red-700' : band === 'yellow' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700';
+                                                return (
+                                                    <span className={`px-2 py-1 rounded-full text-sm font-semibold ${bandClass}`}>
+                                                        {score}
+                                                    </span>
+                                                );
+                                            })()}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">

@@ -120,6 +120,14 @@ Reminder: Commit & push after checks/tests pass.
   - Standardize coaching plans, check-ins, and outcome tracking.
 - Exit criteria:
   - Driver scorecards and coaching lifecycle are production-ready.
+Execution Status: Complete
+Completed items:
+Risk events and driver risk score history tables with org RLS, constraints, and risk type seeds.
+Risk scoring helpers combining Motive scores and local events with 0–100 bands.
+Safety dashboard now shows live averages, incident/coaching counts, and score trend.
+Drivers list shows banded scores with band filter; driver profile shows banded score and manual recalc.
+Artifacts added: `docs/plans/2026-02-22-sprint-4-design.md`, `docs/plans/2026-02-22-sprint-4-implementation-plan.md`, `docs/sprint-4/summary.md`, `docs/sprint-4/verification.md`.
+Checks: `npm run test -- --run src/test` and `npm run build` passed.
 
 ### Sprint 5: Integrations Hardening (Motive/FMCSA/Email)
 Reminder: Commit & push after checks/tests pass.

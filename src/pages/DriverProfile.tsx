@@ -10,6 +10,7 @@ import { taskService } from '../services/taskService';
 import { generateCheckIns } from '../utils/riskLogic';
 import type { Driver } from '../types';
 import { motiveService } from '../services/motiveService'; // Import Service
+import { getBand } from '../services/riskService';
 import toast from 'react-hot-toast';
 import DriverSafetyTab from '../components/drivers/DriverSafetyTab';
 import DriverDocumentsTab from '../components/drivers/DriverDocumentsTab';
@@ -537,10 +538,34 @@ const DriverProfile: React.FC = () => {
 
                     <div className="mt-6 md:mt-0 flex items-center space-x-8">
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 min-w-[150px] text-center">
-                            <div className={`text-3xl font-bold ${driver.riskScore > 80 ? 'text-red-600' : 'text-green-600'}`}>
-                                {driver.riskScore}
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1">Safety Score</div>
+                            {(() => {
+                                const score = driver.riskScore || 60;
+                                const band = getBand(score);
+                                const bandClass = band === 'red' ? 'text-red-600 bg-red-100' : band === 'yellow' ? 'text-amber-700 bg-amber-100' : 'text-green-700 bg-green-100';
+                                return (
+                                    <>
+                                        <div className={`text-3xl font-bold px-3 py-1 rounded-full inline-block ${bandClass}`}>
+                                            {score}
+                                        </div>
+                                        <div className="text-xs text-gray-500 mt-1">Safety Score ({band})</div>
+                                    </>
+                                );
+                            })()}
+                            <button
+                                className="mt-2 text-xs text-green-700 underline"
+                                onClick={async () => {
+                                    if (!id) return;
+                                    try {
+                                        await driverService.refreshRiskScore(id);
+                                        toast.success('Risk score recalculated');
+                                        window.location.reload();
+                                    } catch (err) {
+                                        toast.error('Failed to refresh risk score');
+                                    }
+                                }}
+                            >
+                                Recalculate
+                            </button>
                         </div>
 
                         <div className="text-center">

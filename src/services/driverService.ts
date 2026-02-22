@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import type { Driver, RiskEvent } from '../types';
 import { encryptData, decryptData } from '../utils/crypto';
+import { riskService } from './riskService';
 
 // Helper to handle encryption/decryption
 const processDriverForStorage = async (driver: any) => {
@@ -161,6 +162,10 @@ export const driverService = {
 
         const decrypted = await processDriverFromStorage(data);
         return mapDriverData(decrypted);
+    },
+
+    async refreshRiskScore(driverId: string, organizationId?: string | null) {
+        return riskService.calculateScore(driverId, organizationId);
     },
 
     async upsertDrivers(drivers: Partial<Driver>[]) {

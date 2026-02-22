@@ -1,372 +1,122 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { TrendingDown, AlertTriangle, Plus, Calendar, User, Download } from 'lucide-react';
-import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
-import Modal from '../components/UI/Modal';
-import toast from 'react-hot-toast';
-import { driverService } from '../services/driverService';
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
+import { ArrowDownRight, ArrowUpRight, Activity, Users } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { getBand } from '../services/riskService';
 
 const Safety: React.FC = () => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [stats, setStats] = useState({ riskScore: 32, incidentCount: 12, coachingCount: 8 });
     const [loading, setLoading] = useState(true);
-    const [drivers, setDrivers] = useState<{ id: string; name: string }[]>([]);
-    const [loadingDrivers, setLoadingDrivers] = useState(false);
-    const [newCoaching, setNewCoaching] = useState({
-        driverId: '',
-        driverName: '',
-        date: new Date().toISOString().split('T')[0],
-        type: '',
-        notes: ''
-    });
-
-
+    const [riskAverage, setRiskAverage] = useState(0);
+    const [incidentCount, setIncidentCount] = useState(0);
+    const [coachingCount, setCoachingCount] = useState(0);
+    const [history, setHistory] = useState<any[]>([]);
 
     useEffect(() => {
-        loadData();
+        const load = async () => {
+            try {
+                // Avg risk score across drivers
+                const { data: drivers, error: dErr } = await supabase.from('drivers').select('risk_score');
+                if (dErr) throw dErr;
+                const scores = (drivers || []).map((d: any) => d.risk_score || 60);
+                const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 60;
+                setRiskAverage(avg);
+
+                // Risk events last 90 days
+                const since = new Date();
+                since.setDate(since.getDate() - 90);
+                const { count: incidents, error: iErr } = await supabase
+                    .from('risk_events')
+                    .select('*', { count: 'exact', head: true })
+                    .gte('occurred_at', since.toISOString());
+                if (iErr) throw iErr;
+                setIncidentCount(incidents || 0);
+
+                // Active coaching plans
+                const { count: coaching, error: cErr } = await supabase
+                    .from('coaching_plans')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('status', 'Active');
+                if (cErr) throw cErr;
+                setCoachingCount(coaching || 0);
+
+                // Score history (latest 12 entries overall)
+                const { data: scoresHist, error: hErr } = await supabase
+                    .from('driver_risk_scores')
+                    .select('score, as_of')
+                    .order('as_of', { ascending: false })
+                    .limit(12);
+                if (hErr) throw hErr;
+                const hist = (scoresHist || []).map((row: any) => ({
+                    date: new Date(row.as_of).toLocaleDateString(),
+                    score: row.score,
+                })).reverse();
+                setHistory(hist);
+            } catch (err) {
+                console.error('Failed to load safety dashboard', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        load();
     }, []);
 
-    // Load active drivers when modal opens
-    useEffect(() => {
-        if (isModalOpen && drivers.length === 0) {
-            loadDrivers();
-        }
-    }, [isModalOpen]);
-
-    const loadDrivers = async () => {
-        setLoadingDrivers(true);
-        try {
-            const { data } = await driverService.fetchDriversPaginated(1, 200, { status: 'Active' });
-            setDrivers(data.map(d => ({ id: d.id, name: d.name })));
-        } catch (error) {
-            console.error('Failed to load drivers', error);
-        } finally {
-            setLoadingDrivers(false);
-        }
-    };
-
-    const loadData = async () => {
-        try {
-            setLoading(true);
-            const stats = await driverService.fetchSafetyStats();
-            setStats(stats);
-        } catch (error) {
-            toast.error('Failed to load safety data');
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleAddCoaching = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        // Validate driver is selected
-        if (!newCoaching.driverId) {
-            toast.error('Please select a driver');
-            return;
-        }
-
-        // Calculate points based on type
-        let points = 0;
-        switch (newCoaching.type) {
-            case 'Speeding': points = 10; break;
-            case 'Hard Braking': points = 5; break;
-            case 'HOS Violation': points = 15; break;
-            case 'Accident': points = 20; break;
-            case 'Citation': points = 10; break;
-            default: points = 5;
-        }
-
-        try {
-            await driverService.addRiskEvent(newCoaching.driverId, {
-                date: newCoaching.date,
-                type: newCoaching.type,
-                points,
-                notes: newCoaching.notes
-            });
-
-            // Refetch to ensure consistency
-            await loadData();
-
-            toast.success(`Risk event logged for ${newCoaching.driverName}`);
-            setIsModalOpen(false);
-            setNewCoaching({ driverId: '', driverName: '', date: new Date().toISOString().split('T')[0], type: '', notes: '' });
-
-        } catch (error) {
-            toast.error('Failed to log event');
-            console.error(error);
-        }
-    };
-
-    const data = [
-        { name: 'Speeding', count: 45 },
-        { name: 'Hard Brake', count: 32 },
-        { name: 'HOS Violation', count: 18 },
-        { name: 'Distraction', count: 12 },
-        { name: 'Seatbelt', count: 8 },
-    ];
-
-    const riskData = [
-        { name: 'Low Risk', value: 65, color: '#10B981' },
-        { name: 'Medium Risk', value: 25, color: '#F59E0B' },
-        { name: 'High Risk', value: 10, color: '#EF4444' },
-    ];
-
-    const handleExportReport = async () => {
-        const drivers = await driverService.fetchDrivers();
-        const headers = ['Driver Name', 'Risk Score', 'Status', 'Total Incidents', 'Active Coaching Plans'];
-
-        const rows = drivers.map(d => [
-            d.name,
-            d.riskScore.toString(),
-            d.status,
-            ((d.accidents?.length || 0) + (d.citations?.length || 0) + (d.riskEvents?.length || 0)).toString(),
-            (d.coachingPlans?.filter((p: any) => p.status === 'Active').length || 0).toString()
-        ]);
-
-        const csvContent = [
-            headers.join(','),
-            ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-        ].join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `safety_report_${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
-        toast.success("Safety Report exported successfully");
-    };
+    const band = getBand(riskAverage);
+    const bandColor = band === 'red' ? 'text-red-600 bg-red-100' : band === 'yellow' ? 'text-amber-700 bg-amber-100' : 'text-green-700 bg-green-100';
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-slate-800">Safety & Risk Overview</h2>
-                <div className="flex space-x-2">
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="px-4 py-2 bg-green-100 text-green-800 border border-green-200 rounded-md text-sm font-medium hover:bg-green-200 flex items-center"
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Log Event
-                    </button>
-                    <button
-                        onClick={handleExportReport}
-                        className="px-4 py-2 bg-white text-green-800 border border-green-200 rounded-md text-sm font-medium hover:bg-green-50 flex items-center"
-                    >
-                        <Download className="w-4 h-4 mr-2" />
-                        Export Report
-                    </button>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                    <p className="text-sm text-slate-500">Fleet Risk Score (avg)</p>
+                    <div className="flex items-center justify-between mt-2">
+                        <span className={`text-3xl font-bold px-3 py-1 rounded-full ${bandColor}`}>{loading ? '...' : riskAverage}</span>
+                        {band === 'green' ? <ArrowDownRight className="text-green-600" /> : band === 'yellow' ? <Activity className="text-amber-600" /> : <ArrowUpRight className="text-red-600" />}
+                    </div>
+                </div>
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                    <p className="text-sm text-slate-500">Incidents (90d)</p>
+                    <div className="flex items-center justify-between mt-2">
+                        <span className="text-3xl font-bold text-slate-900">{loading ? '...' : incidentCount}</span>
+                        <Users className="text-slate-400" />
+                    </div>
+                </div>
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                    <p className="text-sm text-slate-500">Active Coaching Plans</p>
+                    <div className="flex items-center justify-between mt-2">
+                        <span className="text-3xl font-bold text-slate-900">{loading ? '...' : coachingCount}</span>
+                        <Activity className="text-slate-400" />
+                    </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Link to="/drivers" className="block transform transition-transform hover:scale-[1.02]">
-                    <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 flex items-center cursor-pointer hover:shadow-md transition-shadow">
-                        <div className="p-3 bg-red-100 rounded-full mr-4 border border-red-200">
-                            <AlertTriangle className="w-6 h-6 text-red-600" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-slate-500">Fleet Risk Score</p>
-                            <h3 className="text-3xl font-bold text-slate-900 mt-1">{loading ? '...' : stats.riskScore}</h3>
-                        </div>
-                        <div className="ml-auto flex items-center text-sm text-green-700 bg-green-50 px-2 py-1 rounded-full">
-                            <TrendingDown className="w-4 h-4 mr-1" />
-                            <span>-2.5%</span>
-                        </div>
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 className="text-lg font-bold text-slate-800">Risk Score Trend</h3>
+                        <p className="text-sm text-slate-500">Last 12 score calculations</p>
                     </div>
-                </Link>
-
-                <Link to="/drivers?filter=incidents" className="block transform transition-transform hover:scale-[1.02]">
-                    <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 flex items-center cursor-pointer hover:shadow-md transition-shadow">
-                        <div className="p-3 bg-orange-100 rounded-full mr-4 border border-orange-200">
-                            <AlertTriangle className="w-6 h-6 text-orange-600" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-slate-500">Total Incidents</p>
-                            <h3 className="text-3xl font-bold text-slate-900 mt-1">{loading ? '...' : stats.incidentCount}</h3>
-                        </div>
-                        <div className="ml-auto text-sm text-slate-500">
-                            This Month
-                        </div>
-                    </div>
-                </Link>
-
-                <Link to="/tasks" className="block transform transition-transform hover:scale-[1.02]">
-                    <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 flex items-center cursor-pointer hover:shadow-md transition-shadow">
-                        <div className="p-3 bg-blue-100 rounded-full mr-4 border border-blue-200">
-                            <User className="w-6 h-6 text-blue-600" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-slate-500">Active Coaching</p>
-                            <h3 className="text-3xl font-bold text-slate-900 mt-1">{loading ? '...' : stats.coachingCount}</h3>
-                        </div>
-                        <div className="ml-auto text-sm text-slate-500">
-                            Drivers
-                        </div>
-                    </div>
-                </Link>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-                    <h3 className="text-lg font-bold text-slate-800 mb-4">Top Incident Types</h3>
-                    <div className="h-80">
+                </div>
+                {history.length === 0 ? (
+                    <p className="text-sm text-slate-500">No score history yet.</p>
+                ) : (
+                    <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={data} layout="vertical">
-                                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                                <XAxis type="number" />
-                                <YAxis dataKey="name" type="category" width={100} />
+                            <AreaChart data={history}>
+                                <defs>
+                                    <linearGradient id="riskColor" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.6} />
+                                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <XAxis dataKey="date" hide />
+                                <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
                                 <Tooltip />
-                                <Bar dataKey="count" fill="#10B981" radius={[0, 4, 4, 0]} />
-                            </BarChart>
+                                <Area type="monotone" dataKey="score" stroke="#059669" fillOpacity={1} fill="url(#riskColor)" />
+                            </AreaChart>
                         </ResponsiveContainer>
                     </div>
-                </div>
-
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-                    <h3 className="text-lg font-bold text-slate-800 mb-4">Fleet Risk Distribution</h3>
-                    <div className="h-80">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={riskData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={100}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                >
-                                    {riskData.map((entry, index) => (
-                                        <Cell key={`cell - ${index} `} fill={entry.color} />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                            </PieChart>
-                        </ResponsiveContainer>
-                        <div className="flex justify-center space-x-6 mt-4">
-                            {riskData.map((entry, index) => (
-                                <div key={index} className="flex items-center">
-                                    <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: entry.color }}></div>
-                                    <span className="text-sm text-slate-600">{entry.name}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
+                )}
             </div>
-
-            <Modal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                title="Log Risk Event"
-            >
-                <form onSubmit={handleAddCoaching} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Select Driver <span className="text-red-500">*</span></label>
-                        <div className="relative">
-                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4 z-10" />
-                            <select
-                                required
-                                className="pl-9 w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
-                                value={newCoaching.driverId}
-                                onChange={(e) => {
-                                    const selectedDriver = drivers.find(d => d.id === e.target.value);
-                                    setNewCoaching({
-                                        ...newCoaching,
-                                        driverId: e.target.value,
-                                        driverName: selectedDriver?.name || ''
-                                    });
-                                }}
-                            >
-                                <option value="">
-                                    {loadingDrivers ? 'Loading drivers...' : 'Select an active driver'}
-                                </option>
-                                {drivers.map(driver => (
-                                    <option key={driver.id} value={driver.id}>
-                                        {driver.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        {drivers.length === 0 && !loadingDrivers && (
-                            <p className="text-xs text-slate-500 mt-1">No active drivers found in the roster.</p>
-                        )}
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
-                        <div className="relative">
-                            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-                            <input
-                                type="date"
-                                required
-                                className="pl-9 w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                                value={newCoaching.date}
-                                onChange={(e) => setNewCoaching({ ...newCoaching, date: e.target.value })}
-                            />
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Event Type</label>
-                            <select
-                                className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                                value={newCoaching.type}
-                                onChange={(e) => setNewCoaching({ ...newCoaching, type: e.target.value })}
-                            >
-                                <option value="">Select Type</option>
-                                <option value="Speeding">Speeding (+10)</option>
-                                <option value="Hard Braking">Hard Braking (+5)</option>
-                                <option value="HOS Violation">HOS Violation (+15)</option>
-                                <option value="Accident">Accident (+20)</option>
-                                <option value="Citation">Citation (+10)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Points</label>
-                            <input
-                                type="number"
-                                className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                                value={
-                                    newCoaching.type === 'Speeding' ? 10 :
-                                        newCoaching.type === 'Hard Braking' ? 5 :
-                                            newCoaching.type === 'HOS Violation' ? 15 :
-                                                newCoaching.type === 'Accident' ? 20 :
-                                                    newCoaching.type === 'Citation' ? 10 : 0
-                                }
-                                readOnly
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
-                        <textarea
-                            className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                            rows={3}
-                            placeholder="Enter event details..."
-                            value={newCoaching.notes}
-                            onChange={(e) => setNewCoaching({ ...newCoaching, notes: e.target.value })}
-                        ></textarea>
-                    </div>
-                    <div className="flex justify-end space-x-3 mt-6">
-                        <button
-                            type="button"
-                            onClick={() => setIsModalOpen(false)}
-                            className="px-4 py-2 border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700"
-                        >
-                            Log Event
-                        </button>
-                    </div>
-                </form>
-            </Modal>
         </div>
     );
 };
