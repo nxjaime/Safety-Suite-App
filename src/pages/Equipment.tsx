@@ -7,6 +7,23 @@ import { settingsService } from '../services/settingsService';
 
 export const equipmentProfileTabs = ['Overview', 'Inspections', 'Maintenance', 'Work Orders'] as const;
 
+export const OWN_LEASE_OPTIONS = ['Own', 'Lease', 'Rent'] as const;
+export const ELD_LOGGING_OPTIONS = ['Enabled', 'Disabled', 'Exempt'] as const;
+export const VEHICLE_TYPE_OPTIONS = ['Sales Vehicle', 'Truck', 'Trailer'] as const;
+export const US_STATE_OPTIONS = [
+    'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+    'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+    'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+    'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+    'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
+] as const;
+
+type EquipmentCategory = 'Trucks' | 'Trailers' | 'Forklifts' | 'Pallet Jacks' | 'Sales Vehicles';
+type OwnLeaseOption = (typeof OWN_LEASE_OPTIONS)[number];
+type EldLoggingOption = (typeof ELD_LOGGING_OPTIONS)[number];
+type VehicleTypeOption = (typeof VEHICLE_TYPE_OPTIONS)[number];
+type StateOption = (typeof US_STATE_OPTIONS)[number];
+
 type EquipmentRow = {
     id: string;
     type: string;
@@ -15,41 +32,233 @@ type EquipmentRow = {
     year: number;
     status: string;
     nextService: string;
-    category: 'Trucks' | 'Trailers' | 'Forklifts' | 'Pallet Jacks' | 'Sales Vehicles';
-    ownership: string;
+    category: EquipmentCategory;
+    ownLease: OwnLeaseOption;
     usageMiles: number;
     usageHours: number;
     attachments: string[];
     forkliftAttachments: string[];
+    removedFromFleet?: string;
+    addedToFleet?: string;
+    divNumber?: string;
+    division?: string;
+    corp?: string;
+    owner?: string;
+    city?: string;
+    state?: StateOption | '';
+    vehicleNumber?: string;
+    vin?: string;
+    insClass?: string;
+    glAcct?: string;
+    grossWeight?: number | null;
+    geotab?: string;
+    tollTransponder?: string;
+    driver?: string;
+    repCode?: string;
+    driverCheckNumber?: string;
+    mthLeaseCharge?: number | null;
+    mileageCharge?: number | null;
+    followUp?: string;
+    leaseExpirYear?: number | null;
+    vehicleValue?: number | null;
+    licensePlate?: string;
+    notes?: string;
+    monthsInService?: number | null;
+    asOfDate?: string;
+    avgMilesPerMonth?: number | null;
+    estimatedOdometer6mo?: number | null;
+    mgr?: string;
+    eldLogging?: EldLoggingOption | '';
+    email?: string;
+    phone?: string;
+    imei?: string;
+    eldNotes?: string;
+    vehicleType?: VehicleTypeOption | '';
 };
+
+type EquipmentFormState = {
+    id: string;
+    type: string;
+    make: string;
+    model: string;
+    year: string;
+    ownLease: OwnLeaseOption;
+    status: string;
+    usageMiles: string;
+    usageHours: string;
+    attachments: string;
+    forkliftAttachments: string[];
+    removedFromFleet: string;
+    addedToFleet: string;
+    divNumber: string;
+    division: string;
+    corp: string;
+    owner: string;
+    city: string;
+    state: StateOption | '';
+    vehicleNumber: string;
+    vin: string;
+    insClass: string;
+    glAcct: string;
+    grossWeight: string;
+    geotab: string;
+    tollTransponder: string;
+    driver: string;
+    repCode: string;
+    driverCheckNumber: string;
+    mthLeaseCharge: string;
+    mileageCharge: string;
+    followUp: string;
+    leaseExpirYear: string;
+    vehicleValue: string;
+    licensePlate: string;
+    notes: string;
+    monthsInService: string;
+    asOfDate: string;
+    avgMilesPerMonth: string;
+    estimatedOdometer6mo: string;
+    mgr: string;
+    eldLogging: EldLoggingOption | '';
+    email: string;
+    phone: string;
+    imei: string;
+    eldNotes: string;
+    vehicleType: VehicleTypeOption | '';
+};
+
+const parseNumber = (value: string) => {
+    if (!value || value.trim() === '') return null;
+    const num = Number(value);
+    return Number.isNaN(num) ? null : num;
+};
+
+const parseIntNumber = (value: string) => {
+    if (!value || value.trim() === '') return null;
+    const num = parseInt(value, 10);
+    return Number.isNaN(num) ? null : num;
+};
+
+export const buildEquipmentRow = (
+    form: EquipmentFormState,
+    category: EquipmentCategory,
+    nextService: string
+): EquipmentRow => ({
+    id: form.id.trim(),
+    type: form.type.trim(),
+    make: form.make.trim(),
+    model: form.model.trim(),
+    year: parseInt(form.year, 10),
+    status: form.status,
+    nextService,
+    category,
+    ownLease: form.ownLease,
+    usageMiles: form.usageMiles ? parseInt(form.usageMiles, 10) : 0,
+    usageHours: form.usageHours ? parseInt(form.usageHours, 10) : 0,
+    attachments: form.attachments
+        ? form.attachments.split(',').map((item) => item.trim()).filter(Boolean)
+        : [],
+    forkliftAttachments: form.forkliftAttachments,
+    removedFromFleet: form.removedFromFleet || '',
+    addedToFleet: form.addedToFleet || '',
+    divNumber: form.divNumber.trim() || '',
+    division: form.division.trim() || '',
+    corp: form.corp.trim() || '',
+    owner: form.owner.trim() || '',
+    city: form.city.trim() || '',
+    state: form.state || '',
+    vehicleNumber: form.vehicleNumber.trim() || '',
+    vin: form.vin.trim() || '',
+    insClass: form.insClass.trim() || '',
+    glAcct: form.glAcct.trim() || '',
+    grossWeight: parseIntNumber(form.grossWeight),
+    geotab: form.geotab.trim() || '',
+    tollTransponder: form.tollTransponder.trim() || '',
+    driver: form.driver.trim() || '',
+    repCode: form.repCode.trim() || '',
+    driverCheckNumber: form.driverCheckNumber.trim() || '',
+    mthLeaseCharge: parseNumber(form.mthLeaseCharge),
+    mileageCharge: parseNumber(form.mileageCharge),
+    followUp: form.followUp || '',
+    leaseExpirYear: parseIntNumber(form.leaseExpirYear),
+    vehicleValue: parseNumber(form.vehicleValue),
+    licensePlate: form.licensePlate.trim() || '',
+    notes: form.notes.trim() || '',
+    monthsInService: parseIntNumber(form.monthsInService),
+    asOfDate: form.asOfDate || '',
+    avgMilesPerMonth: parseIntNumber(form.avgMilesPerMonth),
+    estimatedOdometer6mo: parseIntNumber(form.estimatedOdometer6mo),
+    mgr: form.mgr.trim() || '',
+    eldLogging: form.eldLogging || '',
+    email: form.email.trim() || '',
+    phone: form.phone.trim() || '',
+    imei: form.imei.trim() || '',
+    eldNotes: form.eldNotes.trim() || '',
+    vehicleType: form.vehicleType || ''
+});
 
 const Equipment: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<'Trucks' | 'Trailers' | 'Forklifts' | 'Pallet Jacks' | 'Sales Vehicles'>('Trucks');
+    const [activeTab, setActiveTab] = useState<EquipmentCategory>('Trucks');
     const [profileTab, setProfileTab] = useState<(typeof equipmentProfileTabs)[number]>('Overview');
     const [vehicleTypes, setVehicleTypes] = useState<string[]>([]);
-    const [newAsset, setNewAsset] = useState({
+    const [newAsset, setNewAsset] = useState<EquipmentFormState>({
         id: '',
         type: '',
         make: '',
         model: '',
         year: '',
-        ownership: 'owned',
+        ownLease: 'Own',
         status: 'active',
         usageMiles: '',
         usageHours: '',
         attachments: '',
-        forkliftAttachments: [] as string[]
+        forkliftAttachments: [],
+        removedFromFleet: '',
+        addedToFleet: '',
+        divNumber: '',
+        division: '',
+        corp: '',
+        owner: '',
+        city: '',
+        state: '',
+        vehicleNumber: '',
+        vin: '',
+        insClass: '',
+        glAcct: '',
+        grossWeight: '',
+        geotab: '',
+        tollTransponder: '',
+        driver: '',
+        repCode: '',
+        driverCheckNumber: '',
+        mthLeaseCharge: '',
+        mileageCharge: '',
+        followUp: '',
+        leaseExpirYear: '',
+        vehicleValue: '',
+        licensePlate: '',
+        notes: '',
+        monthsInService: '',
+        asOfDate: '',
+        avgMilesPerMonth: '',
+        estimatedOdometer6mo: '',
+        mgr: '',
+        eldLogging: '',
+        email: '',
+        phone: '',
+        imei: '',
+        eldNotes: '',
+        vehicleType: ''
     });
 
     const [vehicles, setVehicles] = useState<EquipmentRow[]>([
-        { id: 'TRK-101', type: 'Truck', make: 'Freightliner', model: 'Cascadia', year: 2022, status: 'active', nextService: '2023-11-15', category: 'Trucks', ownership: 'owned', usageMiles: 182340, usageHours: 3200, attachments: ['Camera', 'Tablet'], forkliftAttachments: [] },
-        { id: 'TRK-102', type: 'Truck', make: 'Volvo', model: 'VNL 860', year: 2021, status: 'maintenance', nextService: '2023-10-20', category: 'Trucks', ownership: 'leased', usageMiles: 140010, usageHours: 2600, attachments: ['Camera'], forkliftAttachments: [] },
-        { id: 'TRL-501', type: 'Trailer', make: 'Wabash', model: 'Duraplate', year: 2020, status: 'active', nextService: '2023-12-01', category: 'Trailers', ownership: 'rented', usageMiles: 84500, usageHours: 0, attachments: [], forkliftAttachments: [] },
-        { id: 'TRL-502', type: 'Trailer', make: 'Great Dane', model: 'Champion', year: 2019, status: 'out_of_service', nextService: '2023-10-15', category: 'Trailers', ownership: 'owned', usageMiles: 121300, usageHours: 0, attachments: [], forkliftAttachments: [] },
-        { id: 'FRK-201', type: 'Forklift', make: 'Toyota', model: '8FGCU25', year: 2022, status: 'active', nextService: '2023-11-01', category: 'Forklifts', ownership: 'leased', usageMiles: 0, usageHours: 1120, attachments: [], forkliftAttachments: ['Forks', 'Box Clamp'] },
-        { id: 'PAL-701', type: 'Pallet Jack', make: 'Crown', model: 'PTH50', year: 2021, status: 'active', nextService: '2023-12-08', category: 'Pallet Jacks', ownership: 'owned', usageMiles: 0, usageHours: 320, attachments: [], forkliftAttachments: [] },
-        { id: 'SAL-401', type: 'Sales Vehicle', make: 'Ford', model: 'Transit', year: 2023, status: 'active', nextService: '2024-01-10', category: 'Sales Vehicles', ownership: 'owned', usageMiles: 18400, usageHours: 0, attachments: ['Camera'], forkliftAttachments: [] },
+        { id: 'TRK-101', type: 'Truck', make: 'Freightliner', model: 'Cascadia', year: 2022, status: 'active', nextService: '2023-11-15', category: 'Trucks', ownLease: 'Own', usageMiles: 182340, usageHours: 3200, attachments: ['Camera', 'Tablet'], forkliftAttachments: [] },
+        { id: 'TRK-102', type: 'Truck', make: 'Volvo', model: 'VNL 860', year: 2021, status: 'maintenance', nextService: '2023-10-20', category: 'Trucks', ownLease: 'Lease', usageMiles: 140010, usageHours: 2600, attachments: ['Camera'], forkliftAttachments: [] },
+        { id: 'TRL-501', type: 'Trailer', make: 'Wabash', model: 'Duraplate', year: 2020, status: 'active', nextService: '2023-12-01', category: 'Trailers', ownLease: 'Rent', usageMiles: 84500, usageHours: 0, attachments: [], forkliftAttachments: [] },
+        { id: 'TRL-502', type: 'Trailer', make: 'Great Dane', model: 'Champion', year: 2019, status: 'out_of_service', nextService: '2023-10-15', category: 'Trailers', ownLease: 'Own', usageMiles: 121300, usageHours: 0, attachments: [], forkliftAttachments: [] },
+        { id: 'FRK-201', type: 'Forklift', make: 'Toyota', model: '8FGCU25', year: 2022, status: 'active', nextService: '2023-11-01', category: 'Forklifts', ownLease: 'Lease', usageMiles: 0, usageHours: 1120, attachments: [], forkliftAttachments: ['Forks', 'Box Clamp'] },
+        { id: 'PAL-701', type: 'Pallet Jack', make: 'Crown', model: 'PTH50', year: 2021, status: 'active', nextService: '2023-12-08', category: 'Pallet Jacks', ownLease: 'Own', usageMiles: 0, usageHours: 320, attachments: [], forkliftAttachments: [] },
+        { id: 'SAL-401', type: 'Sales Vehicle', make: 'Ford', model: 'Transit', year: 2023, status: 'active', nextService: '2024-01-10', category: 'Sales Vehicles', ownLease: 'Own', usageMiles: 18400, usageHours: 0, attachments: ['Camera'], forkliftAttachments: [] },
     ]);
     const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -75,21 +284,14 @@ const Equipment: React.FC = () => {
 
     const handleAddAsset = (e: React.FormEvent) => {
         e.preventDefault();
-        const baseAsset = {
-            ...newAsset,
-            year: parseInt(newAsset.year),
-            category: activeTab,
-            usageMiles: newAsset.usageMiles ? parseInt(newAsset.usageMiles) : 0,
-            usageHours: newAsset.usageHours ? parseInt(newAsset.usageHours) : 0,
-            attachments: newAsset.attachments ? newAsset.attachments.split(',').map((item) => item.trim()).filter(Boolean) : [],
-        };
+        const baseAsset = buildEquipmentRow(newAsset, activeTab, editingId ? (vehicles.find(v => v.id === editingId)?.nextService || 'Pending') : 'Pending');
 
         if (editingId) {
-            setVehicles(vehicles.map(v => v.id === editingId ? { ...v, ...baseAsset, category: v.category } : v));
+            setVehicles(vehicles.map(v => v.id === editingId ? { ...v, ...baseAsset, category: v.category, nextService: v.nextService } : v));
             setEditingId(null);
             toast.success('Asset updated successfully');
         } else {
-            setVehicles([...vehicles, { ...baseAsset, status: baseAsset.status, nextService: 'Pending' }]);
+            setVehicles([...vehicles, baseAsset]);
             toast.success('Asset added successfully');
         }
         setIsModalOpen(false);
@@ -99,12 +301,48 @@ const Equipment: React.FC = () => {
             make: '',
             model: '',
             year: '',
-            ownership: 'owned',
+            ownLease: 'Own',
             status: 'active',
             usageMiles: '',
             usageHours: '',
             attachments: '',
-            forkliftAttachments: []
+            forkliftAttachments: [],
+            removedFromFleet: '',
+            addedToFleet: '',
+            divNumber: '',
+            division: '',
+            corp: '',
+            owner: '',
+            city: '',
+            state: '',
+            vehicleNumber: '',
+            vin: '',
+            insClass: '',
+            glAcct: '',
+            grossWeight: '',
+            geotab: '',
+            tollTransponder: '',
+            driver: '',
+            repCode: '',
+            driverCheckNumber: '',
+            mthLeaseCharge: '',
+            mileageCharge: '',
+            followUp: '',
+            leaseExpirYear: '',
+            vehicleValue: '',
+            licensePlate: '',
+            notes: '',
+            monthsInService: '',
+            asOfDate: '',
+            avgMilesPerMonth: '',
+            estimatedOdometer6mo: '',
+            mgr: '',
+            eldLogging: '',
+            email: '',
+            phone: '',
+            imei: '',
+            eldNotes: '',
+            vehicleType: ''
         });
     };
 
@@ -115,12 +353,48 @@ const Equipment: React.FC = () => {
             make: vehicle.make,
             model: vehicle.model || '',
             year: vehicle.year.toString(),
-            ownership: vehicle.ownership || 'owned',
+            ownLease: vehicle.ownLease || 'Own',
             status: vehicle.status || 'active',
             usageMiles: vehicle.usageMiles?.toString() || '',
             usageHours: vehicle.usageHours?.toString() || '',
             attachments: vehicle.attachments?.join(', ') || '',
-            forkliftAttachments: vehicle.forkliftAttachments || []
+            forkliftAttachments: vehicle.forkliftAttachments || [],
+            removedFromFleet: vehicle.removedFromFleet || '',
+            addedToFleet: vehicle.addedToFleet || '',
+            divNumber: vehicle.divNumber || '',
+            division: vehicle.division || '',
+            corp: vehicle.corp || '',
+            owner: vehicle.owner || '',
+            city: vehicle.city || '',
+            state: vehicle.state || '',
+            vehicleNumber: vehicle.vehicleNumber || '',
+            vin: vehicle.vin || '',
+            insClass: vehicle.insClass || '',
+            glAcct: vehicle.glAcct || '',
+            grossWeight: vehicle.grossWeight?.toString() || '',
+            geotab: vehicle.geotab || '',
+            tollTransponder: vehicle.tollTransponder || '',
+            driver: vehicle.driver || '',
+            repCode: vehicle.repCode || '',
+            driverCheckNumber: vehicle.driverCheckNumber || '',
+            mthLeaseCharge: vehicle.mthLeaseCharge?.toString() || '',
+            mileageCharge: vehicle.mileageCharge?.toString() || '',
+            followUp: vehicle.followUp || '',
+            leaseExpirYear: vehicle.leaseExpirYear?.toString() || '',
+            vehicleValue: vehicle.vehicleValue?.toString() || '',
+            licensePlate: vehicle.licensePlate || '',
+            notes: vehicle.notes || '',
+            monthsInService: vehicle.monthsInService?.toString() || '',
+            asOfDate: vehicle.asOfDate || '',
+            avgMilesPerMonth: vehicle.avgMilesPerMonth?.toString() || '',
+            estimatedOdometer6mo: vehicle.estimatedOdometer6mo?.toString() || '',
+            mgr: vehicle.mgr || '',
+            eldLogging: vehicle.eldLogging || '',
+            email: vehicle.email || '',
+            phone: vehicle.phone || '',
+            imei: vehicle.imei || '',
+            eldNotes: vehicle.eldNotes || '',
+            vehicleType: vehicle.vehicleType || ''
         });
         setEditingId(vehicle.id);
         setIsModalOpen(true);
@@ -133,12 +407,48 @@ const Equipment: React.FC = () => {
             make: '',
             model: '',
             year: '',
-            ownership: 'owned',
+            ownLease: 'Own',
             status: 'active',
             usageMiles: '',
             usageHours: '',
             attachments: '',
-            forkliftAttachments: []
+            forkliftAttachments: [],
+            removedFromFleet: '',
+            addedToFleet: '',
+            divNumber: '',
+            division: '',
+            corp: '',
+            owner: '',
+            city: '',
+            state: '',
+            vehicleNumber: '',
+            vin: '',
+            insClass: '',
+            glAcct: '',
+            grossWeight: '',
+            geotab: '',
+            tollTransponder: '',
+            driver: '',
+            repCode: '',
+            driverCheckNumber: '',
+            mthLeaseCharge: '',
+            mileageCharge: '',
+            followUp: '',
+            leaseExpirYear: '',
+            vehicleValue: '',
+            licensePlate: '',
+            notes: '',
+            monthsInService: '',
+            asOfDate: '',
+            avgMilesPerMonth: '',
+            estimatedOdometer6mo: '',
+            mgr: '',
+            eldLogging: '',
+            email: '',
+            phone: '',
+            imei: '',
+            eldNotes: '',
+            vehicleType: ''
         });
         setEditingId(null);
         setIsModalOpen(true);
