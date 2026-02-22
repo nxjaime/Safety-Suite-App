@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CalendarCheck, ShieldCheck, Truck, Sparkles, BarChart3, Users, FileText, HelpCircle } from 'lucide-react';
+import { ArrowRight, CalendarCheck, ShieldCheck, Truck, Sparkles, BarChart3, Users, FileText } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const Landing: React.FC = () => {
