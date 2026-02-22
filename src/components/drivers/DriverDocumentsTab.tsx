@@ -1,13 +1,14 @@
 import React from 'react';
-import { FileText, Trash2, Upload } from 'lucide-react';
+import { Download, FileText, Trash2, Upload } from 'lucide-react';
 
 interface DriverDocumentsTabProps {
     documents: any[];
     onUpload: () => void;
     onDelete: (id: string) => void;
+    onDownload: (doc: any) => void;
 }
 
-const DriverDocumentsTab: React.FC<DriverDocumentsTabProps> = ({ documents, onUpload, onDelete }) => {
+const DriverDocumentsTab: React.FC<DriverDocumentsTabProps> = ({ documents, onUpload, onDelete, onDownload }) => {
     return (
         <div className="space-y-6">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -58,6 +59,9 @@ const DriverDocumentsTab: React.FC<DriverDocumentsTabProps> = ({ documents, onUp
                                         {doc.notes || '-'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <button onClick={() => onDownload(doc)} className="mr-3 text-emerald-600 hover:text-emerald-800">
+                                            <Download className="w-4 h-4" />
+                                        </button>
                                         <button onClick={() => onDelete(doc.id)} className="text-red-600 hover:text-red-900">
                                             <Trash2 className="w-4 h-4" />
                                         </button>

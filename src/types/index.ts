@@ -46,7 +46,7 @@ export interface TaskItem {
     priority: 'High' | 'Medium' | 'Low';
     status: 'Pending' | 'In Progress' | 'Completed';
     assignee: string;
-    type: 'General' | 'Coaching Check-in' | 'Coaching';
+    type: 'General' | 'Coaching Check-in' | 'Coaching' | 'Compliance';
     relatedId?: string; // driver ID or plan ID
     driverName?: string;
     driverId?: string;

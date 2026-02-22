@@ -366,7 +366,7 @@ const DriverProfile: React.FC = () => {
                 type: newDocument.type as any,
                 notes: newDocument.notes,
                 expiryDate: newDocument.expiryDate,
-                url: newDocument.file ? newDocument.file.name : '' // Mock URL for now
+                file: newDocument.file
             });
 
             setDriverDocuments([doc, ...driverDocuments]);
@@ -388,6 +388,26 @@ const DriverProfile: React.FC = () => {
         } catch (error) {
             console.error('Failed to delete document', error);
             toast.error('Failed to delete document');
+        }
+    };
+
+    const handleDownloadDocument = async (doc: any) => {
+        try {
+            if (doc.storagePath) {
+                const signedUrl = await driverService.getDriverDocumentDownloadUrl(doc.storagePath);
+                window.open(signedUrl, '_blank', 'noopener,noreferrer');
+                return;
+            }
+
+            if (doc.url) {
+                window.open(doc.url, '_blank', 'noopener,noreferrer');
+                return;
+            }
+
+            toast.error('No file available for download');
+        } catch (error) {
+            console.error('Failed to download document', error);
+            toast.error('Failed to download document');
         }
     };
 
@@ -876,6 +896,7 @@ const DriverProfile: React.FC = () => {
                         documents={driverDocuments}
                         onUpload={() => setIsDocumentModalOpen(true)}
                         onDelete={handleDeleteDocument}
+                        onDownload={handleDownloadDocument}
                     />
                 )
             }

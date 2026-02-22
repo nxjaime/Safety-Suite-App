@@ -45,6 +45,7 @@ const Compliance: React.FC = () => {
         carrier_address: '',
 
         // Driver
+        driver_id: '',
         driver_name: '',
         driver_license_number: '',
         driver_license_state: '',
@@ -140,6 +141,7 @@ const Compliance: React.FC = () => {
         if (driver) {
             setNewInspection(prev => ({
                 ...prev,
+                driver_id: driver.id,
                 driver_name: driver.name,
                 driver_license_number: driver.licenseNumber || '',
                 // driver_license_state: driver.licenseState || '', // Not currently in Driver type
@@ -148,6 +150,7 @@ const Compliance: React.FC = () => {
             // Handle "manual" or empty case if needed, or just clear
             setNewInspection(prev => ({
                 ...prev,
+                driver_id: '',
                 driver_name: '',
                 driver_license_number: '',
             }));
@@ -468,13 +471,14 @@ const Compliance: React.FC = () => {
                                         <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Driver</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Vehicle</th>
                                         <th className="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Violations</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Remediation</th>
                                         <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">File</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
                                     {inspections.length === 0 ? (
                                         <tr>
-                                            <td colSpan={6} className="px-6 py-4 text-center text-slate-500 text-sm">
+                                            <td colSpan={7} className="px-6 py-4 text-center text-slate-500 text-sm">
                                                 No inspections found. Upload one to get started.
                                             </td>
                                         </tr>
@@ -489,6 +493,16 @@ const Compliance: React.FC = () => {
                                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${(item.violations_count || 0) > 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
                                                         }`}>
                                                         {item.violations_count}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${item.remediation_status === 'Closed'
+                                                        ? 'bg-emerald-100 text-emerald-700'
+                                                        : item.remediation_status === 'In Progress'
+                                                            ? 'bg-amber-100 text-amber-700'
+                                                            : 'bg-rose-100 text-rose-700'
+                                                        }`}>
+                                                        {item.remediation_status || 'Open'}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

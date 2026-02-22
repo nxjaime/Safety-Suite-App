@@ -42,7 +42,7 @@ const DocumentModal: React.FC<DocumentModalProps> = ({
                 type: newDocument.type as any,
                 notes: newDocument.notes,
                 expiryDate: newDocument.expiryDate,
-                url: newDocument.file ? newDocument.file.name : '' // Mock URL for now
+                file: newDocument.file
             });
 
             toast.success('Document uploaded successfully');

@@ -3,6 +3,8 @@ import type { Driver, RiskEvent } from '../types';
 import { encryptData, decryptData } from '../utils/crypto';
 import { riskService } from './riskService';
 
+const DRIVER_DOCUMENT_BUCKET = 'driver-documents';
+
 // Helper to handle encryption/decryption
 const processDriverForStorage = async (driver: any) => {
     const processed = { ...driver };
@@ -60,6 +62,8 @@ const mapDriverData = (data: any): Driver => {
         trainingHistory: data.training_history
     };
 };
+
+const sanitizeFileName = (name: string): string => name.replace(/[^a-zA-Z0-9_.-]/g, '-');
 
 export const driverService = {
     async fetchDrivers(): Promise<Driver[]> {
@@ -434,43 +438,97 @@ export const driverService = {
             .order('created_at', { ascending: false });
 
         if (error) throw error;
-        return data.map((d: any) => ({
+        return (data || []).map((d: any) => ({
             id: d.id,
             driverId: d.driver_id,
             name: d.name,
             type: d.type,
-            url: d.url,
+            url: d.url || d.storage_path,
             notes: d.notes,
             expiryDate: d.expiry_date,
-            date: d.created_at
+            date: d.created_at,
+            storageBucket: d.storage_bucket,
+            storagePath: d.storage_path
         }));
     },
 
-    async uploadDocument(driverId: string, doc: { name: string, type: string, notes?: string, expiryDate?: string, url?: string }) {
+    async uploadDocument(driverId: string, doc: { name: string, type: string, notes?: string, expiryDate?: string, url?: string, file?: File | null }) {
+        const orgId = await this._getOrgId();
+        let storagePath: string | null = null;
+        let storedBucket: string | null = null;
+
+        if (doc.file && orgId) {
+            const cleanName = sanitizeFileName(doc.file.name);
+            storagePath = `${orgId}/${driverId}/${Date.now()}-${cleanName}`;
+            const { error: uploadError } = await supabase.storage
+                .from(DRIVER_DOCUMENT_BUCKET)
+                .upload(storagePath, doc.file, {
+                    contentType: doc.file.type,
+                    upsert: false
+                });
+
+            if (uploadError) throw uploadError;
+            storedBucket = DRIVER_DOCUMENT_BUCKET;
+        }
+
         const { data, error } = await supabase
             .from('driver_documents')
             .insert([{
+                organization_id: orgId,
                 driver_id: driverId,
                 name: doc.name,
                 type: doc.type,
                 notes: doc.notes,
                 expiry_date: doc.expiryDate,
-                url: doc.url
+                url: doc.url || storagePath,
+                storage_bucket: storedBucket,
+                storage_path: storagePath,
+                file_size: doc.file?.size || null,
+                mime_type: doc.file?.type || null
             }])
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            if (storagePath) {
+                await supabase.storage.from(DRIVER_DOCUMENT_BUCKET).remove([storagePath]);
+            }
+            throw error;
+        }
         return data;
     },
 
+    async getDriverDocumentDownloadUrl(storagePath: string) {
+        const { data, error } = await supabase.storage
+            .from(DRIVER_DOCUMENT_BUCKET)
+            .createSignedUrl(storagePath, 60);
+
+        if (error || !data?.signedUrl) throw error || new Error('Failed to create signed URL');
+        return data.signedUrl;
+    },
+
     async deleteDocument(docId: string) {
+        const { data: docRow } = await supabase
+            .from('driver_documents')
+            .select('storage_bucket, storage_path')
+            .eq('id', docId)
+            .single();
+
         const { error } = await supabase
             .from('driver_documents')
             .delete()
             .eq('id', docId);
 
         if (error) throw error;
+
+        if (docRow?.storage_bucket && docRow?.storage_path) {
+            const { error: storageError } = await supabase.storage
+                .from(docRow.storage_bucket)
+                .remove([docRow.storage_path]);
+            if (storageError) {
+                console.error('Failed to delete storage object for document', storageError);
+            }
+        }
     },
 
     async updateCoachingPlan(planId: string, updates: any) {

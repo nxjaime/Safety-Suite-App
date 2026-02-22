@@ -250,6 +250,31 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
   - Build compliance task queues tied to drivers/equipment.
 - Exit criteria:
   - Compliance and document workflows are auditable end-to-end.
+Execution Status: Complete
+Started: `2026-02-22`
+Completed: `2026-02-22`
+Completed items:
+- Productionized document storage and metadata workflows:
+  - Added migration `supabase/migrations/20260222030000_documents_compliance_workflows.sql` to create secure `documents` table, private storage buckets (`compliance-documents`, `driver-documents`), storage policies, and indexes.
+  - Added `src/services/documentService.ts` for listing, uploading, signed-download URL generation, and archival.
+  - Rebuilt `src/pages/Documents.tsx` from mock-only UI to live Supabase-backed document operations with category/search filtering.
+- Hardened driver document handling:
+  - `src/services/driverService.ts` now uploads files to private storage, stores path metadata, supports signed URLs, and removes storage objects on delete.
+  - Updated upload workflows in `src/pages/DriverProfile.tsx` and `src/components/drivers/modals/DocumentModal.tsx` to send real files.
+  - Updated `src/components/drivers/DriverDocumentsTab.tsx` to support direct download actions.
+- Hardened inspection and remediation workflows:
+  - `src/services/inspectionService.ts` now validates inspection payloads, persists remediation metadata, computes defect counts, and auto-generates compliance queue tasks linked to inspections.
+  - Added remediation status visibility in `src/pages/Compliance.tsx` inspections table.
+  - Added unit tests for compliance task generation in `src/test/inspectionComplianceTasks.test.ts`.
+Checks run:
+- `npm run test:layout`
+- `npm run test:smoke`
+- `npm run test:unit`
+- `npm run build`
+All passed in this workspace.
+Artifacts:
+- `docs/sprint-6/summary.md`
+- `docs/sprint-6/verification.md`
 
 ### Sprint 7: Security and Risk Hardening
 Reminder: Commit locally and push to GitHub once all checks/tests pass.
