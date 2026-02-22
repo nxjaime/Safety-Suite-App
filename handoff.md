@@ -197,7 +197,7 @@ Artifacts:
 - `docs/sprint-4-5/verification.md`
 
 ### Sprint 5: Integrations Hardening (Motive/FMCSA/Email)
-Reminder: Commit & push after checks/tests pass.
+Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - Goal: Make external data and notification flows reliable.
 - Scope:
   - Add retries, timeouts, backoff, and error normalization.
@@ -209,7 +209,7 @@ Reminder: Commit & push after checks/tests pass.
   - Integration failures degrade gracefully with alerting.
 
 ### Sprint 6: Compliance + Documents + Inspection Workflows
-Reminder: Commit & push after checks/tests pass.
+Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - Goal: Close compliance execution loop.
 - Scope:
   - Productionize document upload/storage/access controls.
@@ -219,7 +219,7 @@ Reminder: Commit & push after checks/tests pass.
   - Compliance and document workflows are auditable end-to-end.
 
 ### Sprint 7: Security and Risk Hardening
-Reminder: Commit & push after checks/tests pass.
+Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - Goal: Remove high-risk technical debt and enforce trust boundaries.
 - Scope:
   - Replace insecure client-side secret patterns for PII handling.
@@ -229,7 +229,7 @@ Reminder: Commit & push after checks/tests pass.
   - No critical security issues open for release scope.
 
 ### Sprint 8: Database Optimization and Data Quality
-Reminder: Commit & push after checks/tests pass.
+Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - Goal: Scale performance and improve data correctness.
 - Scope:
   - Query profiling + index strategy for high-traffic paths.
@@ -239,7 +239,7 @@ Reminder: Commit & push after checks/tests pass.
   - Core queries meet latency targets; data QA checks in place.
 
 ### Sprint 9: Reporting, Testing, and Observability
-Reminder: Commit & push after checks/tests pass.
+Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - Goal: Build release confidence and operational visibility.
 - Scope:
   - Replace static dashboards with live metrics and filters.
@@ -250,7 +250,7 @@ Reminder: Commit & push after checks/tests pass.
   - Dashboards and alerts support on-call operations.
 
 ### Sprint 10: UAT, Launch Readiness, and Hypercare
-Reminder: Commit & push after checks/tests pass.
+Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - Goal: Execute controlled production launch.
 - Scope:
   - Pilot rollout + UAT sign-off.
