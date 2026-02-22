@@ -43,9 +43,9 @@ const UserProfile: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-800">My Profile</h2>
+            <h2 className="text-2xl font-bold text-slate-800">My Profile</h2>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
                 <div className="h-32 bg-green-700"></div>
                 <div className="px-6 pb-6">
                     <div className="relative flex justify-between items-end -mt-12 mb-6">
@@ -57,7 +57,7 @@ const UserProfile: React.FC = () => {
                             />
                             <button
                                 onClick={() => document.getElementById('profile-photo-input')?.click()}
-                                className="absolute bottom-0 right-0 p-1.5 bg-white rounded-full border border-gray-200 shadow-sm hover:bg-gray-50 text-gray-600 cursor-pointer"
+                                className="absolute bottom-0 right-0 p-1.5 bg-white rounded-full border border-slate-200 shadow-sm hover:bg-slate-50 text-slate-600 cursor-pointer"
                                 title="Change profile picture"
                             >
                                 <Camera className="w-4 h-4" />
@@ -91,23 +91,23 @@ const UserProfile: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
                                 <div className="relative">
-                                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                                     <input
                                         type="text"
                                         value={user.name}
                                         onChange={(e) => handleChange('name', e.target.value)}
-                                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Job Title</label>
                                 <select
                                     value={user.title}
                                     onChange={(e) => handleChange('title', e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
                                 >
                                     <option value="Safety Manager">Safety Manager</option>
                                     <option value="Fleet Manager">Fleet Manager</option>
@@ -116,14 +116,14 @@ const UserProfile: React.FC = () => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
                                 <div className="relative">
-                                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                                     <input
                                         type="email"
                                         value={user.email}
                                         onChange={(e) => handleChange('email', e.target.value)}
-                                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                                     />
                                 </div>
                             </div>
@@ -131,36 +131,36 @@ const UserProfile: React.FC = () => {
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number</label>
                                 <div className="relative">
-                                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                                     <input
                                         type="tel"
                                         value={user.phone}
                                         onChange={(e) => handleChange('phone', e.target.value)}
-                                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Location</label>
                                 <div className="relative">
-                                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                                     <input
                                         type="text"
                                         value={user.location}
                                         onChange={(e) => handleChange('location', e.target.value)}
-                                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Avatar URL</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Avatar URL</label>
                                 <input
                                     type="text"
                                     value={user.avatarUrl}
                                     onChange={(e) => handleChange('avatarUrl', e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm text-gray-500"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm text-slate-500"
                                     placeholder="https://..."
                                 />
                             </div>

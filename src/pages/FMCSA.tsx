@@ -79,8 +79,8 @@ const FMCSA: React.FC = () => {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-800">FMCSA Rules & Regulations</h2>
-                    <p className="text-gray-500 mt-1">Quick reference for key Federal Motor Carrier Safety Administration regulations.</p>
+                    <h2 className="text-2xl font-bold text-slate-800">FMCSA Rules & Regulations</h2>
+                    <p className="text-slate-500 mt-1">Quick reference for key Federal Motor Carrier Safety Administration regulations.</p>
                 </div>
                 <button className="flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-md text-sm font-medium hover:bg-blue-100 border border-blue-200">
                     <ExternalLink className="w-4 h-4 mr-2" />
@@ -88,9 +88,9 @@ const FMCSA: React.FC = () => {
                 </button>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <div className="flex items-center bg-gray-50 border border-gray-300 rounded-md px-3 py-2 w-full max-w-lg">
-                    <Search className="w-4 h-4 text-gray-400 mr-2" />
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+                <div className="flex items-center bg-slate-50 border border-slate-300 rounded-md px-3 py-2 w-full max-w-lg">
+                    <Search className="w-4 h-4 text-slate-400 mr-2" />
                     <input
                         type="text"
                         placeholder="Search regulation codes, titles, or descriptions..."
@@ -104,9 +104,9 @@ const FMCSA: React.FC = () => {
             <div className="space-y-4">
                 {filteredRegulations.length > 0 ? (
                     filteredRegulations.map((reg) => (
-                        <div key={reg.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                        <div key={reg.id} className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
                             <div
-                                className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                                className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50 transition-colors"
                                 onClick={() => togglePart(reg.id)}
                             >
                                 <div className="flex items-center space-x-4">
@@ -114,16 +114,16 @@ const FMCSA: React.FC = () => {
                                         <BookOpen className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-semibold text-gray-900">{reg.part}: {reg.title}</h3>
-                                        <p className="text-sm text-gray-500">{reg.summary}</p>
+                                        <h3 className="text-lg font-semibold text-slate-900">{reg.part}: {reg.title}</h3>
+                                        <p className="text-sm text-slate-500">{reg.summary}</p>
                                     </div>
                                 </div>
-                                {expandedPartId === reg.id ? <ChevronDown className="w-5 h-5 text-gray-400" /> : <ChevronRight className="w-5 h-5 text-gray-400" />}
+                                {expandedPartId === reg.id ? <ChevronDown className="w-5 h-5 text-slate-400" /> : <ChevronRight className="w-5 h-5 text-slate-400" />}
                             </div>
 
                             {expandedPartId === reg.id && (
                                 <div
-                                    className="border-t border-gray-200 bg-gray-50 p-4 space-y-3"
+                                    className="border-t border-slate-200 bg-slate-50 p-4 space-y-3"
                                 >
                                     <div className="mb-2">
                                         <a
@@ -137,19 +137,19 @@ const FMCSA: React.FC = () => {
                                         </a>
                                     </div>
                                     {reg.sections.map((section) => (
-                                        <div key={section.code} className="bg-white p-3 rounded-md border border-gray-200 shadow-sm ml-14">
+                                        <div key={section.code} className="bg-white p-3 rounded-md border border-slate-200 shadow-sm ml-14">
                                             <div className="flex items-start justify-between">
                                                 <div>
                                                     <a
                                                         href={`https://www.ecfr.gov/current/title-49/section-${section.code}`}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="inline-block px-2 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded mb-1 hover:bg-gray-200"
+                                                        className="inline-block px-2 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded mb-1 hover:bg-slate-200"
                                                     >
                                                         § {section.code}
                                                     </a>
-                                                    <h4 className="text-sm font-bold text-gray-900">{section.title}</h4>
-                                                    <p className="text-sm text-gray-600 mt-1">{section.description}</p>
+                                                    <h4 className="text-sm font-bold text-slate-900">{section.title}</h4>
+                                                    <p className="text-sm text-slate-600 mt-1">{section.description}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -159,8 +159,8 @@ const FMCSA: React.FC = () => {
                         </div>
                     ))
                 ) : (
-                    <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500">
-                        <BookOpen className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+                    <div className="bg-white rounded-lg border border-slate-200 p-8 text-center text-slate-500">
+                        <BookOpen className="w-12 h-12 mx-auto text-slate-300 mb-3" />
                         No regulations found matching "{searchTerm}"
                     </div>
                 )}

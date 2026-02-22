@@ -319,14 +319,14 @@ const Drivers: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-800">Drivers</h2>
+                <h2 className="text-2xl font-bold text-slate-800">Drivers</h2>
                 <div className="flex space-x-3">
                     <div className="relative">
-                        <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
                         <input
                             type="text"
                             placeholder="Search drivers..."
-                            className="pl-9 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 w-64"
+                            className="pl-9 pr-4 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 w-64"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -335,7 +335,7 @@ const Drivers: React.FC = () => {
                         onClick={() => setShowFilters(!showFilters)}
                         className={clsx(
                             "flex items-center px-4 py-2 border rounded-md text-sm font-medium transition-colors",
-                            showFilters ? "bg-green-100 text-green-800 border-green-200" : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                            showFilters ? "bg-green-100 text-green-800 border-green-200" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
                         )}
                     >
                         <Filter className="w-4 h-4 mr-2" />
@@ -343,21 +343,21 @@ const Drivers: React.FC = () => {
                     </button>
                     <button
                         onClick={() => setIsImportModalOpen(true)}
-                        className="flex items-center px-4 py-2 border border-gray-300 bg-white rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        className="flex items-center px-4 py-2 border border-slate-300 bg-white rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50"
                     >
                         <Upload className="w-4 h-4 mr-2" />
                         Import CSV
                     </button>
                     <button
                         onClick={handleSyncMotive}
-                        className="flex items-center px-4 py-2 border border-gray-300 bg-white rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        className="flex items-center px-4 py-2 border border-slate-300 bg-white rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50"
                     >
                         <Upload className="w-4 h-4 mr-2" />
                         Sync Motive
                     </button>
                     <button
                         onClick={handleExportCSV}
-                        className="flex items-center px-4 py-2 border border-gray-300 bg-white rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        className="flex items-center px-4 py-2 border border-slate-300 bg-white rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50"
                     >
                         <Download className="w-4 h-4 mr-2" />
                         Export
@@ -374,11 +374,11 @@ const Drivers: React.FC = () => {
 
             {/* Filter Panel */}
             {showFilters && (
-                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-2">
+                <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-2">
                     <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Terminal</label>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">Terminal</label>
                         <select
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                             value={filterTerminal}
                             onChange={(e) => setFilterTerminal(e.target.value)}
                         >
@@ -393,9 +393,9 @@ const Drivers: React.FC = () => {
                         </select>
                     </div>
                     <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">Status</label>
                         <select
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
                         >
@@ -408,7 +408,7 @@ const Drivers: React.FC = () => {
                     <div className="flex items-end">
                         <button
                             onClick={() => { setFilterTerminal(''); setFilterStatus(''); setSearchTerm(''); }}
-                            className="text-sm text-gray-500 hover:text-green-600 underline"
+                            className="text-sm text-slate-500 hover:text-green-600 underline"
                         >
                             Clear Filters
                         </button>
@@ -416,16 +416,16 @@ const Drivers: React.FC = () => {
                 </div>
             )}
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-visible min-h-[400px]">
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-visible min-h-[400px]">
                 <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-slate-50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Terminal</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk Score</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Employee</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Terminal</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Risk Score</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Plan Status</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -435,12 +435,12 @@ const Drivers: React.FC = () => {
                                     <div className="flex justify-center">
                                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
                                     </div>
-                                    <p className="mt-2 text-sm text-gray-500">Loading drivers...</p>
+                                    <p className="mt-2 text-sm text-slate-500">Loading drivers...</p>
                                 </td>
                             </tr>
                         ) : drivers.length > 0 ? (
                             drivers.map((driver) => (
-                                <tr key={driver.id} className="hover:bg-gray-50 transition-colors">
+                                <tr key={driver.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
                                             <div className="flex-shrink-0 h-10 w-10">
@@ -450,11 +450,11 @@ const Drivers: React.FC = () => {
                                                 <div className="text-sm font-medium text-green-600 hover:underline">
                                                     <Link to={`/drivers/${driver.id}`}>{driver.name}</Link>
                                                 </div>
-                                                <div className="text-sm text-gray-500">ID: {driver.employeeId}</div>
+                                                <div className="text-sm text-slate-500">ID: {driver.employeeId}</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                                         {driver.terminal}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
@@ -468,13 +468,13 @@ const Drivers: React.FC = () => {
                                             </span>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                                         {driver.riskScore > 80 ? 'Plan Assigned' : 'No Plan Assigned'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={clsx(
                                             "px-2 inline-flex text-xs leading-5 font-semibold rounded-full",
-                                            driver.status === 'Active' ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                                            driver.status === 'Active' ? "bg-green-100 text-green-800" : "bg-slate-100 text-slate-800"
                                         )}>
                                             {driver.status}
                                         </span>
@@ -485,32 +485,32 @@ const Drivers: React.FC = () => {
                                                 e.stopPropagation();
                                                 setOpenActionMenuId(openActionMenuId === driver.id ? null : driver.id);
                                             }}
-                                            className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                                            className="text-slate-400 hover:text-slate-600 focus:outline-none"
                                         >
                                             <MoreHorizontal className="w-5 h-5" />
                                         </button>
 
                                         {/* Actions Dropdown */}
                                         {openActionMenuId === driver.id && (
-                                            <div ref={actionMenuRef} className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 border border-gray-200">
+                                            <div ref={actionMenuRef} className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 border border-slate-200">
                                                 <div className="py-1">
                                                     <button
                                                         onClick={() => navigate(`/drivers/${driver.id}`)}
-                                                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                        className="flex items-center w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
                                                     >
                                                         <Eye className="w-4 h-4 mr-2" />
                                                         View Profile
                                                     </button>
                                                     <button
                                                         onClick={() => handleOpenModal(driver)}
-                                                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                        className="flex items-center w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
                                                     >
                                                         <Edit className="w-4 h-4 mr-2" />
                                                         Edit Driver
                                                     </button>
                                                     <button
                                                         onClick={() => handleDeleteDriver(driver.id, driver.name)}
-                                                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                                                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-slate-100"
                                                     >
                                                         <Trash2 className="w-4 h-4 mr-2" />
                                                         Delete
@@ -523,11 +523,11 @@ const Drivers: React.FC = () => {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                                <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
                                     <div className="flex flex-col items-center justify-center">
-                                        <User className="h-12 w-12 text-gray-300 mb-2" />
-                                        <p className="text-lg font-medium text-gray-900">No drivers found</p>
-                                        <p className="text-sm text-gray-500">Try adjusting your search or filters.</p>
+                                        <User className="h-12 w-12 text-slate-300 mb-2" />
+                                        <p className="text-lg font-medium text-slate-900">No drivers found</p>
+                                        <p className="text-sm text-slate-500">Try adjusting your search or filters.</p>
                                     </div>
                                 </td>
                             </tr>
@@ -538,26 +538,26 @@ const Drivers: React.FC = () => {
 
             {/* Pagination Controls */}
             {drivers.length > 0 && (
-                <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-lg shadow-sm">
+                <div className="flex items-center justify-between border-t border-slate-200 bg-white px-4 py-3 sm:px-6 rounded-lg shadow-sm">
                     <div className="flex flex-1 justify-between sm:hidden">
                         <button
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                             disabled={currentPage === 1}
-                            className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                            className="relative inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                         >
                             Previous
                         </button>
                         <button
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages}
-                            className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                            className="relative ml-3 inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                         >
                             Next
                         </button>
                     </div>
                     <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                         <div>
-                            <p className="text-sm text-gray-700">
+                            <p className="text-sm text-slate-700">
                                 Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(currentPage * pageSize, totalCount)}</span> of{' '}
                                 <span className="font-medium">{totalCount}</span> results
                             </p>
@@ -567,7 +567,7 @@ const Drivers: React.FC = () => {
                                 <button
                                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                     disabled={currentPage === 1}
-                                    className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                                    className="relative inline-flex items-center rounded-l-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-gray-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
                                 >
                                     <span className="sr-only">Previous</span>
                                     <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -575,13 +575,13 @@ const Drivers: React.FC = () => {
                                     </svg>
                                 </button>
                                 {/* Simple Page Numbers - can be robust if needed but keeping simple 1..N or current */}
-                                <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">
+                                <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-slate-900 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">
                                     Page {currentPage} of {totalPages}
                                 </span>
                                 <button
                                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                     disabled={currentPage === totalPages}
-                                    className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                                    className="relative inline-flex items-center rounded-r-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-gray-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
                                 >
                                     <span className="sr-only">Next</span>
                                     <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -611,13 +611,13 @@ const Drivers: React.FC = () => {
                 <form onSubmit={handleSaveDriver} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">First Name</label>
                             <div className="relative">
-                                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                                 <input
                                     type="text"
                                     required
-                                    className="pl-9 w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                    className="pl-9 w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                     placeholder="John"
                                     value={formData.firstName}
                                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
@@ -625,11 +625,11 @@ const Drivers: React.FC = () => {
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Last Name</label>
                             <input
                                 type="text"
                                 required
-                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 placeholder="Doe"
                                 value={formData.lastName}
                                 onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
@@ -638,13 +638,13 @@ const Drivers: React.FC = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
                         <div className="relative">
-                            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                             <input
                                 type="text"
                                 required
-                                className="pl-9 w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="pl-9 w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 placeholder="123 Main St, City, State"
                                 value={formData.address}
                                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
@@ -654,13 +654,13 @@ const Drivers: React.FC = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">SSN</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">SSN</label>
                             <div className="relative">
-                                <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                                 <input
                                     type="text"
                                     required
-                                    className="pl-9 w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                    className="pl-9 w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                     placeholder="XXX-XX-XXXX"
                                     value={formData.ssn}
                                     onChange={(e) => setFormData({ ...formData, ssn: e.target.value })}
@@ -668,13 +668,13 @@ const Drivers: React.FC = () => {
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number</label>
                             <div className="relative">
-                                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                                 <input
                                     type="tel"
                                     required
-                                    className="pl-9 w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                    className="pl-9 w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                     placeholder="(555) 123-4567"
                                     value={formData.phone}
                                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -685,20 +685,20 @@ const Drivers: React.FC = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Driver Code</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Driver Code</label>
                             <input
                                 type="text"
                                 required
-                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 placeholder="DRV-001"
                                 value={formData.driverCode}
                                 onChange={(e) => setFormData({ ...formData, driverCode: e.target.value })}
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Terminal</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Terminal</label>
                             <select
-                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 value={formData.terminal}
                                 onChange={(e) => setFormData({ ...formData, terminal: e.target.value })}
                             >
@@ -715,10 +715,10 @@ const Drivers: React.FC = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Driver Manager</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Driver Manager</label>
                         <input
                             type="text"
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                             placeholder="Manager Name"
                             value={formData.driverManager}
                             onChange={(e) => setFormData({ ...formData, driverManager: e.target.value })}
@@ -729,21 +729,21 @@ const Drivers: React.FC = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">License Number</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">License Number</label>
                             <input
                                 type="text"
                                 required
-                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 placeholder="DL-12345678"
                                 value={formData.licenseNumber}
                                 onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })}
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">License State</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">License State</label>
                             <input
                                 type="text"
-                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 placeholder="TX"
                                 value={formData.licenseState}
                                 onChange={(e) => setFormData({ ...formData, licenseState: e.target.value })}
@@ -753,20 +753,20 @@ const Drivers: React.FC = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Restrictions</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Restrictions</label>
                             <input
                                 type="text"
-                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 placeholder="None"
                                 value={formData.licenseRestrictions}
                                 onChange={(e) => setFormData({ ...formData, licenseRestrictions: e.target.value })}
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Endorsements</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Endorsements</label>
                             <input
                                 type="text"
-                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 placeholder="None"
                                 value={formData.licenseEndorsements}
                                 onChange={(e) => setFormData({ ...formData, licenseEndorsements: e.target.value })}
@@ -775,10 +775,10 @@ const Drivers: React.FC = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">License Expiration Date</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">License Expiration Date</label>
                         <input
                             type="date"
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                             value={formData.licenseExpirationDate}
                             onChange={(e) => setFormData({ ...formData, licenseExpirationDate: e.target.value })}
                         />
@@ -786,19 +786,19 @@ const Drivers: React.FC = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Medical Card Issue Date</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Medical Card Issue Date</label>
                             <input
                                 type="date"
-                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 value={formData.medicalCardIssueDate}
                                 onChange={(e) => setFormData({ ...formData, medicalCardIssueDate: e.target.value })}
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Medical Card Expiration</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Medical Card Expiration</label>
                             <input
                                 type="date"
-                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 value={formData.medicalCardExpirationDate}
                                 onChange={(e) => setFormData({ ...formData, medicalCardExpirationDate: e.target.value })}
                             />
@@ -809,21 +809,21 @@ const Drivers: React.FC = () => {
                         <input
                             type="checkbox"
                             id="cpapRequired"
-                            className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                            className="h-4 w-4 text-green-600 focus:ring-green-500 border-slate-300 rounded"
                             checked={formData.cpapRequired}
                             onChange={(e) => setFormData({ ...formData, cpapRequired: e.target.checked })}
                         />
-                        <label htmlFor="cpapRequired" className="text-sm font-medium text-gray-700">CPAP Required</label>
+                        <label htmlFor="cpapRequired" className="text-sm font-medium text-slate-700">CPAP Required</label>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Hire Date</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Hire Date</label>
                         <div className="relative">
-                            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                             <input
                                 type="date"
                                 required
-                                className="pl-9 w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="pl-9 w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 value={formData.hireDate}
                                 max={new Date().toISOString().split('T')[0]}
                                 onChange={(e) => setFormData({ ...formData, hireDate: e.target.value })}
@@ -832,22 +832,22 @@ const Drivers: React.FC = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Driver Photo</label>
-                        <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Driver Photo</label>
+                        <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-md">
                             <div className="space-y-1 text-center">
-                                <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                                <div className="flex text-sm text-gray-600">
+                                <Upload className="mx-auto h-12 w-12 text-slate-400" />
+                                <div className="flex text-sm text-slate-600">
                                     <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-green-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-green-500">
                                         <span>Upload a file</span>
                                         <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleImageChange} accept="image/*" />
                                     </label>
                                     <p className="pl-1">or drag and drop</p>
                                 </div>
-                                <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                                <p className="text-xs text-slate-500">PNG, JPG, GIF up to 10MB</p>
                             </div>
                         </div>
                         {typeof formData.image === 'object' && formData.image && (
-                            <p className="mt-2 text-sm text-gray-500">Selected: {(formData.image as File).name}</p>
+                            <p className="mt-2 text-sm text-slate-500">Selected: {(formData.image as File).name}</p>
                         )}
                     </div>
 
@@ -855,7 +855,7 @@ const Drivers: React.FC = () => {
                         <button
                             type="button"
                             onClick={() => setIsModalOpen(false)}
-                            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            className="px-4 py-2 border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50"
                         >
                             Cancel
                         </button>

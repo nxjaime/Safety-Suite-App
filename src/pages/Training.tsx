@@ -66,7 +66,7 @@ const Training: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-800">Training & Development</h2>
+                <h2 className="text-2xl font-bold text-slate-800">Training & Development</h2>
                 <button
                     onClick={() => setIsModalOpen(true)}
                     className="px-4 py-2 bg-green-100 text-green-800 border border-green-200 rounded-md text-sm font-medium hover:bg-green-200 flex items-center"
@@ -81,7 +81,7 @@ const Training: React.FC = () => {
                     onClick={() => setFilterStatus('Active')}
                     className={clsx(
                         "bg-white p-6 rounded-lg shadow-sm border cursor-pointer transition-all",
-                        filterStatus === 'Active' ? "border-green-500 ring-2 ring-green-100" : "border-gray-200 hover:border-green-300"
+                        filterStatus === 'Active' ? "border-green-500 ring-2 ring-green-100" : "border-slate-200 hover:border-green-300"
                     )}
                 >
                     <div className="flex items-center">
@@ -89,8 +89,8 @@ const Training: React.FC = () => {
                             <GraduationCap className="w-6 h-6 text-green-800" />
                         </div>
                         <div className="ml-4">
-                            <p className="text-sm text-gray-500">Active Modules</p>
-                            <h3 className="text-2xl font-bold text-gray-900">{activeCount}</h3>
+                            <p className="text-sm text-slate-500">Active Modules</p>
+                            <h3 className="text-2xl font-bold text-slate-900">{activeCount}</h3>
                         </div>
                     </div>
                 </div>
@@ -98,7 +98,7 @@ const Training: React.FC = () => {
                     onClick={() => setFilterStatus('Completed')}
                     className={clsx(
                         "bg-white p-6 rounded-lg shadow-sm border cursor-pointer transition-all",
-                        filterStatus === 'Completed' ? "border-blue-500 ring-2 ring-blue-100" : "border-gray-200 hover:border-blue-300"
+                        filterStatus === 'Completed' ? "border-blue-500 ring-2 ring-blue-100" : "border-slate-200 hover:border-blue-300"
                     )}
                 >
                     <div className="flex items-center">
@@ -106,9 +106,9 @@ const Training: React.FC = () => {
                             <CheckCircle className="w-6 h-6 text-blue-600" />
                         </div>
                         <div>
-                            <p className="text-sm text-gray-500">Completion Rate</p>
-                            <h3 className="text-2xl font-bold text-gray-900">{completionRate}%</h3>
-                            <p className="text-xs text-gray-400 mt-1">{completedCount} / {totalCount} completed</p>
+                            <p className="text-sm text-slate-500">Completion Rate</p>
+                            <h3 className="text-2xl font-bold text-slate-900">{completionRate}%</h3>
+                            <p className="text-xs text-slate-400 mt-1">{completedCount} / {totalCount} completed</p>
                         </div>
                     </div>
                 </div>
@@ -116,7 +116,7 @@ const Training: React.FC = () => {
                     onClick={() => setFilterStatus('Overdue')}
                     className={clsx(
                         "bg-white p-6 rounded-lg shadow-sm border cursor-pointer transition-all",
-                        filterStatus === 'Overdue' ? "border-red-500 ring-2 ring-red-100" : "border-gray-200 hover:border-red-300"
+                        filterStatus === 'Overdue' ? "border-red-500 ring-2 ring-red-100" : "border-slate-200 hover:border-red-300"
                     )}
                 >
                     <div className="flex items-center">
@@ -124,8 +124,8 @@ const Training: React.FC = () => {
                             <AlertCircle className="w-6 h-6 text-red-600" />
                         </div>
                         <div>
-                            <p className="text-sm text-gray-500">Overdue Assignments</p>
-                            <h3 className="text-2xl font-bold text-gray-900">{overdueCount}</h3>
+                            <p className="text-sm text-slate-500">Overdue Assignments</p>
+                            <h3 className="text-2xl font-bold text-slate-900">{overdueCount}</h3>
                         </div>
                     </div>
                 </div>
@@ -135,36 +135,36 @@ const Training: React.FC = () => {
                 <div className="flex justify-end">
                     <button
                         onClick={() => setFilterStatus('All')}
-                        className="text-sm text-gray-500 hover:text-gray-700 underline"
+                        className="text-sm text-slate-500 hover:text-slate-700 underline"
                     >
                         Clear Filter (Show All)
                     </button>
                 </div>
             )}
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                    <h3 className="text-lg font-bold text-gray-800">Training Assignments</h3>
-                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                    <h3 className="text-lg font-bold text-slate-800">Training Assignments</h3>
+                    <span className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-full">
                         Showing: {filterStatus}
                     </span>
                 </div>
                 <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-slate-50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Module Name</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assignee</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Module Name</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Assignee</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Due Date</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Progress</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {getFilteredList().map((module) => (
-                            <tr key={module.id} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{module.title}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{module.assignee}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{module.dueDate}</td>
+                            <tr key={module.id} className="hover:bg-slate-50">
+                                <td className="px-6 py-4 whitespace-nowrap font-medium text-slate-900">{module.title}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{module.assignee}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{module.dueDate}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span className={clsx(
                                         "px-2 inline-flex text-xs leading-5 font-semibold rounded-full",
@@ -176,18 +176,18 @@ const Training: React.FC = () => {
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 max-w-xs">
+                                    <div className="w-full bg-slate-200 rounded-full h-2.5 dark:bg-slate-700 max-w-xs">
                                         <div className={clsx("h-2.5 rounded-full",
                                             module.status === 'Overdue' ? 'bg-red-600' : 'bg-green-600'
                                         )} style={{ width: `${module.progress}%` }}></div>
                                     </div>
-                                    <span className="text-xs text-gray-500 mt-1">{module.progress}%</span>
+                                    <span className="text-xs text-slate-500 mt-1">{module.progress}%</span>
                                 </td>
                             </tr>
                         ))}
                         {getFilteredList().length === 0 && (
                             <tr>
-                                <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                                <td colSpan={5} className="px-6 py-4 text-center text-sm text-slate-500">
                                     No assignments found for status "{filterStatus}".
                                 </td>
                             </tr>
@@ -203,9 +203,9 @@ const Training: React.FC = () => {
             >
                 <form onSubmit={handleAssignTraining} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Module Name</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Module Name</label>
                         <select
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                             value={newAssignment.moduleName}
                             onChange={(e) => setNewAssignment({ ...newAssignment, moduleName: e.target.value })}
                         >
@@ -216,12 +216,12 @@ const Training: React.FC = () => {
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Assignee</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Assignee</label>
                         <div className="relative">
-                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                             <select
                                 required
-                                className="pl-9 w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="pl-9 w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 value={newAssignment.assignee}
                                 onChange={(e) => setNewAssignment({ ...newAssignment, assignee: e.target.value })}
                             >
@@ -233,13 +233,13 @@ const Training: React.FC = () => {
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Due Date</label>
                         <div className="relative">
-                            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                             <input
                                 type="date"
                                 required
-                                className="pl-9 w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="pl-9 w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 value={newAssignment.dueDate}
                                 onChange={(e) => setNewAssignment({ ...newAssignment, dueDate: e.target.value })}
                             />
@@ -249,7 +249,7 @@ const Training: React.FC = () => {
                         <button
                             type="button"
                             onClick={() => setIsModalOpen(false)}
-                            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            className="px-4 py-2 border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50"
                         >
                             Cancel
                         </button>

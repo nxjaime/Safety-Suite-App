@@ -155,13 +155,13 @@ const Settings: React.FC = () => {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-800">Settings</h2>
-                    <p className="text-gray-500 text-sm mt-1">Manage application users, system data, and carrier configuration</p>
+                    <h2 className="text-2xl font-bold text-slate-800">Settings</h2>
+                    <p className="text-slate-500 text-sm mt-1">Manage application users, system data, and carrier configuration</p>
                 </div>
             </div>
 
             {/* Tabs */}
-            <div className="border-b border-gray-200">
+            <div className="border-b border-slate-200">
                 <nav className="-mb-px flex space-x-8">
                     <button
                         onClick={() => setActiveTab('users')}
@@ -169,7 +169,7 @@ const Settings: React.FC = () => {
                             "whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center",
                             activeTab === 'users'
                                 ? "border-green-500 text-green-600"
-                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                                : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
                         )}
                     >
                         <User className="w-4 h-4 mr-2" />
@@ -181,7 +181,7 @@ const Settings: React.FC = () => {
                             "whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center",
                             activeTab === 'system'
                                 ? "border-green-500 text-green-600"
-                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                                : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
                         )}
                     >
                         <Database className="w-4 h-4 mr-2" />
@@ -193,7 +193,7 @@ const Settings: React.FC = () => {
                             "whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center",
                             activeTab === 'carrier'
                                 ? "border-green-500 text-green-600"
-                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                                : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
                         )}
                     >
                         <Truck className="w-4 h-4 mr-2" />
@@ -215,28 +215,28 @@ const Settings: React.FC = () => {
                         </button>
                     </div>
 
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
                         <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                            <thead className="bg-slate-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Login</th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">User</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Role</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Last Login</th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {users.map((user) => (
-                                    <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                                    <tr key={user.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
                                                 <div className="flex-shrink-0 h-10 w-10 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-bold">
                                                     {user.name.charAt(0)}
                                                 </div>
                                                 <div className="ml-4">
-                                                    <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                                                    <div className="text-sm text-gray-500">{user.email}</div>
+                                                    <div className="text-sm font-medium text-slate-900">{user.name}</div>
+                                                    <div className="text-sm text-slate-500">{user.email}</div>
                                                 </div>
                                             </div>
                                         </td>
@@ -244,7 +244,7 @@ const Settings: React.FC = () => {
                                             <span className={clsx(
                                                 "px-2 inline-flex text-xs leading-5 font-semibold rounded-full",
                                                 user.role === 'Admin' ? "bg-purple-100 text-purple-800" :
-                                                    user.role === 'Manager' ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-800"
+                                                    user.role === 'Manager' ? "bg-blue-100 text-blue-800" : "bg-slate-100 text-slate-800"
                                             )}>
                                                 {user.role}
                                             </span>
@@ -257,11 +257,11 @@ const Settings: React.FC = () => {
                                                 {user.status}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                                             {user.lastLogin}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <button className="text-gray-400 hover:text-gray-600">
+                                            <button className="text-slate-400 hover:text-slate-600">
                                                 <MoreHorizontal className="w-5 h-5" />
                                             </button>
                                         </td>
@@ -276,11 +276,11 @@ const Settings: React.FC = () => {
             {/* System Data Tab */}
             {activeTab === 'system' && (
                 <div className="space-y-6">
-                    <div className="flex justify-between items-center bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                    <div className="flex justify-between items-center bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
                         <div className="flex items-center space-x-4">
-                            <span className="text-sm font-medium text-gray-700">Select Data Type:</span>
+                            <span className="text-sm font-medium text-slate-700">Select Data Type:</span>
                             <select
-                                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                                 value={systemDataType}
                                 onChange={(e) => setSystemDataType(e.target.value as any)}
                             >
@@ -298,28 +298,28 @@ const Settings: React.FC = () => {
                         </button>
                     </div>
 
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
                         <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                            <thead className="bg-slate-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Label</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Label</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {loading && (
                                     <tr>
-                                        <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">Loading...</td>
+                                        <td colSpan={3} className="px-6 py-4 text-center text-sm text-slate-500">Loading...</td>
                                     </tr>
                                 )}
                                 {!loading && systemOptions.map((item) => (
-                                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
                                             {item.label}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-800">
                                                 {item.category.replace('_', ' ')}
                                             </span>
                                         </td>
@@ -335,7 +335,7 @@ const Settings: React.FC = () => {
                                 ))}
                                 {!loading && systemOptions.length === 0 && (
                                     <tr>
-                                        <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">
+                                        <td colSpan={3} className="px-6 py-4 text-center text-sm text-slate-500">
                                             No options found. Add one to get started.
                                         </td>
                                     </tr>
@@ -349,50 +349,50 @@ const Settings: React.FC = () => {
             {/* Carrier Settings Tab */}
             {activeTab === 'carrier' && (
                 <div className="space-y-6">
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
                         <div className="flex items-center mb-6">
                             <div className="p-3 bg-green-100 rounded-full mr-4">
                                 <Building className="w-6 h-6 text-green-600" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-semibold text-gray-800">Carrier Information</h3>
-                                <p className="text-sm text-gray-500">Enter your USDOT and MC numbers to enable carrier health monitoring</p>
+                                <h3 className="text-lg font-semibold text-slate-800">Carrier Information</h3>
+                                <p className="text-sm text-slate-500">Enter your USDOT and MC numbers to enable carrier health monitoring</p>
                             </div>
                         </div>
 
                         <form onSubmit={handleSaveCarrierSettings} className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Company Name</label>
                                     <input
                                         type="text"
-                                        className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        className="w-full border border-slate-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                         placeholder="Enter company name"
                                         value={carrierSettings.companyName || ''}
                                         onChange={(e) => setCarrierSettings({ ...carrierSettings, companyName: e.target.value })}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">USDOT Number</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">USDOT Number</label>
                                     <input
                                         type="text"
-                                        className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        className="w-full border border-slate-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                         placeholder="e.g. 1234567"
                                         value={carrierSettings.dotNumber || ''}
                                         onChange={(e) => setCarrierSettings({ ...carrierSettings, dotNumber: e.target.value })}
                                     />
-                                    <p className="mt-1 text-xs text-gray-500">Your 7-digit FMCSA USDOT number</p>
+                                    <p className="mt-1 text-xs text-slate-500">Your 7-digit FMCSA USDOT number</p>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">MC Number (Optional)</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">MC Number (Optional)</label>
                                     <input
                                         type="text"
-                                        className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        className="w-full border border-slate-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                         placeholder="e.g. MC-123456"
                                         value={carrierSettings.mcNumber || ''}
                                         onChange={(e) => setCarrierSettings({ ...carrierSettings, mcNumber: e.target.value })}
                                     />
-                                    <p className="mt-1 text-xs text-gray-500">Motor carrier operating authority number</p>
+                                    <p className="mt-1 text-xs text-slate-500">Motor carrier operating authority number</p>
                                 </div>
                             </div>
 
@@ -433,13 +433,13 @@ const Settings: React.FC = () => {
             >
                 <form onSubmit={handleAddUser} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
                         <div className="relative">
-                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                             <input
                                 type="text"
                                 required
-                                className="pl-9 w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="pl-9 w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 placeholder="Jane Doe"
                                 value={newUser.name}
                                 onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
@@ -447,13 +447,13 @@ const Settings: React.FC = () => {
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
                         <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                             <input
                                 type="email"
                                 required
-                                className="pl-9 w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="pl-9 w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 placeholder="jane@company.com"
                                 value={newUser.email}
                                 onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
@@ -461,11 +461,11 @@ const Settings: React.FC = () => {
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
                         <div className="relative">
-                            <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                             <select
-                                className="pl-9 w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="pl-9 w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 value={newUser.role}
                                 onChange={(e) => setNewUser({ ...newUser, role: e.target.value as any })}
                             >
@@ -476,13 +476,13 @@ const Settings: React.FC = () => {
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Temporary Password</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Temporary Password</label>
                         <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                             <input
                                 type="password"
                                 required
-                                className="pl-9 w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="pl-9 w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 placeholder="••••••••"
                                 value={newUser.password}
                                 onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
@@ -493,7 +493,7 @@ const Settings: React.FC = () => {
                         <button
                             type="button"
                             onClick={() => setIsUserModalOpen(false)}
-                            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            className="px-4 py-2 border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50"
                         >
                             Cancel
                         </button>
@@ -515,16 +515,16 @@ const Settings: React.FC = () => {
             >
                 <form onSubmit={handleAddSystemData} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Name / Label</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Name / Label</label>
                         <input
                             type="text"
                             required
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                             placeholder="Enter option name..."
                             value={newDataItem.label}
                             onChange={(e) => setNewDataItem({ ...newDataItem, label: e.target.value })}
                         />
-                        <p className="mt-1 text-xs text-gray-500">
+                        <p className="mt-1 text-xs text-slate-500">
                             Adding to category: <span className="font-semibold">{systemDataType.replace('_', ' ')}</span>
                         </p>
                     </div>
@@ -532,7 +532,7 @@ const Settings: React.FC = () => {
                         <button
                             type="button"
                             onClick={() => setIsDataModalOpen(false)}
-                            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            className="px-4 py-2 border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50"
                         >
                             Cancel
                         </button>

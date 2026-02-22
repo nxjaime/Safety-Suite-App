@@ -62,16 +62,16 @@ const Documents: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-800">
+                <h2 className="text-2xl font-bold text-slate-800">
                     {selectedCategory ? (
                         <div className="flex items-center">
                             <span
-                                className="text-gray-500 hover:text-gray-700 cursor-pointer mr-2"
+                                className="text-slate-500 hover:text-slate-700 cursor-pointer mr-2"
                                 onClick={() => setSelectedCategory(null)}
                             >
                                 Document Library
                             </span>
-                            <span className="text-gray-400 mr-2">/</span>
+                            <span className="text-slate-400 mr-2">/</span>
                             <span>{selectedCategory}</span>
                         </div>
                     ) : 'Document Library'}
@@ -88,14 +88,14 @@ const Documents: React.FC = () => {
             {/* Filter Bar */}
             <div className="flex space-x-4 mb-6">
                 <div className="relative flex-1">
-                    <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
                     <input
                         type="text"
                         placeholder="Search documents..."
-                        className="pl-9 pr-4 py-2 w-full border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                        className="pl-9 pr-4 py-2 w-full border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                     />
                 </div>
-                <button className="flex items-center px-4 py-2 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <button className="flex items-center px-4 py-2 border border-slate-300 rounded-md bg-white text-sm font-medium text-slate-700 hover:bg-slate-50">
                     <Filter className="w-4 h-4 mr-2" />
                     Filter
                 </button>
@@ -112,12 +112,12 @@ const Documents: React.FC = () => {
                             <div
                                 key={cat}
                                 onClick={() => setSelectedCategory(cat)}
-                                className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center cursor-pointer hover:bg-gray-50"
+                                className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex items-center cursor-pointer hover:bg-slate-50"
                             >
                                 <Folder className={`w-8 h-8 ${color} mr-3`} />
                                 <div>
-                                    <h4 className="font-medium text-gray-900">{cat}</h4>
-                                    <p className="text-xs text-gray-500">{count} files</p>
+                                    <h4 className="font-medium text-slate-900">{cat}</h4>
+                                    <p className="text-xs text-slate-500">{count} files</p>
                                 </div>
                             </div>
                         );
@@ -125,31 +125,31 @@ const Documents: React.FC = () => {
                 </div>
             )}
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
                 <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-slate-50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Added</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Name</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Category</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Size</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date Added</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {filteredDocuments.map((doc) => (
-                            <tr key={doc.id} className="hover:bg-gray-50">
+                            <tr key={doc.id} className="hover:bg-slate-50">
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex items-center">
-                                        <FileText className="w-5 h-5 text-gray-400 mr-3" />
-                                        <span className="text-sm font-medium text-gray-900">{doc.name}</span>
+                                        <FileText className="w-5 h-5 text-slate-400 mr-3" />
+                                        <span className="text-sm font-medium text-slate-900">{doc.name}</span>
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doc.category}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doc.type}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doc.size}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doc.date}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{doc.category}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{doc.type}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{doc.size}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{doc.date}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <button
                                         onClick={() => handleDownload(doc.name)}
@@ -171,13 +171,13 @@ const Documents: React.FC = () => {
             >
                 <form onSubmit={handleUploadDocument} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Document Name</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Document Name</label>
                         <div className="relative">
-                            <File className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <File className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                             <input
                                 type="text"
                                 required
-                                className="pl-9 w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="pl-9 w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 placeholder="e.g. Safety Policy 2024"
                                 value={newDocument.name}
                                 onChange={(e) => setNewDocument({ ...newDocument, name: e.target.value })}
@@ -185,9 +185,9 @@ const Documents: React.FC = () => {
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
                         <select
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                             value={newDocument.category}
                             onChange={(e) => setNewDocument({ ...newDocument, category: e.target.value })}
                         >
@@ -199,18 +199,18 @@ const Documents: React.FC = () => {
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">File</label>
-                        <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                        <label className="block text-sm font-medium text-slate-700 mb-1">File</label>
+                        <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-md">
                             <div className="space-y-1 text-center">
-                                <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                                <div className="flex text-sm text-gray-600">
+                                <Upload className="mx-auto h-12 w-12 text-slate-400" />
+                                <div className="flex text-sm text-slate-600">
                                     <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-green-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-green-500">
                                         <span>Upload a file</span>
                                         <input id="file-upload" name="file-upload" type="file" className="sr-only" />
                                     </label>
                                     <p className="pl-1">or drag and drop</p>
                                 </div>
-                                <p className="text-xs text-gray-500">PDF, DOCX, XLSX up to 10MB</p>
+                                <p className="text-xs text-slate-500">PDF, DOCX, XLSX up to 10MB</p>
                             </div>
                         </div>
                     </div>
@@ -218,7 +218,7 @@ const Documents: React.FC = () => {
                         <button
                             type="button"
                             onClick={() => setIsModalOpen(false)}
-                            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            className="px-4 py-2 border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50"
                         >
                             Cancel
                         </button>

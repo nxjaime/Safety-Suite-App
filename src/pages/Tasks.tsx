@@ -163,17 +163,17 @@ const Tasks: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-800">Tasks & Follow-ups</h2>
+                <h2 className="text-2xl font-bold text-slate-800">Tasks & Follow-ups</h2>
                 <div className="flex space-x-3">
                     <div className="relative group">
-                        <button className="flex items-center px-4 py-2 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        <button className="flex items-center px-4 py-2 border border-slate-300 rounded-md bg-white text-sm font-medium text-slate-700 hover:bg-slate-50">
                             <Filter className="w-4 h-4 mr-2" />
                             Filter
                         </button>
-                        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg hidden group-hover:block z-20 p-2">
-                            <div className="text-xs font-semibold text-gray-500 mb-1 px-2">Priority</div>
+                        <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-md shadow-lg hidden group-hover:block z-20 p-2">
+                            <div className="text-xs font-semibold text-slate-500 mb-1 px-2">Priority</div>
                             <select
-                                className="w-full text-sm border-gray-300 rounded mb-2"
+                                className="w-full text-sm border-slate-300 rounded mb-2"
                                 value={filterPriority}
                                 onChange={(e) => setFilterPriority(e.target.value)}
                             >
@@ -182,9 +182,9 @@ const Tasks: React.FC = () => {
                                 <option value="Medium">Medium</option>
                                 <option value="Low">Low</option>
                             </select>
-                            <div className="text-xs font-semibold text-gray-500 mb-1 px-2">Status</div>
+                            <div className="text-xs font-semibold text-slate-500 mb-1 px-2">Status</div>
                             <select
-                                className="w-full text-sm border-gray-300 rounded"
+                                className="w-full text-sm border-slate-300 rounded"
                                 value={filterStatus}
                                 onChange={(e) => setFilterStatus(e.target.value)}
                             >
@@ -205,10 +205,10 @@ const Tasks: React.FC = () => {
                 </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <div className="p-4 border-b border-gray-200 bg-gray-50">
-                    <div className="flex items-center bg-white border border-gray-300 rounded-md px-3 py-2 w-full max-w-md">
-                        <Search className="w-4 h-4 text-gray-400 mr-2" />
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                <div className="p-4 border-b border-slate-200 bg-slate-50">
+                    <div className="flex items-center bg-white border border-slate-300 rounded-md px-3 py-2 w-full max-w-md">
+                        <Search className="w-4 h-4 text-slate-400 mr-2" />
                         <input
                             type="text"
                             placeholder="Search tasks..."
@@ -221,20 +221,20 @@ const Tasks: React.FC = () => {
 
                 {filteredTasks.length > 0 ? (
                     <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                        <thead className="bg-slate-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Related Driver</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Task</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Related Driver</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Assigned To</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Due Date</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Priority</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {filteredTasks.map((task) => (
-                                <tr key={task.id} className={clsx("hover:bg-gray-50", task.status === 'Completed' && "opacity-60")}>
+                                <tr key={task.id} className={clsx("hover:bg-slate-50", task.status === 'Completed' && "opacity-60")}>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
                                             <div className={clsx(
@@ -245,8 +245,8 @@ const Tasks: React.FC = () => {
                                                 <CheckSquare className="w-4 h-4" />
                                             </div>
                                             <div className="ml-4">
-                                                <div className={clsx("text-sm font-medium", task.status === 'Completed' ? "text-gray-500 line-through" : "text-gray-900")}>{task.title}</div>
-                                                <div className="text-xs text-gray-500">{task.type}</div>
+                                                <div className={clsx("text-sm font-medium", task.status === 'Completed' ? "text-slate-500 line-through" : "text-slate-900")}>{task.title}</div>
+                                                <div className="text-xs text-slate-500">{task.type}</div>
                                             </div>
                                         </div>
                                     </td>
@@ -257,15 +257,15 @@ const Tasks: React.FC = () => {
                                                 <span className="text-sm">{task.driverName || 'View Driver'}</span>
                                             </Link>
                                         ) : (
-                                            <span className="text-sm text-gray-400">-</span>
+                                            <span className="text-sm text-slate-400">-</span>
                                         )}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                                         {task.assignee}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                                         <div className="flex items-center">
-                                            <Calendar className="w-4 h-4 text-gray-400 mr-2" />
+                                            <Calendar className="w-4 h-4 text-slate-400 mr-2" />
                                             {task.dueDate}
                                         </div>
                                     </td>
@@ -284,7 +284,7 @@ const Tasks: React.FC = () => {
                                             "px-2 inline-flex text-xs leading-5 font-semibold rounded-full",
                                             task.status === 'Completed' ? "bg-green-100 text-green-800" :
                                                 task.status === 'In Progress' ? "bg-blue-100 text-blue-800" :
-                                                    "bg-gray-100 text-gray-800"
+                                                    "bg-slate-100 text-slate-800"
                                         )}>
                                             {task.status}
                                         </span>
@@ -312,7 +312,7 @@ const Tasks: React.FC = () => {
                                             {task.driverId && (
                                                 <Link
                                                     to={`/drivers/${task.driverId}`}
-                                                    className="text-gray-500 hover:text-gray-700 p-1"
+                                                    className="text-slate-500 hover:text-slate-700 p-1"
                                                     title="Go to Driver"
                                                 >
                                                     <ArrowRight className="w-4 h-4" />
@@ -325,8 +325,8 @@ const Tasks: React.FC = () => {
                         </tbody>
                     </table>
                 ) : (
-                    <div className="p-12 text-center text-gray-500">
-                        <CheckSquare className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+                    <div className="p-12 text-center text-slate-500">
+                        <CheckSquare className="w-12 h-12 mx-auto text-slate-300 mb-3" />
                         <p>No tasks found matching your filters.</p>
                     </div>
                 )}
@@ -340,29 +340,29 @@ const Tasks: React.FC = () => {
             >
                 <form onSubmit={handleCreateTask} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Task Title</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Task Title</label>
                         <input
                             type="text"
                             required
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                             value={newTask.title}
                             onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
                             placeholder="e.g. Schedule Safety Meeting"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
                         <textarea
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                             value={newTask.description}
                             onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
                             rows={3}
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Related Driver (Optional)</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Related Driver (Optional)</label>
                         <select
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                             value={newTask.driverId}
                             onChange={(e) => setNewTask({ ...newTask, driverId: e.target.value })}
                         >
@@ -374,19 +374,19 @@ const Tasks: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Due Date</label>
                             <input
                                 type="date"
                                 required
-                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 value={newTask.dueDate}
                                 onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Priority</label>
                             <select
-                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 value={newTask.priority}
                                 onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
                             >
@@ -397,9 +397,9 @@ const Tasks: React.FC = () => {
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Assign To</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Assign To</label>
                         <select
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                             value={newTask.assignee}
                             onChange={(e) => setNewTask({ ...newTask, assignee: e.target.value })}
                         >
@@ -413,7 +413,7 @@ const Tasks: React.FC = () => {
                         <button
                             type="button"
                             onClick={() => setIsTaskModalOpen(false)}
-                            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            className="px-4 py-2 border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50"
                         >
                             Cancel
                         </button>
@@ -435,13 +435,13 @@ const Tasks: React.FC = () => {
             >
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Task</label>
-                        <p className="text-gray-900 font-medium">{selectedTask?.title}</p>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Task</label>
+                        <p className="text-slate-900 font-medium">{selectedTask?.title}</p>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Assign To</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Assign To</label>
                         <select
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                             value={editTask.assignee}
                             onChange={(e) => setEditTask({ ...editTask, assignee: e.target.value })}
                         >
@@ -452,18 +452,18 @@ const Tasks: React.FC = () => {
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Due Date</label>
                         <input
                             type="date"
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                             value={editTask.dueDate}
                             onChange={(e) => setEditTask({ ...editTask, dueDate: e.target.value })}
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Priority</label>
                         <select
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                             value={editTask.priority}
                             onChange={(e) => setEditTask({ ...editTask, priority: e.target.value })}
                         >
@@ -475,7 +475,7 @@ const Tasks: React.FC = () => {
                     <div className="flex justify-end space-x-3 mt-6">
                         <button
                             onClick={() => setIsEditModalOpen(false)}
-                            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            className="px-4 py-2 border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50"
                         >
                             Cancel
                         </button>
@@ -497,17 +497,17 @@ const Tasks: React.FC = () => {
             >
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Task</label>
-                        <p className="text-gray-900 font-medium">{selectedTask?.title}</p>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Task</label>
+                        <p className="text-slate-900 font-medium">{selectedTask?.title}</p>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-slate-700 mb-1">
                             Closing Notes <span className="text-red-500">*</span>
                         </label>
                         <textarea
                             className={clsx(
                                 "w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500",
-                                closeNotes.trim().length < 25 ? "border-orange-300" : "border-gray-300"
+                                closeNotes.trim().length < 25 ? "border-orange-300" : "border-slate-300"
                             )}
                             value={closeNotes}
                             onChange={(e) => setCloseNotes(e.target.value)}
@@ -525,7 +525,7 @@ const Tasks: React.FC = () => {
                     <div className="flex justify-end space-x-3 mt-6">
                         <button
                             onClick={() => setIsCloseModalOpen(false)}
-                            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            className="px-4 py-2 border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50"
                         >
                             Cancel
                         </button>

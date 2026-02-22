@@ -85,7 +85,7 @@ const Equipment: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-800">Equipment Management</h2>
+                <h2 className="text-2xl font-bold text-slate-800">Equipment Management</h2>
                 <button
                     onClick={openAddModal}
                     className="mt-6 px-4 py-2 bg-green-100 text-green-800 border border-green-200 rounded-md text-sm font-medium hover:bg-green-200 flex items-center"
@@ -95,7 +95,7 @@ const Equipment: React.FC = () => {
                 </button>
             </div>
 
-            <div className="flex space-x-4 border-b border-gray-200">
+            <div className="flex space-x-4 border-b border-slate-200">
                 {['Vehicles', 'Trailers', 'Miscellaneous'].map((tab) => (
                     <button
                         key={tab}
@@ -104,7 +104,7 @@ const Equipment: React.FC = () => {
                             'py-2 px-4 border-b-2 font-medium text-sm transition-colors',
                             activeTab === tab
                                 ? 'border-green-600 text-green-700'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
                         )}
                     >
                         {tab}
@@ -113,62 +113,62 @@ const Equipment: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex items-center">
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 flex items-center">
                     <div className="p-3 bg-green-100 rounded-full mr-4 border border-green-200">
                         <Truck className="w-6 h-6 text-green-800" />
                     </div>
                     <div>
-                        <p className="text-sm text-gray-500">Total {activeTab}</p>
-                        <h3 className="text-2xl font-bold text-gray-900">{filteredVehicles.length}</h3>
+                        <p className="text-sm text-slate-500">Total {activeTab}</p>
+                        <h3 className="text-2xl font-bold text-slate-900">{filteredVehicles.length}</h3>
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex items-center">
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 flex items-center">
                     <div className="p-3 bg-yellow-100 rounded-full mr-4 border border-yellow-200">
                         <Wrench className="w-6 h-6 text-yellow-600" />
                     </div>
                     <div>
-                        <p className="text-sm text-gray-500">In Maintenance</p>
-                        <h3 className="text-2xl font-bold text-gray-900">
+                        <p className="text-sm text-slate-500">In Maintenance</p>
+                        <h3 className="text-2xl font-bold text-slate-900">
                             {vehicles.filter(v => v.status === 'Maintenance').length}
                         </h3>
                     </div>
                 </div>
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex items-center">
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 flex items-center">
                     <div className="p-3 bg-red-100 rounded-full mr-4 border border-red-200">
                         <AlertTriangle className="w-6 h-6 text-red-600" />
                     </div>
                     <div>
-                        <p className="text-sm text-gray-500">Overdue Inspection</p>
-                        <h3 className="text-2xl font-bold text-gray-900">
+                        <p className="text-sm text-slate-500">Overdue Inspection</p>
+                        <h3 className="text-2xl font-bold text-slate-900">
                             {vehicles.filter(v => v.status === 'Inspection Due').length}
                         </h3>
                     </div>
                 </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200">
-                    <h3 className="text-lg font-bold text-gray-800">Vehicle List</h3>
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-200">
+                    <h3 className="text-lg font-bold text-slate-800">Vehicle List</h3>
                 </div>
                 <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-slate-50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Make/Model/Year</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Next Service</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">ID</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Make/Model/Year</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Next Service</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {filteredVehicles.map((vehicle) => (
-                            <tr key={vehicle.id} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{vehicle.id}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{vehicle.type}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{vehicle.year} {vehicle.make} {vehicle.model}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{vehicle.nextService}</td>
+                            <tr key={vehicle.id} className="hover:bg-slate-50">
+                                <td className="px-6 py-4 whitespace-nowrap font-medium text-slate-900">{vehicle.id}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{vehicle.type}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{vehicle.year} {vehicle.make} {vehicle.model}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{vehicle.nextService}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span className={clsx(
                                         "px-2 inline-flex text-xs leading-5 font-semibold rounded-full",
@@ -200,13 +200,13 @@ const Equipment: React.FC = () => {
             >
                 <form onSubmit={handleAddAsset} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle ID</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Vehicle ID</label>
                         <div className="relative">
-                            <Truck className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <Truck className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                             <input
                                 type="text"
                                 required
-                                className="pl-9 w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="pl-9 w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 placeholder="TRK-001"
                                 value={newAsset.id}
                                 onChange={(e) => setNewAsset({ ...newAsset, id: e.target.value })}
@@ -215,9 +215,9 @@ const Equipment: React.FC = () => {
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Type</label>
                         <select
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                             value={newAsset.type}
                             onChange={(e) => setNewAsset({ ...newAsset, type: e.target.value })}
                         >
@@ -229,22 +229,22 @@ const Equipment: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Make</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Make</label>
                             <input
                                 type="text"
                                 required
-                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 placeholder="Freightliner"
                                 value={newAsset.make}
                                 onChange={(e) => setNewAsset({ ...newAsset, make: e.target.value })}
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Model</label>
                             <input
                                 type="text"
                                 required
-                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 placeholder="Cascadia"
                                 value={newAsset.model}
                                 onChange={(e) => setNewAsset({ ...newAsset, model: e.target.value })}
@@ -252,11 +252,11 @@ const Equipment: React.FC = () => {
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Year</label>
                         <input
                             type="number"
                             required
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                             placeholder="2024"
                             value={newAsset.year}
                             onChange={(e) => setNewAsset({ ...newAsset, year: e.target.value })}
@@ -266,7 +266,7 @@ const Equipment: React.FC = () => {
                         <button
                             type="button"
                             onClick={() => setIsModalOpen(false)}
-                            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            className="px-4 py-2 border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50"
                         >
                             Cancel
                         </button>
