@@ -26,3 +26,8 @@ dist-ssr
 
 # Worktrees
 .worktrees/
+
+# Playwright
+playwright-report/
+test-results/
+blob-report/

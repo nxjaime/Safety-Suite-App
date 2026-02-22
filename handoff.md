@@ -63,7 +63,7 @@ A release candidate is shippable when:
 
 ---
 
-## 10-Sprint Roadmap
+## 10-Sprint Roadmap (+ Sprint 4.5 UI Overhaul)
 
 ### Sprint 1: Release Baseline and Product Alignment
 Reminder: Commit & push after checks/tests pass.
@@ -147,6 +147,54 @@ All passed in this workspace.
 Follow-ons moved to Sprint 5+:
 - Expand focused UI tests for Drivers and DriverProfile risk workflows.
 - Reconcile legacy `supabase/schema.sql` drift while preparing next migration set.
+
+### Sprint 4.5: UI Modernization Overhaul (Layout + Visual Language)
+Reminder: Commit & push after checks/tests pass.
+- Goal: Modernize interface layout, hierarchy, and color system to align with a premium fleet-safety operations product.
+- Scope:
+  - Define updated visual direction (typography, spacing, color tokens, component elevation, states).
+  - Redesign app shell (sidebar, top bar, content frame) and normalize page-level layout patterns.
+  - Refresh key modules first (`Dashboard`, `Drivers`, `DriverProfile`, `Safety`, `Equipment`, `Maintenance`, `Work Orders`).
+  - Add interaction polish: loading skeletons, empty states, error states, and clear status semantics.
+  - Maintain WCAG AA contrast and keyboard accessibility while redesigning.
+- Exit criteria:
+  - New design system tokens are applied across all core routes.
+  - Legacy visual patterns are removed from prioritized routes.
+  - Stakeholder sign-off confirms visual direction fits Fleetio + Idelic product intent.
+Execution Status: Complete
+Started: `2026-02-22`
+Completed: `2026-02-22`
+Completed items:
+- Added Playwright-based progressive testing infrastructure:
+  - `playwright.config.ts`
+  - `e2e/smoke.spec.ts`
+  - NPM scripts in `package.json`: `test:unit`, `test:e2e`, `test:smoke`, `test:progress`
+  - CI updates in `.github/workflows/quality-gates.yml` to install Chromium and run UI smoke tests on PR/push.
+- Added Playwright output ignores to `.gitignore`.
+- Completed shell modernization baseline:
+  - `src/components/Layout/Sidebar.tsx` refreshed for new visual direction.
+  - `src/components/Layout/Header.tsx` simplified and modernized (removed theme switcher).
+  - `src/components/Layout/Layout.tsx` spacing/frame updated for route consistency.
+- Parallel page modernization completed:
+  - `src/pages/Dashboard.tsx` refreshed with updated hierarchy and card/chart styling.
+  - `src/pages/Safety.tsx` updated with modern section framing and actions.
+  - `src/pages/Drivers.tsx` updated with modern section framing and actions.
+  - `src/pages/DriverProfile.tsx` updated with modernized framing and action styling.
+  - `src/pages/Equipment.tsx` updated with modern section framing and action styling.
+  - `src/pages/Maintenance.tsx` updated with modern section framing and data card/table treatment.
+  - `src/pages/WorkOrders.tsx` updated with modern section framing and data card/table treatment.
+- Playwright smoke coverage expanded to assert redirects for `/drivers` and `/safety` when unauthenticated.
+ - Playwright smoke coverage expanded to assert redirects for `/equipment`, `/maintenance`, and `/work-orders` when unauthenticated.
+Checks run:
+- `npm run test:unit`
+- `npm run test:smoke`
+- `npm run build`
+All passed in this workspace.
+Artifacts:
+- `docs/plans/2026-02-22-sprint-4-5-ui-overhaul-design.md`
+- `docs/plans/2026-02-22-sprint-4-5-ui-overhaul-implementation-plan.md`
+- `docs/sprint-4-5/summary.md`
+- `docs/sprint-4-5/verification.md`
 
 ### Sprint 5: Integrations Hardening (Motive/FMCSA/Email)
 Reminder: Commit & push after checks/tests pass.

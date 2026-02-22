@@ -521,8 +521,8 @@ const DriverProfile: React.FC = () => {
     );
 
     return (
-        <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="space-y-8" data-testid="driver-profile-page">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between">
                     <div className="flex items-center space-x-6">
                         <div className="relative group cursor-pointer" onClick={() => document.getElementById('fileInput')?.click()}>
@@ -539,8 +539,8 @@ const DriverProfile: React.FC = () => {
                             />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">{driver.name}</h1>
-                            <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
+                            <h1 className="text-2xl font-semibold text-slate-900">{driver.name}</h1>
+                            <div className="flex items-center space-x-4 text-sm text-slate-500 mt-1">
                                 <span>{driver.terminal}</span>
                                 <span>•</span>
                                 <span>{driver.status}</span>
@@ -559,28 +559,28 @@ const DriverProfile: React.FC = () => {
                     <div className="flex flex-col space-y-3 mt-4 md:mt-0">
                         <button
                             onClick={() => setIsEditModalOpen(true)}
-                            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 flex items-center justify-center"
+                            className="px-4 py-2 bg-sky-600 text-white text-sm font-medium rounded-xl hover:bg-sky-700 flex items-center justify-center shadow-sm"
                         >
                             <UserPlus className="w-4 h-4 mr-2" />
                             Edit Profile
                         </button>
                         <button
                             onClick={() => setIsDocumentModalOpen(true)}
-                            className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 flex items-center justify-center"
+                            className="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-xl hover:bg-emerald-700 flex items-center justify-center shadow-sm"
                         >
                             <Upload className="w-4 h-4 mr-2" />
                             Add Document
                         </button>
                         <button
                             onClick={handleRecalculateScore}
-                            className="px-4 py-2 bg-slate-100 text-slate-800 text-sm font-medium rounded-md hover:bg-slate-200 flex items-center justify-center"
+                            className="px-4 py-2 bg-slate-100 text-slate-800 text-sm font-medium rounded-xl hover:bg-slate-200 flex items-center justify-center"
                         >
                             Recalculate Score
                         </button>
                     </div>
 
                     <div className="mt-6 md:mt-0 flex items-center space-x-8">
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 min-w-[150px] text-center">
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 min-w-[150px] text-center">
                             <div className={`text-3xl font-bold ${driver.riskScore > 80 ? 'text-red-600' : driver.riskScore >= 50 ? 'text-amber-600' : 'text-green-600'}`}>
                                 {driver.riskScore}
                             </div>
@@ -684,7 +684,7 @@ const DriverProfile: React.FC = () => {
                             </div>
 
                             {/* Coaching Plans Section */}
-                            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                                 <div className="flex justify-between items-center mb-4">
                                     <h3 className="text-lg font-semibold text-gray-800">Active Coaching Plans</h3>
                                 </div>
@@ -765,7 +765,7 @@ const DriverProfile: React.FC = () => {
                             </div>
 
                             {/* Notes Section */}
-                            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Driver Coaching & Notes</h3>
 
                                 <div className="mb-4">
@@ -806,7 +806,7 @@ const DriverProfile: React.FC = () => {
 
                         <div className="space-y-6">
                             {/* Risk Score Chart */}
-                            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Risk Score Trend</h3>
                                 {scoreParts && (
                                     <div className="mb-3 text-xs text-slate-600">
@@ -832,7 +832,7 @@ const DriverProfile: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Risk Events (90d)</h3>
                                 <div className="space-y-2 max-h-64 overflow-y-auto">
                                     {riskEvents.slice(0, 12).map((event: any) => (

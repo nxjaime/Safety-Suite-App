@@ -1,4 +1,4 @@
-name: Quality Gates
+access token name: Quality Gates
 
 on:
   pull_request:
@@ -32,3 +32,9 @@ jobs:
 
       - name: Unit tests
         run: npm run test -- --run src/test
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: UI smoke tests
+        run: npm run test:smoke

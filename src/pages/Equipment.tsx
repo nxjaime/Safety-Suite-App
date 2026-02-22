@@ -145,17 +145,22 @@ const Equipment: React.FC = () => {
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-slate-800">Equipment Management</h2>
-                <button
-                    onClick={openAddModal}
-                    className="mt-6 px-4 py-2 bg-green-100 text-green-800 border border-green-200 rounded-md text-sm font-medium hover:bg-green-200 flex items-center"
-                >
-                    <Truck className="w-4 h-4 mr-2" />
-                    Add {activeTab}
-                </button>
-            </div>
+        <div className="space-y-8" data-testid="equipment-page">
+            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h2 className="text-2xl font-semibold text-slate-900">Equipment Command Center</h2>
+                        <p className="mt-1 text-sm text-slate-500">Manage fleet assets, inspection readiness, and service posture across all equipment types.</p>
+                    </div>
+                    <button
+                        onClick={openAddModal}
+                        className="px-4 py-2 bg-emerald-600 text-white border border-emerald-600 rounded-xl text-sm font-medium hover:bg-emerald-700 flex items-center shadow-sm"
+                    >
+                        <Truck className="w-4 h-4 mr-2" />
+                        Add {activeTab}
+                    </button>
+                </div>
+            </section>
 
             <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
                 {(['Trucks', 'Trailers', 'Forklifts', 'Pallet Jacks', 'Sales Vehicles'] as const).map((tab) => (
@@ -194,7 +199,7 @@ const Equipment: React.FC = () => {
             {profileTab === 'Overview' && (
                 <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 flex items-center">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center">
                     <div className="p-3 bg-green-100 rounded-full mr-4 border border-green-200">
                         <Truck className="w-6 h-6 text-green-800" />
                     </div>
@@ -204,7 +209,7 @@ const Equipment: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 flex items-center">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center">
                     <div className="p-3 bg-yellow-100 rounded-full mr-4 border border-yellow-200">
                         <Wrench className="w-6 h-6 text-yellow-600" />
                     </div>
@@ -215,7 +220,7 @@ const Equipment: React.FC = () => {
                         </h3>
                     </div>
                 </div>
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 flex items-center">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center">
                     <div className="p-3 bg-red-100 rounded-full mr-4 border border-red-200">
                         <AlertTriangle className="w-6 h-6 text-red-600" />
                     </div>
@@ -228,7 +233,7 @@ const Equipment: React.FC = () => {
                 </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="px-6 py-4 border-b border-slate-200">
                     <h3 className="text-lg font-bold text-slate-800">Vehicle List</h3>
                 </div>
@@ -279,7 +284,7 @@ const Equipment: React.FC = () => {
             )}
 
             {profileTab === 'Inspections' && (
-                <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                     <div className="flex items-center justify-between mb-4">
                         <div>
                             <h3 className="text-lg font-bold text-slate-800">Inspection History</h3>
@@ -295,7 +300,7 @@ const Equipment: React.FC = () => {
             )}
 
             {profileTab === 'Maintenance' && (
-                <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                     <div className="flex items-center justify-between mb-4">
                         <div>
                             <h3 className="text-lg font-bold text-slate-800">Maintenance Schedule</h3>
@@ -311,7 +316,7 @@ const Equipment: React.FC = () => {
             )}
 
             {profileTab === 'Work Orders' && (
-                <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                     <div className="flex items-center justify-between mb-4">
                         <div>
                             <h3 className="text-lg font-bold text-slate-800">Open Work Orders</h3>

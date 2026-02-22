@@ -329,10 +329,14 @@ const Drivers: React.FC = () => {
     });
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-slate-800">Drivers</h2>
-                <div className="flex space-x-3">
+        <div className="space-y-8" data-testid="drivers-page">
+            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                    <div>
+                        <h2 className="text-2xl font-semibold text-slate-900">Driver Operations</h2>
+                        <p className="mt-1 text-sm text-slate-500">Manage roster, monitor risk posture, and coordinate coaching assignments.</p>
+                    </div>
+                    <div className="flex flex-wrap gap-3">
                     <div className="relative">
                         <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
                         <input
@@ -346,7 +350,7 @@ const Drivers: React.FC = () => {
                     <button
                         onClick={() => setShowFilters(!showFilters)}
                         className={clsx(
-                            "flex items-center px-4 py-2 border rounded-md text-sm font-medium transition-colors",
+                            "flex items-center px-4 py-2 border rounded-xl text-sm font-medium transition-colors",
                             showFilters ? "bg-green-100 text-green-800 border-green-200" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
                         )}
                     >
@@ -355,34 +359,35 @@ const Drivers: React.FC = () => {
                     </button>
                     <button
                         onClick={() => setIsImportModalOpen(true)}
-                        className="flex items-center px-4 py-2 border border-slate-300 bg-white rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        className="flex items-center px-4 py-2 border border-slate-300 bg-white rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50"
                     >
                         <Upload className="w-4 h-4 mr-2" />
                         Import CSV
                     </button>
                     <button
                         onClick={handleSyncMotive}
-                        className="flex items-center px-4 py-2 border border-slate-300 bg-white rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        className="flex items-center px-4 py-2 border border-slate-300 bg-white rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50"
                     >
                         <Upload className="w-4 h-4 mr-2" />
                         Sync Motive
                     </button>
                     <button
                         onClick={handleExportCSV}
-                        className="flex items-center px-4 py-2 border border-slate-300 bg-white rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        className="flex items-center px-4 py-2 border border-slate-300 bg-white rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50"
                     >
                         <Download className="w-4 h-4 mr-2" />
                         Export
                     </button>
                     <button
                         onClick={() => handleOpenModal()}
-                        className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 flex items-center shadow-sm"
+                        className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 flex items-center shadow-sm"
                     >
                         <Plus className="w-4 h-4 mr-2" />
                         Add Driver
                     </button>
                 </div>
-            </div>
+                </div>
+            </section>
 
             {/* Filter Panel */}
             {showFilters && (
@@ -441,7 +446,7 @@ const Drivers: React.FC = () => {
                 </div>
             )}
 
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-visible min-h-[400px]">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-visible min-h-[400px]">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-slate-50">
                         <tr>
