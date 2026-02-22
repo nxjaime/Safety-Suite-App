@@ -13,7 +13,8 @@
     "test:e2e": "playwright test",
     "test:smoke": "playwright test e2e/smoke.spec.ts",
     "test:layout": "VITE_E2E_AUTH_BYPASS=true playwright test e2e/layout.spec.ts",
-    "test:progress": "npm run test:unit && npm run test:smoke"
+    "test:progress": "npm run test:unit && npm run test:smoke",
+    "admin:grant": "tsx scripts/grantAdmin.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.78.0",
