@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Lock, ArrowRight } from 'lucide-react';
 
 import { supabase } from '../lib/supabase';
@@ -55,6 +55,9 @@ const Login: React.FC = () => {
                 </h2>
                 <p className="mt-2 text-center text-sm text-slate-400">
                     {isSignUp ? 'Join the leading safety management platform' : 'Secure Access for Safety Professionals'}
+                </p>
+                <p className="mt-2 text-center text-xs text-slate-500">
+                    <Link to="/welcome" className="text-emerald-300 hover:text-emerald-200">View product overview</Link>
                 </p>
             </div>
 

@@ -285,6 +285,34 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
   - Run security review pass and remediate high severity findings.
 - Exit criteria:
   - No critical security issues open for release scope.
+Execution Status: Complete
+Started: `2026-02-22`
+Completed: `2026-02-22`
+Completed items:
+- Added RBAC-aware auth context and admin gating:
+  - `src/contexts/AuthContext.tsx` now resolves role context and `isAdmin`.
+  - `src/services/profileService.ts` added for profile role/email-admin resolution.
+  - Added `AdminRoute` in `src/App.tsx` and protected `/admin`.
+- Added admin operations console:
+  - `src/pages/AdminDashboard.tsx` supports table selection, JSON row inserts, listing, and delete actions.
+  - `src/services/adminService.ts` centralizes admin table operations with org-aware insertion defaults.
+- Added secure feedback backlog foundation:
+  - Migration `supabase/migrations/20260222040000_security_feedback_foundation.sql` creates `feedback_entries`, role constraints, and supporting indexes/policies.
+  - `src/services/feedbackService.ts` + `src/pages/HelpFeedback.tsx` deliver feedback submit/list/delete/export CSV workflow.
+- Added public funnel experience:
+  - `src/pages/Landing.tsx` exposed at `/welcome` with Try for Free / Request Demo calls-to-action.
+  - `src/pages/Login.tsx` now links users to `/welcome`.
+- Navigation/access updates:
+  - `src/components/Layout/Sidebar.tsx` and `src/components/Layout/Header.tsx` updated for Help/Feedback and Admin routes.
+Checks run:
+- `npm run test:layout`
+- `npm run test:smoke`
+- `npm run test:unit`
+- `npm run build`
+All passed in this workspace.
+Artifacts:
+- `docs/sprint-7/summary.md`
+- `docs/sprint-7/verification.md`
 
 ### Sprint 8: Database Optimization and Data Quality
 Reminder: Commit locally and push to GitHub once all checks/tests pass.

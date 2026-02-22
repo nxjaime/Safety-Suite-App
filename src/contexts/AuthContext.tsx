@@ -1,10 +1,13 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { profileService, type ProfileRole } from '../services/profileService';
 
 interface AuthContextType {
     session: Session | null;
     user: User | null;
+    role: ProfileRole;
+    isAdmin: boolean;
     loading: boolean;
     signOut: () => Promise<void>;
     signUp: (email: string, password: string, metadata?: any) => Promise<{ error: any }>;
@@ -15,6 +18,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [session, setSession] = useState<Session | null>(null);
     const [user, setUser] = useState<User | null>(null);
+    const [role, setRole] = useState<ProfileRole>('viewer');
     const [loading, setLoading] = useState(true);
     const isE2EAuthBypass = import.meta.env.VITE_E2E_AUTH_BYPASS === 'true';
 
@@ -27,7 +31,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 app_metadata: {},
                 user_metadata: {
                     full_name: 'E2E User',
-                    title: 'QA Automation'
+                    title: 'QA Automation',
+                    role: 'admin'
                 },
                 created_at: new Date().toISOString()
             } as User;
@@ -43,14 +48,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             setSession(mockSession);
             setUser(mockUser);
+            setRole('admin');
             setLoading(false);
             return;
         }
+
+        const resolveRole = async (nextUser: User | null) => {
+            if (!nextUser) {
+                setRole('viewer');
+                return;
+            }
+            const summary = await profileService.getCurrentProfileSummary();
+            const isEmailAdmin = profileService.isEmailAdmin(nextUser.email || '');
+            setRole(isEmailAdmin ? 'admin' : (summary?.role || 'viewer'));
+        };
 
         // Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
             setUser(session?.user ?? null);
+            resolveRole(session?.user ?? null);
             setLoading(false);
         });
 
@@ -58,6 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             setSession(session);
             setUser(session?.user ?? null);
+            resolveRole(session?.user ?? null);
             setLoading(false);
         });
 
@@ -79,8 +97,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error };
     };
 
+    const isAdmin = role === 'admin' || profileService.isEmailAdmin(user?.email || '');
+
     return (
-        <AuthContext.Provider value={{ session, user, loading, signOut, signUp }}>
+        <AuthContext.Provider value={{ session, user, role, isAdmin, loading, signOut, signUp }}>
             {children}
         </AuthContext.Provider>
     );

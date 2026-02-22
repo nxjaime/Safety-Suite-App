@@ -17,11 +17,8 @@ export default defineConfig({
   webServer: {
     command: 'npm run dev -- --host 127.0.0.1 --port 4173',
     url: 'http://127.0.0.1:4173',
-    reuseExistingServer: !process.env.CI && process.env.E2E_AUTH_BYPASS !== 'true',
-    timeout: 120_000,
-    env: {
-      VITE_E2E_AUTH_BYPASS: process.env.E2E_AUTH_BYPASS === 'true' ? 'true' : 'false'
-    }
+    reuseExistingServer: false,
+    timeout: 120_000
   },
   projects: [
     {

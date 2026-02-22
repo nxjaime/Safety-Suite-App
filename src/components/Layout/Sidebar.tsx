@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import CarrierHealthWidget from './CarrierHealthWidget';
+import { useAuth } from '../../contexts/AuthContext';
 
 type NavLinkItem = {
     type: 'link';
@@ -66,11 +67,13 @@ export const navSections: Array<{ label: string; items: NavItem[] }> = [
         items: [
             { type: 'link', name: 'Analytics', path: '/reporting', icon: BarChart2 },
             { type: 'link', name: 'CSA Predictor', path: '/reporting/csa-predictor', icon: BarChart2 },
+            { type: 'link', name: 'Help & Feedback', path: '/help', icon: BookOpen },
         ],
     },
 ];
 
 const Sidebar: React.FC = () => {
+    const { isAdmin } = useAuth();
 
     return (
         <div className="w-64 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900 text-white flex flex-col h-screen fixed left-0 top-0 overflow-y-auto shadow-[4px_0_24px_rgba(15,23,42,0.25)] border-r border-slate-800">
@@ -135,6 +138,31 @@ const Sidebar: React.FC = () => {
                             </ul>
                         </li>
                     ))}
+                    {isAdmin && (
+                        <li>
+                            <div className="px-4 text-[11px] uppercase tracking-[0.16em] text-slate-400 font-semibold mb-2">
+                                Administration
+                            </div>
+                            <ul className="space-y-1">
+                                <li>
+                                    <NavLink
+                                        to="/admin"
+                                        className={({ isActive }) =>
+                                            clsx(
+                                                'flex items-center px-4 py-3 text-sm font-medium transition-colors rounded-r-xl mr-2',
+                                                isActive
+                                                    ? 'bg-emerald-500/15 text-emerald-300 border-l-2 border-emerald-400'
+                                                    : 'text-slate-200 hover:bg-slate-800/80 border-l-2 border-transparent hover:text-white'
+                                            )
+                                        }
+                                    >
+                                        <ShieldAlert className="w-5 h-5 mr-3" />
+                                        Admin Dashboard
+                                    </NavLink>
+                                </li>
+                            </ul>
+                        </li>
+                    )}
                 </ul>
             </nav>
 

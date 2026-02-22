@@ -21,6 +21,9 @@ const FMCSA = lazy(() => import('./pages/FMCSA'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Login = lazy(() => import('./pages/Login'));
 const UserProfile = lazy(() => import('./pages/UserProfile'));
+const Landing = lazy(() => import('./pages/Landing'));
+const HelpFeedback = lazy(() => import('./pages/HelpFeedback'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 
 
 import { useAuth } from './contexts/AuthContext';
@@ -44,11 +47,30 @@ const ProtectedRoute = () => {
   return <Outlet />;
 };
 
+const AdminRoute = () => {
+  const { loading, isAdmin } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <Outlet />;
+};
+
 function App() {
   return (
     <Router>
       <Toaster position="top-right" />
       <Routes>
+        <Route path="/welcome" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Landing /></Suspense>} />
         <Route path="/login" element={<Login />} />
 
         {/* Protected Routes */}
@@ -70,6 +92,10 @@ function App() {
             <Route path="fmcsa" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><FMCSA /></Suspense>} />
             <Route path="settings" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Settings /></Suspense>} />
             <Route path="profile" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><UserProfile /></Suspense>} />
+            <Route path="help" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><HelpFeedback /></Suspense>} />
+            <Route element={<AdminRoute />}>
+              <Route path="admin" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><AdminDashboard /></Suspense>} />
+            </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Route>
