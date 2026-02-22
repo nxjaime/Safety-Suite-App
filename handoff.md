@@ -103,6 +103,13 @@ Reminder: Commit & push after checks/tests pass.
   - Add work order creation, assignment, and status tracking.
 - Exit criteria:
   - End-to-end asset-to-work-order workflow is functional and tested.
+Completed items:
+- Equipment expanded with ownership, status, usage, and attachments.
+- Maintenance templates, due logic, and Maintenance page shipped.
+- Work order workflow and Work Orders page shipped.
+- Inspection out-of-service toggle auto-creates work orders.
+- Fleet navigation and breadcrumbs updated.
+Checks: `npm run test -- --run src/test` and `npm run build` passed.
 
 ### Sprint 4: Safety Intelligence Core (Risk + Coaching)
 Reminder: Commit & push after checks/tests pass.

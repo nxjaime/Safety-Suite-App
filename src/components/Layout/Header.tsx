@@ -45,6 +45,8 @@ const Header: React.FC<HeaderProps> = ({ theme, setTheme }) => {
         if (path.startsWith('/training')) return { title: 'Training', path: 'Safety > Training' };
         if (path.startsWith('/compliance')) return { title: 'Compliance', path: 'Safety > Compliance' };
         if (path.startsWith('/equipment')) return { title: 'Equipment', path: 'Operations > Fleet > Equipment' };
+        if (path.startsWith('/maintenance')) return { title: 'Maintenance', path: 'Operations > Fleet > Maintenance' };
+        if (path.startsWith('/work-orders')) return { title: 'Work Orders', path: 'Operations > Fleet > Work Orders' };
         if (path.startsWith('/reporting')) return { title: 'Reporting', path: 'Reporting > Analytics' };
         if (path.startsWith('/documents')) return { title: 'Documents', path: 'Operations > Fleet > Documents' };
         if (path.startsWith('/fmcsa')) return { title: 'Regulations', path: 'Safety > Regulations' };

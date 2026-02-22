@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, CheckCircle, Clock, FileText, Plus, User, Calendar, Trash2, AlertTriangle, Truck } from 'lucide-react';
 import Modal from '../components/UI/Modal';
-import { inspectionService } from '../services/inspectionService';
+import { inspectionService, shouldCreateWorkOrderFromInspection } from '../services/inspectionService';
 import type { Inspection, ViolationItem } from '../services/inspectionService';
 import { driverService } from '../services/driverService';
 import type { Driver } from '../types';
+import { workOrderService } from '../services/workOrderService';
 
 const Compliance: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -60,7 +61,8 @@ const Compliance: React.FC = () => {
         cargo_info: '',
 
         // Violations
-        violations_data: []
+        violations_data: [],
+        out_of_service: false
     };
 
     const [newInspection, setNewInspection] = useState<Partial<Inspection>>(initialInspectionState);
@@ -155,11 +157,26 @@ const Compliance: React.FC = () => {
     const handleAddInspection = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await inspectionService.createInspection({
+            const inspectionPayload = {
                 ...newInspection,
                 vehicle_name: newInspection.vehicle_name, // Ensure basic UI field is populated
                 violations_count: (newInspection.violations_data || []).length
-            });
+            };
+            await inspectionService.createInspection(inspectionPayload);
+
+            const shouldCreate = shouldCreateWorkOrderFromInspection(
+                inspectionPayload.out_of_service,
+                inspectionPayload.violations_data || []
+            );
+
+            if (shouldCreate) {
+                await workOrderService.createWorkOrder({
+                    title: `Inspection OOS: ${inspectionPayload.vehicle_name || 'Vehicle'}`,
+                    description: 'Auto-generated from inspection out-of-service status.',
+                    status: 'Draft',
+                    priority: 'High'
+                });
+            }
             await loadInspections();
             setIsInspectionModalOpen(false);
             setNewInspection(initialInspectionState);
@@ -648,6 +665,18 @@ const Compliance: React.FC = () => {
                                             <input type="text" className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
                                                 placeholder="Commodity, BOL #"
                                                 value={newInspection.cargo_info} onChange={e => setNewInspection({ ...newInspection, cargo_info: e.target.value })} />
+                                        </div>
+                                        <div className="col-span-2 flex items-center justify-between rounded-md border border-red-200 bg-red-50 px-4 py-2">
+                                            <div>
+                                                <p className="text-sm font-medium text-red-700">Out of Service</p>
+                                                <p className="text-xs text-red-600">Auto-creates a work order when checked.</p>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                className="h-4 w-4 rounded border-red-300 text-red-600 focus:ring-red-500"
+                                                checked={!!newInspection.out_of_service}
+                                                onChange={(e) => setNewInspection({ ...newInspection, out_of_service: e.target.checked })}
+                                            />
                                         </div>
                                     </div>
                                 )}
