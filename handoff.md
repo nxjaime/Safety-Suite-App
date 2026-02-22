@@ -86,12 +86,13 @@ Reminder: Commit & push after checks/tests pass.
 - Exit criteria:
   - Shared design system active on core routes.
   - UX consistency baseline accepted by product/design.
-Execution Status: In Progress
+Execution Status: Complete
 Completed items:
 Design tokens with Space Grotesk + Inter and safety palette.
 Navigation IA updated with Operations/Fleet/Safety/Reporting/Settings.
 Baseline accessibility improvements in navigation and header.
 Baseline form styling and palette alignment across core pages.
+Checks: `npm run test -- --run src/test` and `npm run build` passed.
 
 ### Sprint 3: Fleet Operations Core (Asset + Maintenance)
 Reminder: Commit & push after checks/tests pass.
