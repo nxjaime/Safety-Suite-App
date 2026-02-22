@@ -9,7 +9,7 @@ const Layout: React.FC = () => {
             <Sidebar />
             <div className="flex-1 ml-64">
                 <Header />
-                <main className="pt-24 p-6 md:p-8">
+                <main className="p-6 md:p-8 pt-24 md:pt-24">
                     <Outlet />
                 </main>
             </div>

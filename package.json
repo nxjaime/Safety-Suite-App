@@ -12,7 +12,7 @@
     "test:unit": "vitest --run src/test",
     "test:e2e": "playwright test",
     "test:smoke": "playwright test e2e/smoke.spec.ts",
-    "test:layout": "playwright test e2e/layout.spec.ts",
+    "test:layout": "E2E_AUTH_BYPASS=true playwright test e2e/layout.spec.ts",
     "test:progress": "npm run test:unit && npm run test:smoke"
   },
   "dependencies": {

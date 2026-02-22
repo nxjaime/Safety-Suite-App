@@ -107,7 +107,16 @@ export const carrierService = {
         try {
             // In production, this would call a backend API that scrapes SAFER
             // For now, we'll use a mock API endpoint structure
-            const response = await fetch(`/api/carrier-health?dot=${dotNumber}`);
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 10000);
+            let response: Response;
+            try {
+                response = await fetch(`/api/carrier-health?dot=${dotNumber}`, {
+                    signal: controller.signal
+                });
+            } finally {
+                clearTimeout(timer);
+            }
 
             if (!response.ok) {
                 // If API not available, return cached data from DB

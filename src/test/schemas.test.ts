@@ -3,6 +3,7 @@ import { querySchema as carrierSchema } from '../../api/carrier-health';
 import { querySchema as driversSchema } from '../../api/motive/drivers';
 import { querySchema as scoresSchema } from '../../api/motive/scores';
 import { querySchema as eventsSchema } from '../../api/motive/events';
+import { bodySchema as emailSchema } from '../../api/send-email';
 
 describe('API Schema Validation', () => {
     describe('Carrier Health Schema', () => {
@@ -88,6 +89,26 @@ describe('API Schema Validation', () => {
             const result = eventsSchema.safeParse({
                 start_time: 'invalid',
                 end_time: 'also-invalid'
+            });
+            expect(result.success).toBe(false);
+        });
+    });
+
+    describe('Send Email Schema', () => {
+        it('accepts valid email payload', () => {
+            const result = emailSchema.safeParse({
+                to: 'driver@example.com',
+                subject: 'Reminder',
+                html: '<p>Safety reminder</p>'
+            });
+            expect(result.success).toBe(true);
+        });
+
+        it('rejects invalid recipient email', () => {
+            const result = emailSchema.safeParse({
+                to: 'invalid',
+                subject: 'Reminder',
+                html: '<p>Safety reminder</p>'
             });
             expect(result.success).toBe(false);
         });

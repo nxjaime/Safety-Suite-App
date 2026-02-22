@@ -207,6 +207,39 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
   - Backlog carry-over: add authenticated Playwright fixture and enable protected-route clipping assertions in `e2e/layout.spec.ts`.
 - Exit criteria:
   - Integration failures degrade gracefully with alerting.
+Execution Status: Complete
+Started: `2026-02-22`
+Completed: `2026-02-22`
+Completed items:
+- Added shared API hardening utilities:
+  - `api/lib/http.ts` for CORS handling, timeout + retry upstream fetches, and normalized error responses.
+  - `api/lib/rateLimit.ts` for request throttling with response headers and retry hints.
+- Hardened Motive API routes (`drivers`, `scores`, `events`) with:
+  - strict validation,
+  - per-route rate limits,
+  - timeout/backoff retry behavior,
+  - normalized error payloads.
+- Hardened FMCSA and email integrations:
+  - `api/carrier-health.ts` now uses retry/timeout + normalized failures + rate limit.
+  - `api/send-email.ts` now enforces strict request body validation and rate limiting.
+- Added integration health endpoint:
+  - `api/integrations/health.ts` probes Motive/Resend/FMCSA and returns an overall health state.
+- Added client-side fallback behavior:
+  - `src/services/motiveService.ts` now returns safe fallback payloads on failures and exposes integration health query.
+  - `src/services/carrierService.ts` and `src/services/emailService.ts` now use request timeouts.
+- Closed layout regression backlog item:
+  - Fixed fixed-header clipping root cause in `src/components/Layout/Layout.tsx` (`p-*` / `pt-*` class order).
+  - Enabled authenticated layout regression coverage via env-driven bypass and route assertions in `e2e/layout.spec.ts`.
+- Extended schema validation tests for email API payloads in `src/test/schemas.test.ts`.
+Checks run:
+- `npm run test:layout`
+- `npm run test:smoke`
+- `npm run test:unit`
+- `npm run build`
+All passed in this workspace.
+Artifacts:
+- `docs/sprint-5/summary.md`
+- `docs/sprint-5/verification.md`
 
 ### Sprint 6: Compliance + Documents + Inspection Workflows
 Reminder: Commit locally and push to GitHub once all checks/tests pass.

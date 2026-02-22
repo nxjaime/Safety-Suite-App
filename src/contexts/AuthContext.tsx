@@ -16,8 +16,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [session, setSession] = useState<Session | null>(null);
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const isE2EAuthBypass = import.meta.env.VITE_E2E_AUTH_BYPASS === 'true';
 
     useEffect(() => {
+        if (isE2EAuthBypass) {
+            const mockUser = {
+                id: 'e2e-user',
+                email: 'e2e@safetyhub.local',
+                aud: 'authenticated',
+                app_metadata: {},
+                user_metadata: {
+                    full_name: 'E2E User',
+                    title: 'QA Automation'
+                },
+                created_at: new Date().toISOString()
+            } as User;
+
+            const mockSession = {
+                access_token: 'e2e-access-token',
+                refresh_token: 'e2e-refresh-token',
+                token_type: 'bearer',
+                expires_in: 3600,
+                expires_at: Math.floor(Date.now() / 1000) + 3600,
+                user: mockUser
+            } as Session;
+
+            setSession(mockSession);
+            setUser(mockUser);
+            setLoading(false);
+            return;
+        }
+
         // Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
@@ -33,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
 
         return () => subscription.unsubscribe();
-    }, []);
+    }, [isE2EAuthBypass]);
 
     const signOut = async () => {
         await supabase.auth.signOut();

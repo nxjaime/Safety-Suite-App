@@ -1,4 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { z } from 'zod';
+import { applyCors, fetchWithRetry, normalizeIntegrationError, sendNormalizedError } from './lib/http';
+import { enforceRateLimit } from './lib/rateLimit';
 
 interface CarrierHealth {
     dotNumber: string;
@@ -45,11 +48,14 @@ async function scrapeCarrierData(dotNumber: string): Promise<CarrierHealth | nul
     try {
         const overviewUrl = `https://ai.fmcsa.dot.gov/SMS/Carrier/${dotNumber}/Overview.aspx`;
 
-        const response = await fetch(overviewUrl, {
+        const response = await fetchWithRetry(overviewUrl, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
             }
+        }, {
+            retries: 1,
+            timeoutMs: 10_000
         });
 
         if (!response.ok) {
@@ -118,8 +124,11 @@ async function scrapeCarrierData(dotNumber: string): Promise<CarrierHealth | nul
 
             const detailUrl = `https://ai.fmcsa.dot.gov/SMS/Carrier/${dotNumber}/BASIC/${key}.aspx`;
             try {
-                const r = await fetch(detailUrl, {
+                const r = await fetchWithRetry(detailUrl, {
                     headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+                }, {
+                    retries: 1,
+                    timeoutMs: 7_000
                 });
                 if (!r.ok) return;
                 const dHtml = await r.text();
@@ -160,29 +169,12 @@ async function scrapeCarrierData(dotNumber: string): Promise<CarrierHealth | nul
     }
 }
 
-
-
-const ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    process.env.VITE_APP_URL || ''
-].filter(Boolean);
-
-import { z } from 'zod';
-
 export const querySchema = z.object({
     dot: z.string().min(1, "DOT number is required").regex(/^\d+$/, "DOT number must be numeric")
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    // Enable CORS with specific origin check
-    const origin = req.headers.origin;
-    if (origin && ALLOWED_ORIGINS.includes(origin)) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-    }
-
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    applyCors(req, res, ['GET', 'OPTIONS']);
 
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
@@ -190,6 +182,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (req.method !== 'GET') {
         return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    if (!enforceRateLimit(req, res, { windowMs: 60_000, maxRequests: 30, keyPrefix: 'carrier-health' })) {
+        return;
     }
 
     // Validate Input with Zod
@@ -208,13 +204,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const carrierData = await scrapeCarrierData(dot);
 
         if (!carrierData) {
-            return res.status(404).json({ error: 'Carrier not found or data unavailable' });
+            return res.status(404).json({
+                error: 'Carrier not found or data unavailable',
+                code: 'FMCSA_DATA_UNAVAILABLE',
+                retryable: true
+            });
         }
 
         return res.status(200).json(carrierData);
     } catch (error) {
         console.error('Carrier health API error:', error);
-        return res.status(500).json({ error: 'Internal server error' });
+        const normalized = normalizeIntegrationError(error, 'Failed to fetch FMCSA carrier data');
+        return sendNormalizedError(res, normalized);
     }
 }
-

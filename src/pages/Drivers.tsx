@@ -292,7 +292,7 @@ const Drivers: React.FC = () => {
             }
 
             // 3. Map to local Driver format
-            const mappedDrivers = motiveDrivers.map((md: any) => ({
+            const mappedDrivers: Partial<Driver>[] = motiveDrivers.map((md: any) => ({
                 motive_id: md.id.toString(),
                 name: `${md.first_name} ${md.last_name}`,
                 email: md.email,

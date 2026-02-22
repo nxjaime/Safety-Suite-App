@@ -52,18 +52,26 @@ export const emailService = {
         }
 
         try {
-            // Using Vercel serverless function endpoint
-            const response = await fetch('/api/send-email', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${import.meta.env.VITE_API_SECRET_KEY}`
-                },
-                body: JSON.stringify({
-                    ...options,
-                    from: options.from || 'SafetyHub Connect <noreply@safetyhub.com>'
-                })
-            });
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 10000);
+            let response: Response;
+            try {
+                // Using Vercel serverless function endpoint
+                response = await fetch('/api/send-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${import.meta.env.VITE_API_SECRET_KEY}`
+                    },
+                    signal: controller.signal,
+                    body: JSON.stringify({
+                        ...options,
+                        from: options.from || 'SafetyHub Connect <noreply@safetyhub.com>'
+                    })
+                });
+            } finally {
+                clearTimeout(timer);
+            }
 
             // Handle non-OK responses with detailed error logging
             if (!response.ok) {
