@@ -58,7 +58,7 @@ const Login: React.FC = () => {
                             {isSignUp ? 'Join the leading safety management platform' : 'Welcome back! Please enter your details.'}
                         </p>
                         <p className="mt-2 text-xs text-slate-500">
-                            <Link to="/" className="text-emerald-600 hover:text-emerald-500 font-medium">← Back to Home</Link>
+                            <Link to="/welcome" className="text-emerald-600 hover:text-emerald-500 font-medium">← Back to Landing Page</Link>
                         </p>
                     </div>
 
