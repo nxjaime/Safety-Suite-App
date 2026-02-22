@@ -1,7 +1,25 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Download, HelpCircle, LifeBuoy, MessageSquare, Trash2 } from 'lucide-react';
+import { BookOpen, Download, FileText, LifeBuoy, MessageSquare, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { feedbackService, type FeedbackEntry } from '../services/feedbackService';
+
+const docs = [
+  {
+    title: 'Getting Started',
+    description: 'How to launch your daily workflow with Operations, Safety, and Compliance.',
+    bullets: ['Review Status Board and open tasks', 'Check driver risk and coaching queue', 'Resolve compliance due items first']
+  },
+  {
+    title: 'Submitting Feedback',
+    description: 'Best way to report issues and request product improvements.',
+    bullets: ['Choose the right category and priority', 'Include expected vs actual behavior', 'Add clear context and business impact']
+  },
+  {
+    title: 'Admin & Access',
+    description: 'How admin permissions and elevated actions are managed.',
+    bullets: ['Admin dashboard is role-gated', 'Use least-privilege account assignments', 'Log feedback for missing admin workflows']
+  }
+];
 
 const HelpFeedback: React.FC = () => {
   const [entries, setEntries] = useState<FeedbackEntry[]>([]);
@@ -91,111 +109,149 @@ const HelpFeedback: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-5xl space-y-6 pb-8">
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-2xl font-semibold text-slate-900">Help & Feedback</h2>
-        <p className="mt-1 text-sm text-slate-500">Documentation, support access, and a product feedback backlog.</p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-semibold text-slate-900">Help & Feedback</h2>
+            <p className="mt-1 text-sm text-slate-500">Clean support docs, feedback intake, and backlog management.</p>
+          </div>
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-right">
+            <div className="text-xs uppercase tracking-wide text-emerald-700">Open Backlog</div>
+            <div className="text-xl font-semibold text-emerald-900">{openCount}</div>
+          </div>
+        </div>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-3">
-        <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="mb-3 inline-flex rounded-lg bg-emerald-50 p-2 text-emerald-600"><HelpCircle className="h-5 w-5" /></div>
-          <h3 className="text-lg font-semibold text-slate-900">Getting Started</h3>
-          <p className="mt-2 text-sm text-slate-600">Use Drivers, Equipment, and Compliance first. Then enable integration syncing from Settings and monitor Safety scores daily.</p>
-        </article>
-        <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="mb-3 inline-flex rounded-lg bg-cyan-50 p-2 text-cyan-600"><LifeBuoy className="h-5 w-5" /></div>
-          <h3 className="text-lg font-semibold text-slate-900">Support Workflow</h3>
-          <p className="mt-2 text-sm text-slate-600">Escalate urgent issues via your internal support process and log platform problems below so they enter the roadmap backlog.</p>
-        </article>
-        <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="mb-3 inline-flex rounded-lg bg-amber-50 p-2 text-amber-600"><MessageSquare className="h-5 w-5" /></div>
-          <h3 className="text-lg font-semibold text-slate-900">Backlog Health</h3>
-          <p className="mt-2 text-sm text-slate-600">Open items: <span className="font-semibold text-slate-900">{openCount}</span> / Total: <span className="font-semibold text-slate-900">{entries.length}</span></p>
-        </article>
-      </section>
+      <section className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
+        <div className="space-y-4">
+          <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-slate-700" />
+              <h3 className="text-lg font-semibold text-slate-900">Help Documentation</h3>
+            </div>
+            <div className="space-y-3">
+              {docs.map((doc) => (
+                <div key={doc.title} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <h4 className="font-semibold text-slate-900">{doc.title}</h4>
+                  <p className="mt-1 text-sm text-slate-600">{doc.description}</p>
+                  <ul className="mt-2 space-y-1 text-sm text-slate-700">
+                    {doc.bullets.map((bullet) => (
+                      <li key={bullet}>- {bullet}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
+              <FileText className="h-4 w-4" />
+              Source doc: <code>docs/help/help-center.md</code>
+            </div>
+          </article>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-900">Send Feedback</h3>
-        <form onSubmit={submitFeedback} className="mt-4 grid gap-4 md:grid-cols-4">
-          <select
-            value={form.category}
-            onChange={(event) => setForm((prev) => ({ ...prev, category: event.target.value }))}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          >
-            <option value="General">General</option>
-            <option value="Bug">Bug</option>
-            <option value="Feature Request">Feature Request</option>
-            <option value="Usability">Usability</option>
-            <option value="Performance">Performance</option>
-          </select>
-          <select
-            value={form.priority}
-            onChange={(event) => setForm((prev) => ({ ...prev, priority: event.target.value as 'Low' | 'Medium' | 'High' }))}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          >
-            <option value="Low">Low Priority</option>
-            <option value="Medium">Medium Priority</option>
-            <option value="High">High Priority</option>
-          </select>
-          <input
-            value={form.message}
-            onChange={(event) => setForm((prev) => ({ ...prev, message: event.target.value }))}
-            placeholder="Describe issue or request"
-            className="md:col-span-2 rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          />
-          <button type="submit" className="md:col-span-4 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
-            Submit Feedback
-          </button>
-        </form>
-      </section>
+          <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-3 flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-slate-700" />
+              <h3 className="text-lg font-semibold text-slate-900">Feedback Backlog</h3>
+            </div>
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-sm text-slate-500">Total items: {entries.length}</p>
+              <button onClick={exportCsv} className="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                <Download className="mr-2 h-4 w-4" />
+                Export CSV
+              </button>
+            </div>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-slate-900">Feedback Backlog</h3>
-          <button onClick={exportCsv} className="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-            <Download className="mr-2 h-4 w-4" />
-            Export CSV
-          </button>
+            {loading ? (
+              <p className="text-sm text-slate-500">Loading feedback...</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-200">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Category</th>
+                      <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Priority</th>
+                      <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Message</th>
+                      <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white">
+                    {entries.map((entry) => (
+                      <tr key={entry.id}>
+                        <td className="px-3 py-3 text-sm text-slate-700">{entry.category}</td>
+                        <td className="px-3 py-3 text-sm text-slate-700">{entry.priority}</td>
+                        <td className="px-3 py-3 text-sm text-slate-700">{entry.message}</td>
+                        <td className="px-3 py-3 text-right">
+                          <button onClick={() => deleteFeedback(entry.id)} className="inline-flex items-center text-rose-600 hover:text-rose-700" title="Delete feedback">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {entries.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="px-3 py-6 text-center text-sm text-slate-500">No feedback submitted yet.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </article>
         </div>
 
-        {loading ? (
-          <p className="text-sm text-slate-500">Loading feedback...</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Category</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Priority</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Message</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Submitted</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {entries.map((entry) => (
-                  <tr key={entry.id}>
-                    <td className="px-4 py-3 text-sm text-slate-700">{entry.category}</td>
-                    <td className="px-4 py-3 text-sm text-slate-700">{entry.priority}</td>
-                    <td className="px-4 py-3 text-sm text-slate-700">{entry.message}</td>
-                    <td className="px-4 py-3 text-sm text-slate-500">{new Date(entry.createdAt).toLocaleString()}</td>
-                    <td className="px-4 py-3 text-right">
-                      <button onClick={() => deleteFeedback(entry.id)} className="inline-flex items-center text-rose-600 hover:text-rose-700">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {entries.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">No feedback submitted yet.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+        <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-center gap-2">
+            <LifeBuoy className="h-5 w-5 text-slate-700" />
+            <h3 className="text-lg font-semibold text-slate-900">Send Feedback</h3>
           </div>
-        )}
+          <p className="mb-4 text-sm text-slate-500">Use this form to report bugs, request features, or suggest usability improvements.</p>
+
+          <form onSubmit={submitFeedback} className="space-y-3">
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Category</label>
+              <select
+                value={form.category}
+                onChange={(event) => setForm((prev) => ({ ...prev, category: event.target.value }))}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              >
+                <option value="General">General</option>
+                <option value="Bug">Bug</option>
+                <option value="Feature Request">Feature Request</option>
+                <option value="Usability">Usability</option>
+                <option value="Performance">Performance</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Priority</label>
+              <select
+                value={form.priority}
+                onChange={(event) => setForm((prev) => ({ ...prev, priority: event.target.value as 'Low' | 'Medium' | 'High' }))}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              >
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Message</label>
+              <textarea
+                value={form.message}
+                onChange={(event) => setForm((prev) => ({ ...prev, message: event.target.value }))}
+                rows={5}
+                placeholder="Describe issue or request"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              />
+            </div>
+
+            <button type="submit" className="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+              Submit Feedback
+            </button>
+          </form>
+        </article>
       </section>
     </div>
   );
