@@ -16,3 +16,22 @@ body,
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Space Grotesk', sans-serif;
 }
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900;
+  }
+
+  label {
+    @apply text-slate-700;
+  }
+
+  input, select, textarea {
+    @apply bg-white text-slate-900 border border-slate-200 placeholder-slate-400;
+    @apply focus:outline-none focus:ring-2 focus:ring-safety-green focus:border-safety-green;
+  }
+
+  a {
+    @apply text-slate-700;
+  }
+}
