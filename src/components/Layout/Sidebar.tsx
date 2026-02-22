@@ -46,7 +46,7 @@ export const navSections: Array<{ label: string; items: LegacyNavItem[] }> = [
     {
         label: 'Operations',
         items: [
-            { type: 'link', name: 'Status Board', path: '/', icon: LayoutDashboard },
+            { type: 'link', name: 'Status Board', path: '/dashboard', icon: LayoutDashboard },
             { type: 'link', name: 'Tasks', path: '/tasks', icon: CheckSquare },
             { type: 'subheader', name: 'Fleet' },
             { type: 'link', name: 'Equipment', path: '/equipment', icon: Truck },
@@ -85,7 +85,7 @@ const menuGroups: MenuGroup[] = [
         id: 'quick',
         label: 'Quick Actions',
         items: [
-            { name: 'Status Board', path: '/', icon: LayoutDashboard },
+            { name: 'Status Board', path: '/dashboard', icon: LayoutDashboard },
             { name: 'Tasks', path: '/tasks', icon: CheckSquare }
         ]
     },
