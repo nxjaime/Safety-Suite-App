@@ -1,0 +1,2101 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_error > renders correctly in dark theme > badge_error-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-error">Error</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-error)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_error > renders correctly in high-contrast theme > badge_error-high-contrast 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-error">Error</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-error)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "high-contrast",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_error > renders correctly in light theme > badge_error-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-error">Error</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-error)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_error > renders correctly in vscode-dark theme > badge_error-vscode-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-error">Error</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-error)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "vscode-dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_error > renders correctly in vscode-light theme > badge_error-vscode-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-error">Error</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-error)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "vscode-light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_info > renders correctly in dark theme > badge_info-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-info">Info</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-info)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_info > renders correctly in high-contrast theme > badge_info-high-contrast 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-info">Info</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-info)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "high-contrast",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_info > renders correctly in light theme > badge_info-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-info">Info</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-info)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_info > renders correctly in vscode-dark theme > badge_info-vscode-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-info">Info</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-info)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "vscode-dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_info > renders correctly in vscode-light theme > badge_info-vscode-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-info">Info</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-info)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "vscode-light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_neutral > renders correctly in dark theme > badge_neutral-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-neutral">Neutral</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-text-secondary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_neutral > renders correctly in high-contrast theme > badge_neutral-high-contrast 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-neutral">Neutral</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-text-secondary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "high-contrast",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_neutral > renders correctly in light theme > badge_neutral-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-neutral">Neutral</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-text-secondary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_neutral > renders correctly in vscode-dark theme > badge_neutral-vscode-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-neutral">Neutral</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-text-secondary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "vscode-dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_neutral > renders correctly in vscode-light theme > badge_neutral-vscode-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-neutral">Neutral</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-text-secondary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "vscode-light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_success > renders correctly in dark theme > badge_success-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-success">Success</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-success)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_success > renders correctly in high-contrast theme > badge_success-high-contrast 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-success">Success</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-success)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "high-contrast",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_success > renders correctly in light theme > badge_success-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-success">Success</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-success)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_success > renders correctly in vscode-dark theme > badge_success-vscode-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-success">Success</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-success)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "vscode-dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_success > renders correctly in vscode-light theme > badge_success-vscode-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-success">Success</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-success)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "vscode-light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_warning > renders correctly in dark theme > badge_warning-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-warning">Warning</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-warning)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_warning > renders correctly in high-contrast theme > badge_warning-high-contrast 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-warning">Warning</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-warning)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "high-contrast",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_warning > renders correctly in light theme > badge_warning-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-warning">Warning</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-warning)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_warning > renders correctly in vscode-dark theme > badge_warning-vscode-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-warning">Warning</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-warning)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "vscode-dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > badge_warning > renders correctly in vscode-light theme > badge_warning-vscode-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="badge badge-warning">Warning</span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-sm)",
+    "color": "var(--loki-warning)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-xs)",
+    "padding": "2px var(--loki-space-sm)",
+  },
+  "theme": "vscode-light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_danger > renders correctly in dark theme > button_danger-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-danger">Danger Button</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "rgba(0, 0, 0, 0) rgba(0, 0, 0, 0) rgba(0, 0, 0, 0)",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-inverse)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_danger > renders correctly in high-contrast theme > button_danger-high-contrast 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-danger">Danger Button</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "rgba(0, 0, 0, 0) rgba(0, 0, 0, 0) rgba(0, 0, 0, 0)",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-inverse)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "high-contrast",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_danger > renders correctly in light theme > button_danger-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-danger">Danger Button</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "rgba(0, 0, 0, 0) rgba(0, 0, 0, 0) rgba(0, 0, 0, 0)",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-inverse)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_danger > renders correctly in vscode-dark theme > button_danger-vscode-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-danger">Danger Button</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "rgba(0, 0, 0, 0) rgba(0, 0, 0, 0) rgba(0, 0, 0, 0)",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-inverse)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "vscode-dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_danger > renders correctly in vscode-light theme > button_danger-vscode-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-danger">Danger Button</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "rgba(0, 0, 0, 0) rgba(0, 0, 0, 0) rgba(0, 0, 0, 0)",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-inverse)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "vscode-light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_disabled > renders correctly in dark theme > button_disabled-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-primary" disabled="">Disabled</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "rgba(0, 0, 0, 0) rgba(0, 0, 0, 0) rgba(0, 0, 0, 0)",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-inverse)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_disabled > renders correctly in high-contrast theme > button_disabled-high-contrast 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-primary" disabled="">Disabled</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "rgba(0, 0, 0, 0) rgba(0, 0, 0, 0) rgba(0, 0, 0, 0)",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-inverse)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "high-contrast",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_disabled > renders correctly in light theme > button_disabled-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-primary" disabled="">Disabled</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "rgba(0, 0, 0, 0) rgba(0, 0, 0, 0) rgba(0, 0, 0, 0)",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-inverse)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_disabled > renders correctly in vscode-dark theme > button_disabled-vscode-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-primary" disabled="">Disabled</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "rgba(0, 0, 0, 0) rgba(0, 0, 0, 0) rgba(0, 0, 0, 0)",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-inverse)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "vscode-dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_disabled > renders correctly in vscode-light theme > button_disabled-vscode-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-primary" disabled="">Disabled</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "rgba(0, 0, 0, 0) rgba(0, 0, 0, 0) rgba(0, 0, 0, 0)",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-inverse)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "vscode-light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_ghost > renders correctly in dark theme > button_ghost-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-ghost">Ghost Button</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "rgba(0, 0, 0, 0) rgba(0, 0, 0, 0) rgba(0, 0, 0, 0)",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-secondary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_ghost > renders correctly in high-contrast theme > button_ghost-high-contrast 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-ghost">Ghost Button</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "rgba(0, 0, 0, 0) rgba(0, 0, 0, 0) rgba(0, 0, 0, 0)",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-secondary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "high-contrast",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_ghost > renders correctly in light theme > button_ghost-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-ghost">Ghost Button</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "rgba(0, 0, 0, 0) rgba(0, 0, 0, 0) rgba(0, 0, 0, 0)",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-secondary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_ghost > renders correctly in vscode-dark theme > button_ghost-vscode-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-ghost">Ghost Button</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "rgba(0, 0, 0, 0) rgba(0, 0, 0, 0) rgba(0, 0, 0, 0)",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-secondary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "vscode-dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_ghost > renders correctly in vscode-light theme > button_ghost-vscode-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-ghost">Ghost Button</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "rgba(0, 0, 0, 0) rgba(0, 0, 0, 0) rgba(0, 0, 0, 0)",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-secondary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "vscode-light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_primary > renders correctly in dark theme > button_primary-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-primary">Primary Button</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "rgba(0, 0, 0, 0) rgba(0, 0, 0, 0) rgba(0, 0, 0, 0)",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-inverse)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_primary > renders correctly in high-contrast theme > button_primary-high-contrast 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-primary">Primary Button</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "rgba(0, 0, 0, 0) rgba(0, 0, 0, 0) rgba(0, 0, 0, 0)",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-inverse)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "high-contrast",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_primary > renders correctly in light theme > button_primary-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-primary">Primary Button</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "rgba(0, 0, 0, 0) rgba(0, 0, 0, 0) rgba(0, 0, 0, 0)",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-inverse)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_primary > renders correctly in vscode-dark theme > button_primary-vscode-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-primary">Primary Button</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "rgba(0, 0, 0, 0) rgba(0, 0, 0, 0) rgba(0, 0, 0, 0)",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-inverse)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "vscode-dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_primary > renders correctly in vscode-light theme > button_primary-vscode-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-primary">Primary Button</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "rgba(0, 0, 0, 0) rgba(0, 0, 0, 0) rgba(0, 0, 0, 0)",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-inverse)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "vscode-light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_secondary > renders correctly in dark theme > button_secondary-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-secondary">Secondary Button</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-primary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_secondary > renders correctly in high-contrast theme > button_secondary-high-contrast 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-secondary">Secondary Button</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-primary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "high-contrast",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_secondary > renders correctly in light theme > button_secondary-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-secondary">Secondary Button</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-primary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_secondary > renders correctly in vscode-dark theme > button_secondary-vscode-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-secondary">Secondary Button</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-primary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "vscode-dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > button_secondary > renders correctly in vscode-light theme > button_secondary-vscode-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<button class="btn btn-secondary">Secondary Button</button>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-primary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-md)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "vscode-light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > card > renders correctly in dark theme > card-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<div class="card">Card content</div>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-xl)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "var(--loki-space-lg)",
+  },
+  "theme": "dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > card > renders correctly in high-contrast theme > card-high-contrast 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<div class="card">Card content</div>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-xl)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "var(--loki-space-lg)",
+  },
+  "theme": "high-contrast",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > card > renders correctly in light theme > card-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<div class="card">Card content</div>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-xl)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "var(--loki-space-lg)",
+  },
+  "theme": "light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > card > renders correctly in vscode-dark theme > card-vscode-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<div class="card">Card content</div>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-xl)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "var(--loki-space-lg)",
+  },
+  "theme": "vscode-dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > card > renders correctly in vscode-light theme > card-vscode-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<div class="card">Card content</div>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-xl)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "var(--loki-space-lg)",
+  },
+  "theme": "vscode-light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > card_interactive > renders correctly in dark theme > card_interactive-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<div class="card card-interactive" tabindex="0">Interactive Card</div>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-xl)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "var(--loki-space-lg)",
+  },
+  "theme": "dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > card_interactive > renders correctly in high-contrast theme > card_interactive-high-contrast 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<div class="card card-interactive" tabindex="0">Interactive Card</div>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-xl)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "var(--loki-space-lg)",
+  },
+  "theme": "high-contrast",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > card_interactive > renders correctly in light theme > card_interactive-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<div class="card card-interactive" tabindex="0">Interactive Card</div>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-xl)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "var(--loki-space-lg)",
+  },
+  "theme": "light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > card_interactive > renders correctly in vscode-dark theme > card_interactive-vscode-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<div class="card card-interactive" tabindex="0">Interactive Card</div>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-xl)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "var(--loki-space-lg)",
+  },
+  "theme": "vscode-dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > card_interactive > renders correctly in vscode-light theme > card_interactive-vscode-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<div class="card card-interactive" tabindex="0">Interactive Card</div>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-xl)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "var(--loki-space-lg)",
+  },
+  "theme": "vscode-light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > empty_state > renders correctly in dark theme > empty_state-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<div class="empty-state">No items to display</div>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "",
+    "color": "var(--loki-text-muted)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-base)",
+    "padding": "var(--loki-space-xl)",
+  },
+  "theme": "dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > empty_state > renders correctly in high-contrast theme > empty_state-high-contrast 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<div class="empty-state">No items to display</div>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "",
+    "color": "var(--loki-text-muted)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-base)",
+    "padding": "var(--loki-space-xl)",
+  },
+  "theme": "high-contrast",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > empty_state > renders correctly in light theme > empty_state-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<div class="empty-state">No items to display</div>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "",
+    "color": "var(--loki-text-muted)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-base)",
+    "padding": "var(--loki-space-xl)",
+  },
+  "theme": "light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > empty_state > renders correctly in vscode-dark theme > empty_state-vscode-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<div class="empty-state">No items to display</div>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "",
+    "color": "var(--loki-text-muted)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-base)",
+    "padding": "var(--loki-space-xl)",
+  },
+  "theme": "vscode-dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > empty_state > renders correctly in vscode-light theme > empty_state-vscode-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<div class="empty-state">No items to display</div>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "",
+    "color": "var(--loki-text-muted)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-base)",
+    "padding": "var(--loki-space-xl)",
+  },
+  "theme": "vscode-light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > input > renders correctly in dark theme > input-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<input type="text" class="input" value="Sample text">",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-primary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-base)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > input > renders correctly in high-contrast theme > input-high-contrast 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<input type="text" class="input" value="Sample text">",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-primary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-base)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "high-contrast",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > input > renders correctly in light theme > input-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<input type="text" class="input" value="Sample text">",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-primary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-base)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > input > renders correctly in vscode-dark theme > input-vscode-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<input type="text" class="input" value="Sample text">",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-primary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-base)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "vscode-dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > input > renders correctly in vscode-light theme > input-vscode-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<input type="text" class="input" value="Sample text">",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-primary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-base)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "vscode-light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > input_placeholder > renders correctly in dark theme > input_placeholder-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<input type="text" class="input" placeholder="Placeholder">",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-primary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-base)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > input_placeholder > renders correctly in high-contrast theme > input_placeholder-high-contrast 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<input type="text" class="input" placeholder="Placeholder">",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-primary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-base)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "high-contrast",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > input_placeholder > renders correctly in light theme > input_placeholder-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<input type="text" class="input" placeholder="Placeholder">",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-primary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-base)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > input_placeholder > renders correctly in vscode-dark theme > input_placeholder-vscode-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<input type="text" class="input" placeholder="Placeholder">",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-primary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-base)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "vscode-dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > input_placeholder > renders correctly in vscode-light theme > input_placeholder-vscode-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<input type="text" class="input" placeholder="Placeholder">",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-md)",
+    "color": "var(--loki-text-primary)",
+    "fontFamily": "",
+    "fontSize": "var(--loki-text-base)",
+    "padding": "var(--loki-space-sm) var(--loki-space-md)",
+  },
+  "theme": "vscode-light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > spinner > renders correctly in dark theme > spinner-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<div class="spinner"></div>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > spinner > renders correctly in high-contrast theme > spinner-high-contrast 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<div class="spinner"></div>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "high-contrast",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > spinner > renders correctly in light theme > spinner-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<div class="spinner"></div>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > spinner > renders correctly in vscode-dark theme > spinner-vscode-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<div class="spinner"></div>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "vscode-dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > spinner > renders correctly in vscode-light theme > spinner-vscode-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<div class="spinner"></div>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "vscode-light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_active > renders correctly in dark theme > status_active-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot active"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_active > renders correctly in high-contrast theme > status_active-high-contrast 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot active"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "high-contrast",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_active > renders correctly in light theme > status_active-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot active"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_active > renders correctly in vscode-dark theme > status_active-vscode-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot active"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "vscode-dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_active > renders correctly in vscode-light theme > status_active-vscode-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot active"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "vscode-light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_error > renders correctly in dark theme > status_error-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot error"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_error > renders correctly in high-contrast theme > status_error-high-contrast 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot error"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "high-contrast",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_error > renders correctly in light theme > status_error-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot error"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_error > renders correctly in vscode-dark theme > status_error-vscode-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot error"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "vscode-dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_error > renders correctly in vscode-light theme > status_error-vscode-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot error"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "vscode-light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_idle > renders correctly in dark theme > status_idle-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot idle"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_idle > renders correctly in high-contrast theme > status_idle-high-contrast 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot idle"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "high-contrast",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_idle > renders correctly in light theme > status_idle-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot idle"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_idle > renders correctly in vscode-dark theme > status_idle-vscode-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot idle"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "vscode-dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_idle > renders correctly in vscode-light theme > status_idle-vscode-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot idle"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "vscode-light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_paused > renders correctly in dark theme > status_paused-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot paused"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_paused > renders correctly in high-contrast theme > status_paused-high-contrast 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot paused"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "high-contrast",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_paused > renders correctly in light theme > status_paused-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot paused"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_paused > renders correctly in vscode-dark theme > status_paused-vscode-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot paused"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "vscode-dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_paused > renders correctly in vscode-light theme > status_paused-vscode-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot paused"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "vscode-light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_stopped > renders correctly in dark theme > status_stopped-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot stopped"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_stopped > renders correctly in high-contrast theme > status_stopped-high-contrast 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot stopped"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "high-contrast",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_stopped > renders correctly in light theme > status_stopped-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot stopped"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "light",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_stopped > renders correctly in vscode-dark theme > status_stopped-vscode-dark 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot stopped"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "vscode-dark",
+}
+`;
+
+exports[`Loki Dashboard Visual Regression Tests > Component Snapshots > status_stopped > renders correctly in vscode-light theme > status_stopped-vscode-light 1`] = `
+{
+  "dimensions": {
+    "height": 0,
+    "width": 0,
+  },
+  "html": "<span class="status-dot stopped"></span>",
+  "styles": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderColor": "",
+    "borderRadius": "var(--loki-radius-full)",
+    "color": "rgb(0, 0, 0)",
+    "fontFamily": "",
+    "fontSize": "",
+    "padding": "",
+  },
+  "theme": "vscode-light",
+}
+`;

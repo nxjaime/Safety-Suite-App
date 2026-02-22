@@ -1,0 +1,45 @@
+{
+  "scan_files": ["jsts-nodejs.json", "jsts-typescript.json"],
+  "total_raw": 8,
+  "unique_findings": 4,
+  "duplicates_removed": 4,
+  "true_positives": [
+    {
+      "rule": "javascript.express.security.cors-misconfiguration.cors-misconfiguration",
+      "file": "api/carrier-health.ts",
+      "line": 181,
+      "severity": "WARNING",
+      "classification": "TRUE_POSITIVE",
+      "reason": "CORS origin is set dynamically from request header. While there IS an allowlist check (ALLOWED_ORIGINS.includes(origin)), the allowlist includes process.env.VITE_APP_URL which is an environment variable. If misconfigured or empty, this could allow unintended origins. The pattern of reflecting the origin header is a known CORS misconfiguration risk. For enterprise readiness, use a hardcoded production domain list or a dedicated CORS middleware with strict configuration.",
+      "enterprise_recommendation": "Extract CORS handling into shared middleware with hardcoded production origins. Remove localhost origins in production builds. Validate VITE_APP_URL at startup."
+    },
+    {
+      "rule": "javascript.express.security.cors-misconfiguration.cors-misconfiguration",
+      "file": "api/motive/drivers.ts",
+      "line": 25,
+      "severity": "WARNING",
+      "classification": "TRUE_POSITIVE",
+      "reason": "Same CORS pattern as carrier-health.ts - dynamically reflecting origin from request header against an allowlist that includes env vars. Duplicated CORS logic across API endpoints is also a maintenance risk.",
+      "enterprise_recommendation": "Consolidate into shared CORS middleware."
+    },
+    {
+      "rule": "javascript.express.security.cors-misconfiguration.cors-misconfiguration",
+      "file": "api/motive/events.ts",
+      "line": 27,
+      "severity": "WARNING",
+      "classification": "TRUE_POSITIVE",
+      "reason": "Same CORS pattern duplicated again. Each endpoint independently implements CORS with the same allowlist.",
+      "enterprise_recommendation": "Consolidate into shared CORS middleware."
+    },
+    {
+      "rule": "javascript.express.security.cors-misconfiguration.cors-misconfiguration",
+      "file": "api/motive/scores.ts",
+      "line": 25,
+      "severity": "WARNING",
+      "classification": "TRUE_POSITIVE",
+      "reason": "Same CORS pattern duplicated again. Fourth instance of identical CORS code.",
+      "enterprise_recommendation": "Consolidate into shared CORS middleware."
+    }
+  ],
+  "false_positives": []
+}
