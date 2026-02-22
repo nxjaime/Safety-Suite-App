@@ -349,14 +349,20 @@ Artifacts:
 
 ### Sprint 9: Reporting, Testing, and Observability
 Reminder: Commit locally and push to GitHub once all checks/tests pass.
-- Goal: Build release confidence and operational visibility.
+- Goal: Enforce organization-level isolation with page-based RBAC and domain-gated access.
+- User story: As the platform admin, I can manage organizations and define allowed email domains, while each org has role-based access to specific pages without access to the platform admin console.
 - Scope:
-  - Replace static dashboards with live metrics and filters.
-  - Expand unit/integration/E2E coverage on critical workflows.
-  - Add structured logging, tracing context, and alerting.
+  - Add per-organization `allowed_domains` and enforce domain-gated access on login.
+  - Replace current `admin/manager/viewer` roles with page-based roles:
+    - `platform_admin` (platform only)
+    - `full`, `safety`, `coaching`, `maintenance`, `readonly`
+  - Enforce page access via route guards and sidebar visibility per role.
+  - Enforce role + org isolation in database RLS policies (E2E).
+  - Provide platform admin workflows to create orgs, set domains, and assign roles.
 - Exit criteria:
-  - Release pipeline blocks on critical regressions.
-  - Dashboards and alerts support on-call operations.
+  - Users cannot access data outside their org and cannot log in with invalid domains.
+  - Role-based page access is enforced in UI and DB policies.
+  - Platform admin can manage orgs/users from `/admin`.
 
 ### Post-Sprint Stabilization (2026-02-22)
 - Addressed production feedback issues after Sprint 8:
