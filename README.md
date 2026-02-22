@@ -30,6 +30,20 @@ If `npx` is not on your path in this environment:
 export PATH="$HOME/.local/node/bin:$PATH"
 ```
 
+## Sprint Close Script
+
+Run this at the end of a sprint to auto-stage, run checks, commit, and push:
+
+```sh
+./scripts/sprint-close.sh
+```
+
+Behavior:
+- Stages all changes
+- Runs `npm run build` and `npm run test -- --run src/test`
+- Commits with `sprint-<n>: closeout` (parsed from `handoff.md`)
+- Pushes to the current branch
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
