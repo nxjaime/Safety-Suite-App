@@ -135,3 +135,63 @@ export interface Driver {
     riskEvents?: RiskEvent[];
 }
 
+export type EquipmentType = 'truck' | 'trailer' | 'forklift' | 'pallet_jack' | 'sales_vehicle';
+export type OwnershipType = 'owned' | 'leased' | 'rented';
+export type EquipmentStatus = 'active' | 'inactive' | 'out_of_service';
+
+export interface Equipment {
+    id: string;
+    organizationId?: string;
+    assetTag: string;
+    type: EquipmentType;
+    ownershipType: OwnershipType;
+    status: EquipmentStatus;
+    make?: string;
+    model?: string;
+    year?: number;
+    usageMiles?: number;
+    usageHours?: number;
+    attachments?: string[];
+    forkliftAttachments?: string[];
+}
+
+export interface MaintenanceTemplate {
+    id: string;
+    organizationId?: string;
+    name: string;
+    appliesToType?: EquipmentType;
+    intervalDays?: number;
+    intervalMiles?: number;
+    intervalHours?: number;
+}
+
+export type WorkOrderStatus = 'Draft' | 'Approved' | 'In Progress' | 'Completed' | 'Closed';
+export type WorkOrderPriority = 'Low' | 'Medium' | 'High';
+
+export interface WorkOrderLineItem {
+    id: string;
+    workOrderId: string;
+    type: 'part' | 'labor';
+    description: string;
+    quantity: number;
+    unitCost: number;
+    totalCost: number;
+}
+
+export interface WorkOrder {
+    id: string;
+    organizationId?: string;
+    equipmentId?: string;
+    title: string;
+    description?: string;
+    status: WorkOrderStatus;
+    priority: WorkOrderPriority;
+    approvedBy?: string;
+    approvedAt?: string;
+    assignedTo?: string;
+    dueDate?: string;
+    totalPartsCost?: number;
+    totalLaborCost?: number;
+    totalCost?: number;
+    lineItems?: WorkOrderLineItem[];
+}

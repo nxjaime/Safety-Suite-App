@@ -29,4 +29,13 @@ describe('Navigation IA', () => {
     const hasAnalytics = reporting?.items.some(item => item.type === 'link' && item.name === 'Analytics');
     expect(hasAnalytics).toBe(true);
   });
+
+  it('includes Maintenance and Work Orders under Fleet', () => {
+    const operations = navSections.find(section => section.label === 'Operations');
+    expect(operations).toBeTruthy();
+    const hasMaintenance = operations?.items.some(item => item.type === 'link' && item.name === 'Maintenance');
+    const hasWorkOrders = operations?.items.some(item => item.type === 'link' && item.name === 'Work Orders');
+    expect(hasMaintenance).toBe(true);
+    expect(hasWorkOrders).toBe(true);
+  });
 });

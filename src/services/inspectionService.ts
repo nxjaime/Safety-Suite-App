@@ -52,7 +52,16 @@ export interface Inspection {
 
     file_path?: string;
     status?: string;
+    out_of_service?: boolean;
 }
+
+export const shouldCreateWorkOrderFromInspection = (
+    outOfService: boolean | undefined,
+    violations: ViolationItem[] = []
+) => {
+    if (outOfService) return true;
+    return violations.some((violation) => violation.oos);
+};
 
 export const inspectionService = {
     async getInspections() {
@@ -109,6 +118,7 @@ export const inspectionService = {
             // Violations
             violation_code: inspection.violations_count?.toString(),
             violations_data: inspection.violations_data || [],
+            out_of_service: inspection.out_of_service || false,
         };
 
         const { data, error } = await supabase
