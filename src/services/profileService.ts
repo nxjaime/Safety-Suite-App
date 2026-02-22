@@ -8,13 +8,18 @@ export interface ProfileSummary {
   fullName: string | null;
 }
 
+const OWNER_ADMIN_EMAILS = ['nxjaime@gmail.com'];
+
 const parseAdminEmails = (): string[] => {
   const raw = import.meta.env.VITE_ADMIN_EMAILS;
-  if (!raw) return [];
-  return raw
-    .split(',')
-    .map((email: string) => email.trim().toLowerCase())
-    .filter(Boolean);
+  const configured = raw
+    ? raw
+        .split(',')
+        .map((email: string) => email.trim().toLowerCase())
+        .filter(Boolean)
+    : [];
+
+  return Array.from(new Set([...OWNER_ADMIN_EMAILS, ...configured]));
 };
 
 export const profileService = {

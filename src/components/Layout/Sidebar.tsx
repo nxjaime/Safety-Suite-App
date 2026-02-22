@@ -10,6 +10,7 @@ import {
     GraduationCap,
     LayoutDashboard,
     Map,
+    MessageSquare,
     Route,
     Settings,
     ShieldAlert,
@@ -73,8 +74,7 @@ export const navSections: Array<{ label: string; items: LegacyNavItem[] }> = [
         label: 'Reporting',
         items: [
             { type: 'link', name: 'Analytics', path: '/reporting', icon: BarChart2 },
-            { type: 'link', name: 'CSA Predictor', path: '/reporting/csa-predictor', icon: BarChart2 },
-            { type: 'link', name: 'Help & Feedback', path: '/help', icon: BookOpen }
+            { type: 'link', name: 'CSA Predictor', path: '/reporting/csa-predictor', icon: BarChart2 }
         ]
     }
 ];
@@ -123,8 +123,7 @@ const menuGroups: MenuGroup[] = [
         label: 'Reporting',
         items: [
             { name: 'Analytics', path: '/reporting', icon: BarChart2 },
-            { name: 'CSA Predictor', path: '/reporting/csa-predictor', icon: BarChart2 },
-            { name: 'Help & Feedback', path: '/help', icon: BookOpen }
+            { name: 'CSA Predictor', path: '/reporting/csa-predictor', icon: BarChart2 }
         ]
     }
 ];
@@ -221,6 +220,23 @@ const Sidebar: React.FC = () => {
                     ))}
                 </ul>
             </nav>
+
+            <div className="border-t border-slate-800 p-3">
+                <NavLink
+                    to="/help"
+                    className={({ isActive }) =>
+                        clsx(
+                            'flex w-full items-center rounded-xl px-4 py-3 text-sm font-medium transition-colors',
+                            isActive
+                                ? 'bg-emerald-500/15 text-emerald-300'
+                                : 'text-slate-200 hover:bg-slate-800 hover:text-white'
+                        )
+                    }
+                >
+                    <MessageSquare className="mr-3 h-5 w-5" />
+                    Help & Feedback
+                </NavLink>
+            </div>
 
             <div className="border-t border-slate-800">
                 <CarrierHealthWidget />

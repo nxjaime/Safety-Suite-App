@@ -58,9 +58,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setRole('viewer');
                 return;
             }
+
+            const metadataRole = String(nextUser.user_metadata?.role || '').toLowerCase();
             const summary = await profileService.getCurrentProfileSummary();
             const isEmailAdmin = profileService.isEmailAdmin(nextUser.email || '');
-            setRole(isEmailAdmin ? 'admin' : (summary?.role || 'viewer'));
+
+            if (metadataRole === 'admin' || isEmailAdmin) {
+                setRole('admin');
+                return;
+            }
+
+            setRole(summary?.role || 'viewer');
         };
 
         // Get initial session

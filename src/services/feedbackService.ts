@@ -20,6 +20,16 @@ const mapFeedback = (row: any): FeedbackEntry => ({
   submitterEmail: row.submitter_email || ''
 });
 
+const resolveOrganizationId = async (): Promise<string | null> => {
+  const orgFromProfile = await getCurrentOrganization();
+  if (orgFromProfile) return orgFromProfile;
+
+  // Fallback to DB-side helper function used by RLS policies.
+  const { data, error } = await supabase.rpc('get_org_id');
+  if (error) return null;
+  return data || null;
+};
+
 export const feedbackService = {
   async listFeedback(): Promise<FeedbackEntry[]> {
     const { data, error } = await supabase
@@ -36,7 +46,11 @@ export const feedbackService = {
     priority: 'Low' | 'Medium' | 'High';
     message: string;
   }) {
-    const orgId = await getCurrentOrganization();
+    const orgId = await resolveOrganizationId();
+    if (!orgId) {
+      throw new Error('No organization found for current user.');
+    }
+
     const { data: userData } = await supabase.auth.getUser();
 
     const { data, error } = await supabase

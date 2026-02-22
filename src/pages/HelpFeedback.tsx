@@ -33,19 +33,31 @@ const HelpFeedback: React.FC = () => {
 
   const submitFeedback = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.message.trim()) {
+    const trimmed = form.message.trim();
+
+    if (!trimmed) {
       toast.error('Please provide feedback details');
       return;
     }
 
+    if (trimmed.length < 8) {
+      toast.error('Feedback message must be at least 8 characters');
+      return;
+    }
+
     try {
-      const created = await feedbackService.addFeedback(form);
+      const created = await feedbackService.addFeedback({
+        category: form.category,
+        priority: form.priority,
+        message: trimmed
+      });
       setEntries((prev) => [created, ...prev]);
       setForm({ category: 'General', priority: 'Medium', message: '' });
       toast.success('Feedback submitted');
     } catch (error) {
       console.error(error);
-      toast.error('Failed to submit feedback');
+      const message = error instanceof Error ? error.message : 'Failed to submit feedback';
+      toast.error(message);
     }
   };
 

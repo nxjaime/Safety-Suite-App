@@ -358,6 +358,18 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
   - Release pipeline blocks on critical regressions.
   - Dashboards and alerts support on-call operations.
 
+### Post-Sprint Stabilization (2026-02-22)
+- Addressed production feedback issues after Sprint 8:
+  - Fixed `Help & Feedback` submit failures by hardening org resolution in `src/services/feedbackService.ts` (profile org + `get_org_id()` fallback), plus improved UI validation/error messaging in `src/pages/HelpFeedback.tsx`.
+  - Restored admin portal access reliability by improving admin-role detection in:
+    - `src/services/profileService.ts` (owner/admin fallback list + env-admin parsing)
+    - `src/contexts/AuthContext.tsx` (honor `user_metadata.role === 'admin'` during role resolution)
+  - Moved `Help & Feedback` to the bottom utility area of the sidebar in `src/components/Layout/Sidebar.tsx` and removed it from grouped Reporting links.
+- Checks run:
+  - `npm run test:unit`
+  - `npm run build`
+  - Both passed.
+
 ### Sprint 10: UAT, Launch Readiness, and Hypercare
 Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - Goal: Execute controlled production launch.
