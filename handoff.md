@@ -103,13 +103,15 @@ Reminder: Commit & push after checks/tests pass.
   - Add work order creation, assignment, and status tracking.
 - Exit criteria:
   - End-to-end asset-to-work-order workflow is functional and tested.
+Execution Status: Complete
 Completed items:
-- Equipment expanded with ownership, status, usage, and attachments.
-- Maintenance templates, due logic, and Maintenance page shipped.
-- Work order workflow and Work Orders page shipped.
-- Inspection out-of-service toggle auto-creates work orders.
-- Fleet navigation and breadcrumbs updated.
+Fleet operations data model added for `equipment`, `pm_templates`, `work_orders`, and `work_order_line_items`.
+Equipment UI expanded with lifecycle states, ownership, usage tracking, and profile tabs.
+Maintenance and Work Orders pages implemented and routed in app navigation.
+Inspection out-of-service flow now auto-creates draft work orders.
+Sprint artifacts added under `docs/sprint-3/`.
 Checks: `npm run test -- --run src/test` and `npm run build` passed.
+Pause Note: Sprint 3 PR created and merged; work paused after closeout.
 
 ### Sprint 4: Safety Intelligence Core (Risk + Coaching)
 Reminder: Commit & push after checks/tests pass.
@@ -120,6 +122,31 @@ Reminder: Commit & push after checks/tests pass.
   - Standardize coaching plans, check-ins, and outcome tracking.
 - Exit criteria:
   - Driver scorecards and coaching lifecycle are production-ready.
+Execution Status: Complete
+Started: `2026-02-22`
+Completed: `2026-02-22`
+Progress in latest session:
+- Added migration `supabase/migrations/20260222020000_risk_events_score_history.sql` to normalize `risk_events`, create `driver_risk_scores`, add constraints/indexes, and enforce org-scoped RLS for risk/coaching tables.
+- Implemented `src/services/riskService.ts` with event ingestion, composite score calculation (`0.6*motive + 0.4*local`), fallback motive score, score banding, and score-history persistence.
+- Wired `src/services/driverService.ts` to risk service (`addRiskEvent`, `refreshRiskScore`, `getDriverRiskScoreHistory`, `getDriverRiskEvents`) and updated safety aggregations for live score/event/coaching metrics.
+- Updated Sprint 4 UI surfaces:
+  - `src/pages/Safety.tsx` now renders live risk/event/coaching metrics, score trend, and incident/risk distribution from database data.
+  - `src/pages/Drivers.tsx` now shows banded risk pills, client-side risk band filter, and active coaching “Plan Assigned” status.
+  - `src/pages/DriverProfile.tsx` now loads score history/events, logs normalized manual risk events, and supports explicit score recalculation.
+- Added `src/test/riskService.test.ts` covering scoring formula, fallback behavior, band mapping, and score/history persistence side effects.
+- Added Sprint 4 artifacts:
+  - `docs/sprint-4/summary.md`
+  - `docs/sprint-4/verification.md`
+Checks run:
+- `npm run test -- --run src/test/riskService.test.ts`
+- `npm run test -- --run src/test/riskService.test.ts src/test/navigation.test.tsx`
+- `npm run test -- --run src/test/schemas.test.ts`
+- `npm run test -- --run src/test`
+- `npm run build`
+All passed in this workspace.
+Follow-ons moved to Sprint 5+:
+- Expand focused UI tests for Drivers and DriverProfile risk workflows.
+- Reconcile legacy `supabase/schema.sql` drift while preparing next migration set.
 
 ### Sprint 5: Integrations Hardening (Motive/FMCSA/Email)
 Reminder: Commit & push after checks/tests pass.
@@ -216,44 +243,6 @@ Create the execution baseline required to ship safely in 10 sprints.
 - CI quality gates enforced on all PRs.
 - Top blocker list approved by engineering + product.
 
----
-
-## K-Dense Workflow Integration (How to Import It Into Team Workflow)
-
-Use K-Dense as a planning/research copilot layer, not as a replacement for engineering delivery tools.
-
-### Where It Fits Best
-- Discovery: product/market/feature research for Fleetio + Idelic parity decisions
-- Sprint planning: converting goals into scoped sprint epics and acceptance criteria
-- Risk analysis: security/compliance risk surfacing and mitigation options
-- Postmortems: pattern extraction from incidents and recurring defects
-
-### Recommended Team Workflow
-1. Define sprint objective in `handoff.md`.
-2. Send sprint objective + constraints to K-Dense for structured plan proposals.
-3. Bring K-Dense output back into repo as actionable backlog items (tickets/tasks).
-4. Implement in codebase with normal engineering controls (PRs, CI, tests, reviews).
-5. Feed delivery results/metrics back to K-Dense for next sprint planning refinement.
-
-### Input Template for K-Dense
-- Product direction: "Fleetio + Idelic hybrid"
-- Sprint number and objective
-- In-scope modules
-- Constraints: team size, 2-week sprint, current architecture
-- Non-negotiables: security, tenant isolation, performance targets
-- Expected output: epics, stories, acceptance criteria, risks, dependencies
-
-### Output Contract (What to Require)
-- Prioritized epics with clear owners
-- Story-level acceptance criteria
-- Technical risks with mitigation paths
-- Dependencies and sequencing
-- Measurable success metrics per sprint
-
-### Guardrails
-- K-Dense output is advisory; final authority stays with product + engineering leads.
-- No direct production changes without normal code review and CI.
-- Security/compliance decisions require explicit human sign-off.
 
 ## Access/Permissions Likely Needed for Execution
 - Production-like Supabase environment access

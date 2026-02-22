@@ -94,6 +94,8 @@ const DriverProfile: React.FC = () => {
     // Motive Events State
     const [motiveEvents, setMotiveEvents] = useState<any[]>([]);
     const [loadingMotiveEvents, setLoadingMotiveEvents] = useState(false);
+    const [riskHistory, setRiskHistory] = useState<any[]>([]);
+    const [riskEvents, setRiskEvents] = useState<any[]>([]);
 
     useEffect(() => {
         if (driver) {
@@ -129,6 +131,12 @@ const DriverProfile: React.FC = () => {
 
                 if (driverData) {
                     setDriver(driverData);
+                    const [historyRows, riskEventRows] = await Promise.all([
+                        driverService.getDriverRiskScoreHistory(driverData.id, 12),
+                        driverService.getDriverRiskEvents(driverData.id, 90)
+                    ]);
+                    setRiskHistory(historyRows || []);
+                    setRiskEvents(riskEventRows || []);
 
                     // Fetch Motive Events if linked
                     if (driverData.motiveId) {
@@ -383,26 +391,39 @@ const DriverProfile: React.FC = () => {
         }
     };
 
-    const riskData = [{ month: 'Jan', score: 45 }, { month: 'Feb', score: 52 }, { month: 'Mar', score: 48 }, { month: 'Apr', score: 60 }, { month: 'May', score: 55 }, { month: 'Jun', score: driver?.riskScore || 20 }];
+    const riskData = riskHistory.length > 0
+        ? [...riskHistory].reverse().map((point: any) => ({
+            month: new Date(point.as_of).toLocaleDateString(),
+            score: point.score
+        }))
+        : [{ month: 'Current', score: driver?.riskScore || 20 }];
+    const latestScoreEntry = riskHistory[0];
+    const scoreParts = latestScoreEntry?.composite_parts || latestScoreEntry?.compositeParts || null;
+    const riskBand = (driver?.riskScore || 0) >= 80 ? 'Red' : (driver?.riskScore || 0) >= 50 ? 'Yellow' : 'Green';
 
     const handleLogRiskEvent = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!driver) return;
 
-        // Calculate points based on type
-        let points = 0;
+        // Calculate points/severity defaults from selected type
+        let points = 5;
+        let severity = 1;
         switch (newRiskEvent.type) {
-            case 'Speeding': points = 10; break;
-            case 'Hard Braking': points = 5; break;
-            case 'HOS Violation': points = 15; break;
-            case 'Accident': points = 20; break;
-            case 'Citation': points = 10; break;
-            default: points = 5;
+            case 'Speeding': points = 10; severity = 2; break;
+            case 'Hard Braking': points = 8; severity = 2; break;
+            case 'HOS Violation': points = 12; severity = 3; break;
+            case 'Accident': points = 25; severity = 5; break;
+            case 'Citation': points = 10; severity = 2; break;
+            default: points = 5; severity = 1;
         }
 
-        const event = {
-            date: newRiskEvent.date,
+        const event: any = {
+            occurredAt: newRiskEvent.date,
+            source: 'manual',
             type: newRiskEvent.type,
+            eventType: newRiskEvent.type,
+            severity,
+            scoreDelta: points,
             points,
             notes: newRiskEvent.file
                 ? `${newRiskEvent.notes} [Attached: ${newRiskEvent.file.name}]`
@@ -412,14 +433,14 @@ const DriverProfile: React.FC = () => {
         try {
             await driverService.addRiskEvent(driver.id, event);
 
-            // Recalculate score locally and update DB
-            // Or just refresh driver if DB trigger handles it (assuming no trigger for now)
-            // Need to update score manually
-            const newScore = (driver.riskScore || 0) + points;
-            await driverService.updateDriverScore(driver.id, newScore);
-
             const updatedDriver = await driverService.getDriverById(driver.id);
             setDriver(updatedDriver || undefined);
+            const [historyRows, riskEventRows] = await Promise.all([
+                driverService.getDriverRiskScoreHistory(driver.id, 12),
+                driverService.getDriverRiskEvents(driver.id, 90)
+            ]);
+            setRiskHistory(historyRows || []);
+            setRiskEvents(riskEventRows || []);
 
             toast.success(`Risk event logged: ${newRiskEvent.type} `);
             setIsRiskModalOpen(false);
@@ -427,6 +448,23 @@ const DriverProfile: React.FC = () => {
         } catch (error) {
             console.error(error);
             toast.error('Failed to log risk event');
+        }
+    };
+
+    const handleRecalculateScore = async () => {
+        if (!driver) return;
+        try {
+            await driverService.refreshRiskScore(driver.id, '90d');
+            const [updatedDriver, historyRows] = await Promise.all([
+                driverService.getDriverById(driver.id),
+                driverService.getDriverRiskScoreHistory(driver.id, 12)
+            ]);
+            setDriver(updatedDriver || undefined);
+            setRiskHistory(historyRows || []);
+            toast.success('Risk score recalculated');
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to recalculate score');
         }
     };
 
@@ -533,14 +571,21 @@ const DriverProfile: React.FC = () => {
                             <Upload className="w-4 h-4 mr-2" />
                             Add Document
                         </button>
+                        <button
+                            onClick={handleRecalculateScore}
+                            className="px-4 py-2 bg-slate-100 text-slate-800 text-sm font-medium rounded-md hover:bg-slate-200 flex items-center justify-center"
+                        >
+                            Recalculate Score
+                        </button>
                     </div>
 
                     <div className="mt-6 md:mt-0 flex items-center space-x-8">
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 min-w-[150px] text-center">
-                            <div className={`text-3xl font-bold ${driver.riskScore > 80 ? 'text-red-600' : 'text-green-600'}`}>
+                            <div className={`text-3xl font-bold ${driver.riskScore > 80 ? 'text-red-600' : driver.riskScore >= 50 ? 'text-amber-600' : 'text-green-600'}`}>
                                 {driver.riskScore}
                             </div>
                             <div className="text-xs text-gray-500 mt-1">Safety Score</div>
+                            <div className="text-xs mt-1 font-medium">{riskBand} Band</div>
                         </div>
 
                         <div className="text-center">
@@ -763,6 +808,11 @@ const DriverProfile: React.FC = () => {
                             {/* Risk Score Chart */}
                             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Risk Score Trend</h3>
+                                {scoreParts && (
+                                    <div className="mb-3 text-xs text-slate-600">
+                                        Motive: <span className="font-semibold">{scoreParts.motive}</span> | Local: <span className="font-semibold">{scoreParts.local}</span>
+                                    </div>
+                                )}
                                 <div className="h-64">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <AreaChart data={riskData}>
@@ -779,6 +829,27 @@ const DriverProfile: React.FC = () => {
                                             <Area type="monotone" dataKey="score" stroke="#3b82f6" fillOpacity={1} fill="url(#colorScore)" />
                                         </AreaChart>
                                     </ResponsiveContainer>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                                <h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Risk Events (90d)</h3>
+                                <div className="space-y-2 max-h-64 overflow-y-auto">
+                                    {riskEvents.slice(0, 12).map((event: any) => (
+                                        <div key={event.id} className="flex items-center justify-between border border-slate-200 rounded-md px-3 py-2 text-sm">
+                                            <div>
+                                                <div className="font-medium text-slate-800">{event.eventType || event.type}</div>
+                                                <div className="text-xs text-slate-500">{event.source || 'manual'}</div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="font-semibold text-slate-700">S{event.severity || 1}</div>
+                                                <div className="text-xs text-slate-500">{new Date(event.occurredAt || event.date).toLocaleDateString()}</div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {riskEvents.length === 0 && (
+                                        <div className="text-sm text-slate-500">No risk events in the last 90 days.</div>
+                                    )}
                                 </div>
                             </div>
                         </div>

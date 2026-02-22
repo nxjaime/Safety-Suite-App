@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import type { Driver, RiskEvent } from '../types';
 import { encryptData, decryptData } from '../utils/crypto';
+import { riskService } from './riskService';
 
 // Helper to handle encryption/decryption
 const processDriverForStorage = async (driver: any) => {
@@ -37,14 +38,23 @@ const mapDriverData = (data: any): Driver => {
         hireDate: data.hire_date,
         riskEvents: data.risk_events ? data.risk_events.map((e: any) => ({
             ...e,
-            driverId: e.driver_id
+            driverId: e.driver_id,
+            source: e.source,
+            eventType: e.event_type || e.type,
+            type: e.event_type || e.type,
+            severity: e.severity,
+            scoreDelta: e.score_delta,
+            occurredAt: e.occurred_at || e.date
         })) : [],
         coachingPlans: data.coaching_plans ? data.coaching_plans.map((p: any) => ({
             ...p,
             driverId: p.driver_id,
             startDate: p.start_date,
             durationWeeks: p.duration_weeks,
-            weeklyCheckIns: p.weekly_check_ins
+            weeklyCheckIns: p.weekly_check_ins,
+            targetScore: p.target_score,
+            dueDate: p.due_date,
+            outcome: p.outcome
         })) : [],
         // trainingHistory vs training_history? Assuming simple match or missing for now
         trainingHistory: data.training_history
@@ -297,22 +307,51 @@ export const driverService = {
     },
 
     async addRiskEvent(driverId: string, event: Omit<RiskEvent, 'id'>) {
+        const severity = event.severity ?? Math.max(1, Math.min(5, Math.round((event.points || 5) / 5)));
+        const occurredAt = event.occurredAt || event.date || new Date().toISOString().split('T')[0];
+
+        const data = await riskService.ingestEvent({
+            driverId,
+            source: event.source || 'manual',
+            eventType: event.eventType || event.type,
+            severity,
+            occurredAt,
+            metadata: event.metadata || (event.notes ? { notes: event.notes } : {}),
+            scoreDelta: event.scoreDelta
+        });
+
+        await riskService.calculateScore(driverId, '90d');
+        return data;
+    },
+
+    async refreshRiskScore(driverId: string, window = '90d') {
+        return riskService.calculateScore(driverId, window);
+    },
+
+    async getDriverRiskScoreHistory(driverId: string, limit = 12) {
+        return riskService.getScoreHistory(driverId, limit);
+    },
+
+    async getDriverRiskEvents(driverId: string, days = 90) {
+        const cutoff = new Date(Date.now() - (days * 24 * 60 * 60 * 1000)).toISOString();
         const { data, error } = await supabase
             .from('risk_events')
-            .insert([
-                {
-                    driver_id: driverId,
-                    date: event.date,
-                    type: event.type,
-                    points: event.points,
-                    notes: event.notes
-                }
-            ])
-            .select()
-            .single();
+            .select('*')
+            .eq('driver_id', driverId)
+            .gte('occurred_at', cutoff)
+            .order('occurred_at', { ascending: false });
 
         if (error) throw error;
-        return data;
+        return (data || []).map((e: any) => ({
+            ...e,
+            driverId: e.driver_id,
+            source: e.source,
+            eventType: e.event_type || e.type,
+            type: e.event_type || e.type,
+            severity: e.severity,
+            scoreDelta: e.score_delta,
+            occurredAt: e.occurred_at || e.date
+        }));
     },
 
     async addCoachingPlan(driverId: string, driverName: string, plan: any) {
@@ -325,7 +364,10 @@ export const driverService = {
                     start_date: plan.startDate,
                     duration_weeks: plan.durationWeeks,
                     status: plan.status,
-                    weekly_check_ins: plan.weeklyCheckIns
+                    weekly_check_ins: plan.weeklyCheckIns,
+                    target_score: plan.targetScore,
+                    due_date: plan.dueDate,
+                    outcome: plan.outcome
                 }
             ])
             .select()
@@ -466,7 +508,10 @@ export const driverService = {
 
         let query = supabase
             .from('drivers')
-            .select('*', { count: 'exact' });
+            .select(`
+                *,
+                coaching_plans (id, status)
+            `, { count: 'exact' });
 
         if (orgId) {
             query = query.eq('organization_id', orgId);
@@ -501,48 +546,62 @@ export const driverService = {
     },
 
     async fetchSafetyStats() {
-        // This would ideally be a dedicated RPC function or a separate stats table for scale.
-        // For now, we will perform optimized separate queries to avoid fetching all row data.
+        const cutoff = new Date(Date.now() - (90 * 24 * 60 * 60 * 1000)).toISOString();
+        const scoreCutoff = new Date(Date.now() - (180 * 24 * 60 * 60 * 1000)).toISOString();
 
-        // 1. Avg Risk Score
-        const { data: riskData, error: riskError } = await supabase
-            .from('drivers')
-            .select('risk_score');
+        const [
+            { data: drivers, error: driversError },
+            { data: events, error: eventsError },
+            { data: history, error: historyError },
+            { count: coachingCount, error: coachError }
+        ] = await Promise.all([
+            supabase.from('drivers').select('id, risk_score'),
+            supabase.from('risk_events').select('event_type, occurred_at').gte('occurred_at', cutoff),
+            supabase.from('driver_risk_scores').select('score, as_of').gte('as_of', scoreCutoff).order('as_of', { ascending: true }),
+            supabase.from('coaching_plans').select('*', { count: 'exact', head: true }).eq('status', 'Active')
+        ]);
 
-        if (riskError) throw riskError;
-
-        const totalRisk = riskData.reduce((sum, d) => sum + (d.risk_score || 0), 0);
-        const avgRisk = riskData.length > 0 ? Math.round(totalRisk / riskData.length) : 0;
-
-        // 2. Incident Counts - Fetching counts from related tables
-        // Note: This is still slightly expensive if tables are huge, but better than fetching all detailed rows.
-        // Alternative: creating a 'safety_stats' materialized view.
-
-        // We will just do a count of rows in the incident tables for "This Month" or Total? 
-        // The original code calculated Total Incidents from ALL fetched drivers.
-        // Let's approximate by counting rows in risk_events (assuming that's the source of truth now).
-        // If we still need accidents/citations counts:
-
-        const { count: riskEventCount, error: reError } = await supabase
-            .from('risk_events')
-            .select('*', { count: 'exact', head: true });
-
-        // Removed broken accident count logic. We rely on risk_events for now.
-
-        if (reError) throw reError;
-
-        // 3. Active Coaching Plans
-        const { count: coachingCount, error: coachError } = await supabase
-            .from('coaching_plans')
-            .select('*', { count: 'exact', head: true })
-            .eq('status', 'Active');
-
+        if (driversError) throw driversError;
+        if (eventsError) throw eventsError;
+        if (historyError) throw historyError;
         if (coachError) throw coachError;
+
+        const driverRows = drivers || [];
+        const avgRisk = driverRows.length
+            ? Math.round(driverRows.reduce((sum: number, d: any) => sum + (d.risk_score || 0), 0) / driverRows.length)
+            : 0;
+
+        const riskDistribution = driverRows.reduce((acc: { green: number; yellow: number; red: number }, driver: any) => {
+            const score = driver.risk_score || 0;
+            if (score >= 80) acc.red += 1;
+            else if (score >= 50) acc.yellow += 1;
+            else acc.green += 1;
+            return acc;
+        }, { green: 0, yellow: 0, red: 0 });
+
+        const incidentTypeCounts = new Map<string, number>();
+        (events || []).forEach((event: any) => {
+            const key = event.event_type || 'Other';
+            incidentTypeCounts.set(key, (incidentTypeCounts.get(key) || 0) + 1);
+        });
+
+        const topIncidentTypes = Array.from(incidentTypeCounts.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .map(([name, count]) => ({ name, count }));
+
+        const scoreTrend = (history || []).slice(-12).map((entry: any) => ({
+            asOf: entry.as_of,
+            score: entry.score
+        }));
 
         return {
             riskScore: avgRisk,
-            incidentCount: (riskEventCount || 0), // Simplifying to just risk_events table for now
-            coachingCount: coachingCount || 0
+            incidentCount: (events || []).length,
+            coachingCount: coachingCount || 0,
+            riskDistribution,
+            topIncidentTypes,
+            scoreTrend
         };
     }
 };

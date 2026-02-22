@@ -63,6 +63,9 @@ export interface CoachingPlan {
     durationWeeks: number;
     status: 'Active' | 'Completed' | 'Terminated';
     weeklyCheckIns: WeeklyCheckIn[];
+    targetScore?: number;
+    dueDate?: string;
+    outcome?: string;
 }
 
 export interface DriverDocument {
@@ -80,10 +83,30 @@ export interface DriverDocument {
 export interface RiskEvent {
     id: string;
     organizationId?: string;
-    date: string;
+    date?: string;
     type: string;
+    eventType?: string;
+    source?: string;
+    severity?: number;
+    scoreDelta?: number;
     points: number;
+    occurredAt?: string;
+    metadata?: Record<string, unknown>;
     notes?: string;
+}
+
+export interface DriverRiskScore {
+    id: string;
+    organizationId?: string;
+    driverId: string;
+    score: number;
+    sourceWindow?: string;
+    asOf: string;
+    compositeParts?: {
+        motive: number;
+        local: number;
+        band: 'green' | 'yellow' | 'red';
+    };
 }
 
 export interface Accident {

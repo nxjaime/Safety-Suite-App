@@ -1,15 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { TrendingDown, AlertTriangle, Plus, Calendar, User, Download } from 'lucide-react';
-import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import Modal from '../components/UI/Modal';
 import toast from 'react-hot-toast';
 import { driverService } from '../services/driverService';
 
 const Safety: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [stats, setStats] = useState({ riskScore: 32, incidentCount: 12, coachingCount: 8 });
+    const [stats, setStats] = useState({
+        riskScore: 0,
+        incidentCount: 0,
+        coachingCount: 0,
+        riskDistribution: { green: 0, yellow: 0, red: 0 },
+        topIncidentTypes: [] as Array<{ name: string; count: number }>,
+        scoreTrend: [] as Array<{ asOf: string; score: number }>
+    });
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [drivers, setDrivers] = useState<{ id: string; name: string }[]>([]);
     const [loadingDrivers, setLoadingDrivers] = useState(false);
     const [newCoaching, setNewCoaching] = useState({
@@ -48,9 +56,11 @@ const Safety: React.FC = () => {
     const loadData = async () => {
         try {
             setLoading(true);
+            setError(null);
             const stats = await driverService.fetchSafetyStats();
             setStats(stats);
         } catch (error) {
+            setError('Failed to load safety data');
             toast.error('Failed to load safety data');
             console.error(error);
         } finally {
@@ -99,19 +109,22 @@ const Safety: React.FC = () => {
         }
     };
 
-    const data = [
-        { name: 'Speeding', count: 45 },
-        { name: 'Hard Brake', count: 32 },
-        { name: 'HOS Violation', count: 18 },
-        { name: 'Distraction', count: 12 },
-        { name: 'Seatbelt', count: 8 },
-    ];
+    const incidentData = stats.topIncidentTypes.length > 0
+        ? stats.topIncidentTypes
+        : [{ name: 'No incidents', count: 0 }];
 
     const riskData = [
-        { name: 'Low Risk', value: 65, color: '#10B981' },
-        { name: 'Medium Risk', value: 25, color: '#F59E0B' },
-        { name: 'High Risk', value: 10, color: '#EF4444' },
+        { name: 'Low Risk', value: stats.riskDistribution.green, color: '#10B981' },
+        { name: 'Medium Risk', value: stats.riskDistribution.yellow, color: '#F59E0B' },
+        { name: 'High Risk', value: stats.riskDistribution.red, color: '#EF4444' },
     ];
+
+    const riskBand = stats.riskScore >= 80 ? 'red' : stats.riskScore >= 50 ? 'yellow' : 'green';
+    const riskBandClass = riskBand === 'red'
+        ? 'text-red-700 bg-red-50'
+        : riskBand === 'yellow'
+            ? 'text-amber-700 bg-amber-50'
+            : 'text-green-700 bg-green-50';
 
     const handleExportReport = async () => {
         const drivers = await driverService.fetchDrivers();
@@ -160,6 +173,12 @@ const Safety: React.FC = () => {
                 </div>
             </div>
 
+            {error && (
+                <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    {error}
+                </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Link to="/drivers" className="block transform transition-transform hover:scale-[1.02]">
                     <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 flex items-center cursor-pointer hover:shadow-md transition-shadow">
@@ -170,9 +189,9 @@ const Safety: React.FC = () => {
                             <p className="text-sm text-slate-500">Fleet Risk Score</p>
                             <h3 className="text-3xl font-bold text-slate-900 mt-1">{loading ? '...' : stats.riskScore}</h3>
                         </div>
-                        <div className="ml-auto flex items-center text-sm text-green-700 bg-green-50 px-2 py-1 rounded-full">
+                        <div className={`ml-auto flex items-center text-xs px-2 py-1 rounded-full ${riskBandClass}`}>
                             <TrendingDown className="w-4 h-4 mr-1" />
-                            <span>-2.5%</span>
+                            <span>{riskBand.toUpperCase()}</span>
                         </div>
                     </div>
                 </Link>
@@ -208,12 +227,32 @@ const Safety: React.FC = () => {
                 </Link>
             </div>
 
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+                <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-semibold text-slate-700">Risk Score Trend (Recent)</h3>
+                    <span className="text-xs text-slate-500">Last 12 points</span>
+                </div>
+                <div className="h-20">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <LineChart
+                            data={stats.scoreTrend.map((point) => ({
+                                ...point,
+                                shortDate: new Date(point.asOf).toLocaleDateString()
+                            }))}
+                        >
+                            <Line type="monotone" dataKey="score" stroke="#16a34a" strokeWidth={2} dot={false} />
+                            <Tooltip />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
                     <h3 className="text-lg font-bold text-slate-800 mb-4">Top Incident Types</h3>
                     <div className="h-80">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={data} layout="vertical">
+                            <BarChart data={incidentData} layout="vertical">
                                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                                 <XAxis type="number" />
                                 <YAxis dataKey="name" type="category" width={100} />

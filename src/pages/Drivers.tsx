@@ -23,6 +23,7 @@ const Drivers: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterTerminal, setFilterTerminal] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
+    const [filterRiskBand, setFilterRiskBand] = useState<'All' | 'Green' | 'Yellow' | 'Red'>('All');
     const [showFilters, setShowFilters] = useState(false);
     const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
 
@@ -245,7 +246,7 @@ const Drivers: React.FC = () => {
                 d.terminal,
                 d.riskScore.toString(),
                 d.status,
-                d.riskScore > 80 ? 'Plan Assigned' : 'No Plan Assigned',
+                (d.coachingPlans?.some((p: any) => p.status === 'Active')) ? 'Plan Assigned' : 'No Plan Assigned',
                 d.phone,
                 d.email
             ]);
@@ -316,6 +317,17 @@ const Drivers: React.FC = () => {
 
     const totalPages = Math.ceil(totalCount / pageSize);
 
+    const getRiskBand = (score: number) => {
+        if (score >= 80) return 'Red';
+        if (score >= 50) return 'Yellow';
+        return 'Green';
+    };
+
+    const filteredDrivers = drivers.filter((driver) => {
+        if (filterRiskBand === 'All') return true;
+        return getRiskBand(driver.riskScore ?? 60) === filterRiskBand;
+    });
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -374,7 +386,7 @@ const Drivers: React.FC = () => {
 
             {/* Filter Panel */}
             {showFilters && (
-                <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-2">
+                <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-2">
                     <div>
                         <label className="block text-xs font-medium text-slate-500 mb-1">Terminal</label>
                         <select
@@ -405,9 +417,22 @@ const Drivers: React.FC = () => {
                             <option value="On Leave">On Leave</option>
                         </select>
                     </div>
+                    <div>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">Risk Band</label>
+                        <select
+                            className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                            value={filterRiskBand}
+                            onChange={(e) => setFilterRiskBand(e.target.value as 'All' | 'Green' | 'Yellow' | 'Red')}
+                        >
+                            <option value="All">All Bands</option>
+                            <option value="Green">Green (0-49)</option>
+                            <option value="Yellow">Yellow (50-79)</option>
+                            <option value="Red">Red (80-100)</option>
+                        </select>
+                    </div>
                     <div className="flex items-end">
                         <button
-                            onClick={() => { setFilterTerminal(''); setFilterStatus(''); setSearchTerm(''); }}
+                            onClick={() => { setFilterTerminal(''); setFilterStatus(''); setSearchTerm(''); setFilterRiskBand('All'); }}
                             className="text-sm text-slate-500 hover:text-green-600 underline"
                         >
                             Clear Filters
@@ -438,8 +463,12 @@ const Drivers: React.FC = () => {
                                     <p className="mt-2 text-sm text-slate-500">Loading drivers...</p>
                                 </td>
                             </tr>
-                        ) : drivers.length > 0 ? (
-                            drivers.map((driver) => (
+                        ) : filteredDrivers.length > 0 ? (
+                            filteredDrivers.map((driver) => {
+                                const displayRiskScore = driver.riskScore ?? 60;
+                                const riskBand = getRiskBand(displayRiskScore);
+                                const hasActivePlan = (driver.coachingPlans || []).some((plan: any) => plan.status === 'Active');
+                                return (
                                 <tr key={driver.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
@@ -458,18 +487,19 @@ const Drivers: React.FC = () => {
                                         {driver.terminal}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center">
+                                        <div className="flex items-center gap-2">
                                             <span className={clsx(
-                                                "text-lg font-bold",
-                                                driver.riskScore > 80 ? "text-red-600" :
-                                                    driver.riskScore > 50 ? "text-yellow-600" : "text-green-600"
+                                                "text-sm font-semibold px-2 py-1 rounded-full",
+                                                riskBand === 'Red' ? "text-red-700 bg-red-50" :
+                                                    riskBand === 'Yellow' ? "text-amber-700 bg-amber-50" :
+                                                        "text-green-700 bg-green-50"
                                             )}>
-                                                {driver.riskScore}
+                                                {displayRiskScore}
                                             </span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                                        {driver.riskScore > 80 ? 'Plan Assigned' : 'No Plan Assigned'}
+                                        {hasActivePlan ? 'Plan Assigned' : 'No Plan Assigned'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={clsx(
@@ -520,7 +550,8 @@ const Drivers: React.FC = () => {
                                         )}
                                     </td>
                                 </tr>
-                            ))
+                                );
+                            })
                         ) : (
                             <tr>
                                 <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
