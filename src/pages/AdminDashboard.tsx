@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Database, RefreshCw, Shield, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { adminService, adminTables } from '../services/adminService';
+import { dataQualityService, type DataQualitySummary } from '../services/dataQualityService';
 
 const prettyJson = (value: unknown) => JSON.stringify(value, null, 2);
 
@@ -10,6 +11,7 @@ const AdminDashboard: React.FC = () => {
   const [rows, setRows] = useState<Array<Record<string, unknown>>>([]);
   const [payloadText, setPayloadText] = useState('{\n  \n}');
   const [loading, setLoading] = useState(false);
+  const [quality, setQuality] = useState<DataQualitySummary | null>(null);
 
   const selectedTableLabel = useMemo(() => {
     return adminTables.find((table) => table.name === selectedTable)?.label || selectedTable;
@@ -28,8 +30,18 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const loadQuality = async () => {
+    try {
+      const summary = await dataQualityService.getSummary();
+      setQuality(summary);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
     loadRows();
+    loadQuality();
   }, [selectedTable]);
 
   const insertRow = async () => {
@@ -105,6 +117,16 @@ const AdminDashboard: React.FC = () => {
         </article>
 
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3">
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-700">Data Quality Snapshot</div>
+            <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-amber-900">
+              <div>Missing driver emails: <span className="font-semibold">{quality?.missingDriverEmails ?? '-'}</span></div>
+              <div>Missing driver terminals: <span className="font-semibold">{quality?.missingDriverTerminals ?? '-'}</span></div>
+              <div>Open tasks w/o due date: <span className="font-semibold">{quality?.tasksWithoutDueDate ?? '-'}</span></div>
+              <div>Open remediations: <span className="font-semibold">{quality?.openInspectionRemediations ?? '-'}</span></div>
+            </div>
+          </div>
+
           <div className="mb-4 flex items-center justify-between">
             <h3 className="inline-flex items-center text-lg font-semibold text-slate-900">
               <Database className="mr-2 h-5 w-5 text-slate-500" />

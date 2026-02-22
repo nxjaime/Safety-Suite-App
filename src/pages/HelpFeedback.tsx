@@ -2,10 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Download, HelpCircle, LifeBuoy, MessageSquare, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { feedbackService, type FeedbackEntry } from '../services/feedbackService';
-import { useAuth } from '../contexts/AuthContext';
 
 const HelpFeedback: React.FC = () => {
-  const { isAdmin } = useAuth();
   const [entries, setEntries] = useState<FeedbackEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
@@ -171,11 +169,9 @@ const HelpFeedback: React.FC = () => {
                     <td className="px-4 py-3 text-sm text-slate-700">{entry.message}</td>
                     <td className="px-4 py-3 text-sm text-slate-500">{new Date(entry.createdAt).toLocaleString()}</td>
                     <td className="px-4 py-3 text-right">
-                      {isAdmin && (
-                        <button onClick={() => deleteFeedback(entry.id)} className="inline-flex items-center text-rose-600 hover:text-rose-700">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )}
+                      <button onClick={() => deleteFeedback(entry.id)} className="inline-flex items-center text-rose-600 hover:text-rose-700">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </td>
                   </tr>
                 ))}

@@ -323,6 +323,29 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
   - Introduce data quality checks and reconciliation jobs.
 - Exit criteria:
   - Core queries meet latency targets; data QA checks in place.
+Execution Status: Complete
+Started: `2026-02-22`
+Completed: `2026-02-22`
+Completed items:
+- Added database optimization and quality migration:
+  - `supabase/migrations/20260222050000_db_optimization_data_quality.sql`
+  - Added indexes for high-volume query paths (`drivers`, `tasks`, `inspections`, `risk_events`, `work_orders`).
+  - Added quality constraints including bounded `drivers.risk_score` and minimum feedback message length.
+  - Enforced non-empty core fields for `drivers.name` and `tasks.title`.
+- Added data quality monitoring in admin workflows:
+  - `src/services/dataQualityService.ts` summarizes key quality gaps.
+  - `src/pages/AdminDashboard.tsx` now surfaces quality snapshot metrics.
+- Updated sidebar IA to a grouped, collapsible control panel style:
+  - `src/components/Layout/Sidebar.tsx` now presents Wix-like grouped navigation blocks with expand/collapse behavior.
+Checks run:
+- `npm run test:layout`
+- `npm run test:smoke`
+- `npm run test:unit`
+- `npm run build`
+All passed in this workspace.
+Artifacts:
+- `docs/sprint-8/summary.md`
+- `docs/sprint-8/verification.md`
 
 ### Sprint 9: Reporting, Testing, and Observability
 Reminder: Commit locally and push to GitHub once all checks/tests pass.
