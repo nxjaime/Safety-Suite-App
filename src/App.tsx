@@ -70,36 +70,35 @@ function App() {
     <Router>
       <Toaster position="top-right" />
       <Routes>
-        <Route path="/" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Landing /></Suspense>} />
+        <Route path="/welcome" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Landing /></Suspense>} />
         <Route path="/login" element={<Login />} />
 
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
-          <Route element={<Layout />}>
-            <Route path="/dashboard" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Dashboard /></Suspense>} />
-            <Route path="/drivers" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Drivers /></Suspense>} />
-            <Route path="/drivers/:id" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><DriverProfile /></Suspense>} />
-            <Route path="/tasks" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Tasks /></Suspense>} />
-            <Route path="/safety" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Safety /></Suspense>} />
-            <Route path="/training" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Training /></Suspense>} />
-            <Route path="/compliance" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Compliance /></Suspense>} />
-            <Route path="/equipment" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Equipment /></Suspense>} />
-            <Route path="/maintenance" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Maintenance /></Suspense>} />
-            <Route path="/work-orders" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><WorkOrders /></Suspense>} />
-            <Route path="/reporting" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Reporting /></Suspense>} />
-            <Route path="/reporting/csa-predictor" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><CSAPredictor /></Suspense>} />
-            <Route path="/documents" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Documents /></Suspense>} />
-            <Route path="/fmcsa" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><FMCSA /></Suspense>} />
-            <Route path="/settings" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Settings /></Suspense>} />
-            <Route path="/profile" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><UserProfile /></Suspense>} />
-            <Route path="/help" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><HelpFeedback /></Suspense>} />
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Dashboard /></Suspense>} />
+            <Route path="drivers" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Drivers /></Suspense>} />
+            <Route path="drivers/:id" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><DriverProfile /></Suspense>} />
+            <Route path="tasks" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Tasks /></Suspense>} />
+            <Route path="safety" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Safety /></Suspense>} />
+            <Route path="training" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Training /></Suspense>} />
+            <Route path="compliance" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Compliance /></Suspense>} />
+            <Route path="equipment" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Equipment /></Suspense>} />
+            <Route path="maintenance" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Maintenance /></Suspense>} />
+            <Route path="work-orders" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><WorkOrders /></Suspense>} />
+            <Route path="reporting" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Reporting /></Suspense>} />
+            <Route path="reporting/csa-predictor" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><CSAPredictor /></Suspense>} />
+            <Route path="documents" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Documents /></Suspense>} />
+            <Route path="fmcsa" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><FMCSA /></Suspense>} />
+            <Route path="settings" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Settings /></Suspense>} />
+            <Route path="profile" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><UserProfile /></Suspense>} />
+            <Route path="help" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><HelpFeedback /></Suspense>} />
             <Route element={<AdminRoute />}>
-              <Route path="/admin" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><AdminDashboard /></Suspense>} />
+              <Route path="admin" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><AdminDashboard /></Suspense>} />
             </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Route>
-        
-        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

@@ -63,362 +63,79 @@ A release candidate is shippable when:
 
 ---
 
-## 10-Sprint Roadmap (+ Sprint 4.5 UI Overhaul)
+## Sprints 1-9 Compressed Summary
 
 ### Sprint 1: Release Baseline and Product Alignment
-Reminder: Commit & push after checks/tests pass.
-- Goal: Align team on Fleetio + Idelic scope and establish quality gates.
-- Scope:
-  - Create release checklist and CI quality gates (lint, typecheck, tests).
-  - Build route-by-route readiness matrix (Done / Partial / Mock / Blocked).
-  - Finalize MVP scope boundaries for operations vs safety modules.
-- Exit criteria:
-  - Release criteria approved.
-  - Top launch blockers prioritized with owners.
+Status: Complete (`2026-02-21`)
+- Established release checklist, MVP scope map, readiness matrix, and CI quality gate framework.
+- Artifacts: `docs/sprint-1/*` and `.github/workflows/quality-gates.yml`.
 
 ### Sprint 2: UX System and Navigation Refactor
-Reminder: Commit & push after checks/tests pass.
-- Goal: Deliver a unified UX foundation across all modules.
-- Scope:
-  - Define design tokens and component standards.
-  - Standardize IA/navigation around Operations, Safety, Compliance, Reporting.
-  - Implement accessibility baseline (WCAG AA).
-- Exit criteria:
-  - Shared design system active on core routes.
-  - UX consistency baseline accepted by product/design.
-Execution Status: Complete
-Completed items:
-Design tokens with Space Grotesk + Inter and safety palette.
-Navigation IA updated with Operations/Fleet/Safety/Reporting/Settings.
-Baseline accessibility improvements in navigation and header.
-Baseline form styling and palette alignment across core pages.
-Checks: `npm run test -- --run src/test` and `npm run build` passed.
+Status: Complete (`2026-02-22`)
+- Delivered design tokens, baseline IA, and accessibility improvements.
+- Core route styling consistency established.
 
-### Sprint 3: Fleet Operations Core (Asset + Maintenance)
-Reminder: Commit & push after checks/tests pass.
-- Goal: Ship Fleetio-like operational core.
-- Scope:
-  - Expand equipment/vehicle model and lifecycle states.
-  - Implement preventive maintenance schedules and service logs.
-  - Add work order creation, assignment, and status tracking.
-- Exit criteria:
-  - End-to-end asset-to-work-order workflow is functional and tested.
-Execution Status: Complete
-Completed items:
-Fleet operations data model added for `equipment`, `pm_templates`, `work_orders`, and `work_order_line_items`.
-Equipment UI expanded with lifecycle states, ownership, usage tracking, and profile tabs.
-Maintenance and Work Orders pages implemented and routed in app navigation.
-Inspection out-of-service flow now auto-creates draft work orders.
-Sprint artifacts added under `docs/sprint-3/`.
-Checks: `npm run test -- --run src/test` and `npm run build` passed.
-Pause Note: Sprint 3 PR created and merged; work paused after closeout.
+### Sprint 3: Fleet Operations Core
+Status: Complete (`2026-02-22`)
+- Added fleet data model (`equipment`, `pm_templates`, `work_orders`, `work_order_line_items`).
+- Shipped Equipment, Maintenance, and Work Orders flows with inspection-triggered WO draft creation.
+- Artifacts: `docs/sprint-3/*`.
 
-### Sprint 4: Safety Intelligence Core (Risk + Coaching)
-Reminder: Commit & push after checks/tests pass.
-- Goal: Ship Idelic-like safety core.
-- Scope:
-  - Normalize driver risk model and scorecard definitions.
-  - Harden risk event ingestion and scoring logic.
-  - Standardize coaching plans, check-ins, and outcome tracking.
-- Exit criteria:
-  - Driver scorecards and coaching lifecycle are production-ready.
-Execution Status: Complete
-Started: `2026-02-22`
-Completed: `2026-02-22`
-Progress in latest session:
-- Added migration `supabase/migrations/20260222020000_risk_events_score_history.sql` to normalize `risk_events`, create `driver_risk_scores`, add constraints/indexes, and enforce org-scoped RLS for risk/coaching tables.
-- Implemented `src/services/riskService.ts` with event ingestion, composite score calculation (`0.6*motive + 0.4*local`), fallback motive score, score banding, and score-history persistence.
-- Wired `src/services/driverService.ts` to risk service (`addRiskEvent`, `refreshRiskScore`, `getDriverRiskScoreHistory`, `getDriverRiskEvents`) and updated safety aggregations for live score/event/coaching metrics.
-- Updated Sprint 4 UI surfaces:
-  - `src/pages/Safety.tsx` now renders live risk/event/coaching metrics, score trend, and incident/risk distribution from database data.
-  - `src/pages/Drivers.tsx` now shows banded risk pills, client-side risk band filter, and active coaching “Plan Assigned” status.
-  - `src/pages/DriverProfile.tsx` now loads score history/events, logs normalized manual risk events, and supports explicit score recalculation.
-- Added `src/test/riskService.test.ts` covering scoring formula, fallback behavior, band mapping, and score/history persistence side effects.
-- Added Sprint 4 artifacts:
-  - `docs/sprint-4/summary.md`
-  - `docs/sprint-4/verification.md`
-Checks run:
-- `npm run test -- --run src/test/riskService.test.ts`
-- `npm run test -- --run src/test/riskService.test.ts src/test/navigation.test.tsx`
-- `npm run test -- --run src/test/schemas.test.ts`
-- `npm run test -- --run src/test`
-- `npm run build`
-All passed in this workspace.
-Follow-ons moved to Sprint 5+:
-- Expand focused UI tests for Drivers and DriverProfile risk workflows.
-- Reconcile legacy `supabase/schema.sql` drift while preparing next migration set.
+### Sprint 4: Safety Intelligence Core
+Status: Complete (`2026-02-22`)
+- Added normalized risk events + score history migration.
+- Implemented risk scoring/ingestion and wired Safety, Drivers, and Driver Profile risk views.
+- Added risk service tests and verification artifacts.
 
-### Sprint 4.5: UI Modernization Overhaul (Layout + Visual Language)
-Reminder: Commit & push after checks/tests pass.
-- Goal: Modernize interface layout, hierarchy, and color system to align with a premium fleet-safety operations product.
-- Scope:
-  - Define updated visual direction (typography, spacing, color tokens, component elevation, states).
-  - Redesign app shell (sidebar, top bar, content frame) and normalize page-level layout patterns.
-  - Refresh key modules first (`Dashboard`, `Drivers`, `DriverProfile`, `Safety`, `Equipment`, `Maintenance`, `Work Orders`).
-  - Add interaction polish: loading skeletons, empty states, error states, and clear status semantics.
-  - Maintain WCAG AA contrast and keyboard accessibility while redesigning.
-- Exit criteria:
-  - New design system tokens are applied across all core routes.
-  - Legacy visual patterns are removed from prioritized routes.
-  - Stakeholder sign-off confirms visual direction fits Fleetio + Idelic product intent.
-Execution Status: Complete
-Started: `2026-02-22`
-Completed: `2026-02-22`
-Completed items:
-- Added Playwright-based progressive testing infrastructure:
-  - `playwright.config.ts`
-  - `e2e/smoke.spec.ts`
-  - NPM scripts in `package.json`: `test:unit`, `test:e2e`, `test:smoke`, `test:progress`
-  - CI updates in `.github/workflows/quality-gates.yml` to install Chromium and run UI smoke tests on PR/push.
-- Added Playwright output ignores to `.gitignore`.
-- Completed shell modernization baseline:
-  - `src/components/Layout/Sidebar.tsx` refreshed for new visual direction.
-  - `src/components/Layout/Header.tsx` simplified and modernized (removed theme switcher).
-  - `src/components/Layout/Layout.tsx` spacing/frame updated for route consistency.
-- Parallel page modernization completed:
-  - `src/pages/Dashboard.tsx` refreshed with updated hierarchy and card/chart styling.
-  - `src/pages/Safety.tsx` updated with modern section framing and actions.
-  - `src/pages/Drivers.tsx` updated with modern section framing and actions.
-  - `src/pages/DriverProfile.tsx` updated with modernized framing and action styling.
-  - `src/pages/Equipment.tsx` updated with modern section framing and action styling.
-  - `src/pages/Maintenance.tsx` updated with modern section framing and data card/table treatment.
-  - `src/pages/WorkOrders.tsx` updated with modern section framing and data card/table treatment.
-- Playwright smoke coverage expanded to assert redirects for `/drivers` and `/safety` when unauthenticated.
- - Playwright smoke coverage expanded to assert redirects for `/equipment`, `/maintenance`, and `/work-orders` when unauthenticated.
-Checks run:
-- `npm run test:unit`
-- `npm run test:smoke`
-- `npm run build`
-All passed in this workspace.
-Artifacts:
-- `docs/plans/2026-02-22-sprint-4-5-ui-overhaul-design.md`
-- `docs/plans/2026-02-22-sprint-4-5-ui-overhaul-implementation-plan.md`
-- `docs/sprint-4-5/summary.md`
-- `docs/sprint-4-5/verification.md`
+### Sprint 4.5: UI Modernization Overhaul
+Status: Complete (`2026-02-22`)
+- Modernized app shell and key pages (`Dashboard`, `Drivers`, `DriverProfile`, `Safety`, `Equipment`, `Maintenance`, `Work Orders`).
+- Added Playwright smoke/progressive test infrastructure and CI integration.
+- Artifacts: `docs/plans/2026-02-22-sprint-4-5-*`, `docs/sprint-4-5/*`.
 
 ### Sprint 5: Integrations Hardening (Motive/FMCSA/Email)
-Reminder: Commit locally and push to GitHub once all checks/tests pass.
-- Goal: Make external data and notification flows reliable.
-- Scope:
-  - Add retries, timeouts, backoff, and error normalization.
-  - Add rate limits and strict request validation in API routes.
-  - Implement integration health status and fallback behavior.
-  - Backlog carry-over: verify and guard against fixed-header content clipping regressions across all routes.
-  - Backlog carry-over: add authenticated Playwright fixture and enable protected-route clipping assertions in `e2e/layout.spec.ts`.
-- Exit criteria:
-  - Integration failures degrade gracefully with alerting.
-Execution Status: Complete
-Started: `2026-02-22`
-Completed: `2026-02-22`
-Completed items:
-- Added shared API hardening utilities:
-  - `api/lib/http.ts` for CORS handling, timeout + retry upstream fetches, and normalized error responses.
-  - `api/lib/rateLimit.ts` for request throttling with response headers and retry hints.
-- Hardened Motive API routes (`drivers`, `scores`, `events`) with:
-  - strict validation,
-  - per-route rate limits,
-  - timeout/backoff retry behavior,
-  - normalized error payloads.
-- Hardened FMCSA and email integrations:
-  - `api/carrier-health.ts` now uses retry/timeout + normalized failures + rate limit.
-  - `api/send-email.ts` now enforces strict request body validation and rate limiting.
-- Added integration health endpoint:
-  - `api/integrations/health.ts` probes Motive/Resend/FMCSA and returns an overall health state.
-- Added client-side fallback behavior:
-  - `src/services/motiveService.ts` now returns safe fallback payloads on failures and exposes integration health query.
-  - `src/services/carrierService.ts` and `src/services/emailService.ts` now use request timeouts.
-- Closed layout regression backlog item:
-  - Fixed fixed-header clipping root cause in `src/components/Layout/Layout.tsx` (`p-*` / `pt-*` class order).
-  - Enabled authenticated layout regression coverage via env-driven bypass and route assertions in `e2e/layout.spec.ts`.
-- Extended schema validation tests for email API payloads in `src/test/schemas.test.ts`.
-Checks run:
-- `npm run test:layout`
-- `npm run test:smoke`
-- `npm run test:unit`
-- `npm run build`
-All passed in this workspace.
-Artifacts:
-- `docs/sprint-5/summary.md`
-- `docs/sprint-5/verification.md`
+Status: Complete (`2026-02-22`)
+- Added API retry/timeout/rate-limit utilities and normalized integration error handling.
+- Hardened Motive/FMCSA/email routes and added integration health endpoint.
+- Added client fallback behavior and layout regression checks.
+- Artifacts: `docs/sprint-5/*`.
 
 ### Sprint 6: Compliance + Documents + Inspection Workflows
-Reminder: Commit locally and push to GitHub once all checks/tests pass.
-- Goal: Close compliance execution loop.
-- Scope:
-  - Productionize document upload/storage/access controls.
-  - Harden inspection flows and defect/remediation tracking.
-  - Build compliance task queues tied to drivers/equipment.
-- Exit criteria:
-  - Compliance and document workflows are auditable end-to-end.
-Execution Status: Complete
-Started: `2026-02-22`
-Completed: `2026-02-22`
-Completed items:
-- Productionized document storage and metadata workflows:
-  - Added migration `supabase/migrations/20260222030000_documents_compliance_workflows.sql` to create secure `documents` table, private storage buckets (`compliance-documents`, `driver-documents`), storage policies, and indexes.
-  - Added `src/services/documentService.ts` for listing, uploading, signed-download URL generation, and archival.
-  - Rebuilt `src/pages/Documents.tsx` from mock-only UI to live Supabase-backed document operations with category/search filtering.
-- Hardened driver document handling:
-  - `src/services/driverService.ts` now uploads files to private storage, stores path metadata, supports signed URLs, and removes storage objects on delete.
-  - Updated upload workflows in `src/pages/DriverProfile.tsx` and `src/components/drivers/modals/DocumentModal.tsx` to send real files.
-  - Updated `src/components/drivers/DriverDocumentsTab.tsx` to support direct download actions.
-- Hardened inspection and remediation workflows:
-  - `src/services/inspectionService.ts` now validates inspection payloads, persists remediation metadata, computes defect counts, and auto-generates compliance queue tasks linked to inspections.
-  - Added remediation status visibility in `src/pages/Compliance.tsx` inspections table.
-  - Added unit tests for compliance task generation in `src/test/inspectionComplianceTasks.test.ts`.
-Checks run:
-- `npm run test:layout`
-- `npm run test:smoke`
-- `npm run test:unit`
-- `npm run build`
-All passed in this workspace.
-Artifacts:
-- `docs/sprint-6/summary.md`
-- `docs/sprint-6/verification.md`
+Status: Complete (`2026-02-22`)
+- Added secure document storage/migrations and live document library workflows.
+- Hardened driver document upload/download flows and inspection-to-compliance task generation.
+- Artifacts: `docs/sprint-6/*`.
 
 ### Sprint 7: Security and Risk Hardening
-Reminder: Commit locally and push to GitHub once all checks/tests pass.
-- Goal: Remove high-risk technical debt and enforce trust boundaries.
-- Scope:
-  - Replace insecure client-side secret patterns for PII handling.
-  - Enforce RBAC + tenant isolation patterns across app/services/DB.
-  - Run security review pass and remediate high severity findings.
-- Exit criteria:
-  - No critical security issues open for release scope.
-Execution Status: Complete
-Started: `2026-02-22`
-Completed: `2026-02-22`
-Completed items:
-- Added RBAC-aware auth context and admin gating:
-  - `src/contexts/AuthContext.tsx` now resolves role context and `isAdmin`.
-  - `src/services/profileService.ts` added for profile role/email-admin resolution.
-  - Added `AdminRoute` in `src/App.tsx` and protected `/admin`.
-- Added admin operations console:
-  - `src/pages/AdminDashboard.tsx` supports table selection, JSON row inserts, listing, and delete actions.
-  - `src/services/adminService.ts` centralizes admin table operations with org-aware insertion defaults.
-- Added secure feedback backlog foundation:
-  - Migration `supabase/migrations/20260222040000_security_feedback_foundation.sql` creates `feedback_entries`, role constraints, and supporting indexes/policies.
-  - `src/services/feedbackService.ts` + `src/pages/HelpFeedback.tsx` deliver feedback submit/list/delete/export CSV workflow.
-- Added public funnel experience:
-  - `src/pages/Landing.tsx` exposed at `/welcome` with Try for Free / Request Demo calls-to-action.
-  - `src/pages/Login.tsx` now links users to `/welcome`.
-- Navigation/access updates:
-  - `src/components/Layout/Sidebar.tsx` and `src/components/Layout/Header.tsx` updated for Help/Feedback and Admin routes.
-Checks run:
-- `npm run test:layout`
-- `npm run test:smoke`
-- `npm run test:unit`
-- `npm run build`
-All passed in this workspace.
-Artifacts:
-- `docs/sprint-7/summary.md`
-- `docs/sprint-7/verification.md`
+Status: Complete (`2026-02-22`)
+- Added stronger RBAC context, admin route protection, and feedback workflow foundation.
+- Introduced admin operations console and updated access/navigation behavior.
+- Artifacts: `docs/sprint-7/*`.
 
 ### Sprint 8: Database Optimization and Data Quality
-Reminder: Commit locally and push to GitHub once all checks/tests pass.
-- Goal: Scale performance and improve data correctness.
-- Scope:
-  - Query profiling + index strategy for high-traffic paths.
-  - Add pagination/selective projections to reduce heavy queries.
-  - Introduce data quality checks and reconciliation jobs.
-- Exit criteria:
-  - Core queries meet latency targets; data QA checks in place.
-Execution Status: Complete
-Started: `2026-02-22`
-Completed: `2026-02-22`
-Completed items:
-- Added database optimization and quality migration:
-  - `supabase/migrations/20260222050000_db_optimization_data_quality.sql`
-  - Added indexes for high-volume query paths (`drivers`, `tasks`, `inspections`, `risk_events`, `work_orders`).
-  - Added quality constraints including bounded `drivers.risk_score` and minimum feedback message length.
-  - Enforced non-empty core fields for `drivers.name` and `tasks.title`.
-- Added data quality monitoring in admin workflows:
-  - `src/services/dataQualityService.ts` summarizes key quality gaps.
-  - `src/pages/AdminDashboard.tsx` now surfaces quality snapshot metrics.
-- Updated sidebar IA to a grouped, collapsible control panel style:
-  - `src/components/Layout/Sidebar.tsx` now presents Wix-like grouped navigation blocks with expand/collapse behavior.
-Checks run:
-- `npm run test:layout`
-- `npm run test:smoke`
-- `npm run test:unit`
-- `npm run build`
-All passed in this workspace.
-Artifacts:
-- `docs/sprint-8/summary.md`
-- `docs/sprint-8/verification.md`
+Status: Complete (`2026-02-22`)
+- Added indexing and quality constraints migration for high-traffic entities.
+- Added data quality summary service and admin snapshot metrics.
+- Updated sidebar grouped IA behavior.
+- Artifacts: `docs/sprint-8/*`.
 
-### Sprint 9: Reporting, Testing, and Observability
-Reminder: Commit locally and push to GitHub once all checks/tests pass.
-- Goal: Enforce organization-level isolation with page-based RBAC and domain-gated access.
-- User story: As the platform admin, I can manage organizations and define allowed email domains, while each org has role-based access to specific pages without access to the platform admin console.
-- Scope:
-  - Add per-organization `allowed_domains` and enforce domain-gated access on login.
-  - Replace current `admin/manager/viewer` roles with page-based roles:
-    - `platform_admin` (platform only)
-    - `full`, `safety`, `coaching`, `maintenance`, `readonly`
-  - Enforce page access via route guards and sidebar visibility per role.
-  - Enforce role + org isolation in database RLS policies (E2E).
-  - Provide platform admin workflows to create orgs, set domains, and assign roles.
-- Exit criteria:
-  - Users cannot access data outside their org and cannot log in with invalid domains.
-  - Role-based page access is enforced in UI and DB policies.
-  - Platform admin can manage orgs/users from `/admin`.
+### Sprint 9: Org Isolation and Role Model Upgrade
+Status: Planned (scope defined)
+- Focus: organization-level isolation with allowed domains and page-based RBAC.
+- Roles: `platform_admin`, `full`, `safety`, `coaching`, `maintenance`, `readonly`.
+- Expected outcome: strict org/data isolation with platform admin organization management.
 
 ### Post-Sprint Stabilization (2026-02-22)
-- Addressed production feedback issues after Sprint 8:
-  - Fixed `Help & Feedback` submit failures by hardening org resolution in `src/services/feedbackService.ts` (profile org + `get_org_id()` fallback), plus improved UI validation/error messaging in `src/pages/HelpFeedback.tsx`.
-  - Restored admin portal access reliability by improving admin-role detection in:
-    - `src/services/profileService.ts` (owner/admin fallback list + env-admin parsing)
-    - `src/contexts/AuthContext.tsx` (honor `user_metadata.role === 'admin'` during role resolution)
-  - Moved `Help & Feedback` to the bottom utility area of the sidebar in `src/components/Layout/Sidebar.tsx` and removed it from grouped Reporting links.
-- Checks run:
-  - `npm run test:unit`
-  - `npm run build`
-  - Both passed.
-
-### Sprint 10: UAT, Launch Readiness, and Hypercare
-Reminder: Commit locally and push to GitHub once all checks/tests pass.
-- Goal: Execute controlled production launch.
-- Scope:
-  - Pilot rollout + UAT sign-off.
-  - Run go-live checklist and rollback rehearsal.
-  - Execute post-launch hypercare and stabilization backlog triage.
-- Exit criteria:
-  - UAT complete, launch successful, KPIs stable in hypercare.
+Status: Complete
+- Fixed Help & Feedback org-resolution submit failures.
+- Restored admin portal reliability via role resolution improvements.
+- Moved Help & Feedback to utility section in sidebar.
+- Checks: `npm run test:unit`, `npm run build` (both passed).
 
 ---
 
-## Sprint 1 Detailed Draft (Immediate Start)
-
-### Objective
-Create the execution baseline required to ship safely in 10 sprints.
-
-### Execution Status (Started)
-- Status: `Complete`
-- Started: `2026-02-21`
-- Completed: `2026-02-21`
-- Artifacts created:
-  - `docs/sprint-1/release-readiness-checklist.md`
-  - `docs/sprint-1/module-readiness-matrix.md`
-  - `docs/sprint-1/launch-blockers.md`
-  - `docs/sprint-1/nfr-targets.md`
-  - `docs/sprint-1/quality-gate-status.md`
-  - `docs/sprint-1/mvp-feature-map.md`
-  - `docs/sprint-1/pr-merge-criteria.md`
-  - `docs/sprint-1/sprint-2-4-implementation-backlog.md`
-  - `.github/workflows/quality-gates.yml`
-
-### Work Items
-- Finalize MVP feature map for Fleet Operations and Safety Intelligence.
-- Define quality gates and PR merge criteria.
-- Produce route/module readiness matrix.
-- Create prioritized launch blocker backlog (security, UX, data, reliability).
-- Define NFR targets: performance, uptime, RTO/RPO, and support SLAs.
-
-### Acceptance Criteria
-- Sprint 2-4 backlog is implementation-ready.
-- CI quality gates enforced on all PRs.
-- Top blocker list approved by engineering + product.
+## Sprint 1 Detailed Draft (Archived)
+Detailed Sprint 1 planning notes were compressed into the Sprint 1 summary above; full source artifacts remain in `docs/sprint-1/`.
 
 
 ## Access/Permissions Likely Needed for Execution
@@ -426,3 +143,180 @@ Create the execution baseline required to ship safely in 10 sprints.
 - Vercel environment/secrets management access
 - Monitoring/error platform access
 - Security scanner/tooling access
+
+---
+
+## Rebaseline Draft: Sprints 10-20 (Created 2026-02-22)
+
+Context for rebaseline:
+- Current Sprint 10 (UAT/Launch) is no longer realistic due to core workflow failures.
+- Critical broken flows reported:
+  - Maintenance, Work Orders, and Inspections are not reliably working.
+  - Driver profile check-in updates fail.
+  - Documents page fails to load documents.
+  - Safety page risk-event logging fails.
+- Product UX requirement: admin workflows must be form/table driven (no raw JSON entry).
+- Product content requirement: training assignments must include actionable coach talking points and driver actions.
+- Navigation/layout should align with the screenshot-guided target state after each sprint.
+
+### Date Cadence (2-week sprints)
+- Sprint 10: 2026-02-23 to 2026-03-08
+- Sprint 11: 2026-03-09 to 2026-03-22
+- Sprint 12: 2026-03-23 to 2026-04-05
+- Sprint 13: 2026-04-06 to 2026-04-19
+- Sprint 14: 2026-04-20 to 2026-05-03
+- Sprint 15: 2026-05-04 to 2026-05-17
+- Sprint 16: 2026-05-18 to 2026-05-31
+- Sprint 17: 2026-06-01 to 2026-06-14
+- Sprint 18: 2026-06-15 to 2026-06-28
+- Sprint 19: 2026-06-29 to 2026-07-12
+- Sprint 20: 2026-07-13 to 2026-07-26
+
+### Sprint 10: Stability Recovery and Defect Burn-Down
+Reminder: Commit locally and push to GitHub once all checks/tests pass.
+- User story: As an operations manager, I can complete maintenance, work order, inspection, document, check-in, and risk logging workflows without errors so that daily operations are not blocked.
+- Goal: Restore reliability for all currently broken core workflows before adding features.
+- Scope:
+  - Fix end-to-end failures for Maintenance, Work Orders, and Inspections.
+  - Fix driver profile check-in update path (UI validation + service + DB persistence).
+  - Fix document load failures on Documents page (service/query/storage auth).
+  - Fix risk-event logging failures on Safety page (form validation + driver association + write path).
+  - Add targeted regression tests for all above defects.
+- Exit criteria:
+  - All four reported failures reproducibly pass in QA and automated tests.
+  - No P0/P1 open bugs in fleet ops or safety logging flows.
+
+### Sprint 11: Navigation and Module Parity (Screenshot-Aligned IA)
+Reminder: Commit locally and push to GitHub once all checks/tests pass.
+- User story: As a dispatcher, I can find every core module from the sidebar and each link opens a working page so that I can manage fleet and safety tasks quickly.
+- Goal: Align app information architecture and route behavior with screenshot-guided expectations.
+- Scope:
+  - Finalize canonical left-nav structure and labels (Operations + Safety + Admin).
+  - Ensure each nav item lands on a functional page (no dead links/placeholders).
+  - Implement parity modules needed for screenshot target (Inspections, Issues, Reminders, Service History, Fuel, Vehicles, Contacts & Users, Parts & Inventory, Reports).
+  - Add empty states and loading/error states for each module.
+- Exit criteria:
+  - Screenshot walkthrough can be executed fully without broken routes.
+  - Navigation usability sign-off from PM/ops users.
+
+### Sprint 12: Admin Console Usability (No JSON Authoring)
+Reminder: Commit locally and push to GitHub once all checks/tests pass.
+- User story: As an admin user, I can select a table, fill out a form, and save records without writing JSON so that configuration and data maintenance are easy.
+- Goal: Replace technical admin tooling with simple business-user CRUD workflows.
+- Scope:
+  - Replace JSON textarea in `AdminDashboard` with schema-driven forms.
+  - Table picker -> Add item -> Save workflow for all managed entities.
+  - Field-level validation, defaults, and inline error messaging.
+  - List/search/filter/edit/archive patterns with audit trail visibility.
+  - Role-based action constraints (platform admin vs org roles).
+- Exit criteria:
+  - Non-technical admin user can create/update common records without JSON.
+  - Admin usability test (task completion) >= agreed benchmark.
+
+### Sprint 13: Training Assignments v2 (Actionable Coaching Content)
+Reminder: Commit locally and push to GitHub once all checks/tests pass.
+- User story: As a safety coach, I can assign training with talking points and required driver actions so that coaching sessions are specific and measurable.
+- Goal: Make training operationally useful for coaches and drivers.
+- Scope:
+  - Replace mock training data with persisted assignments + status history.
+  - Add structured assignment templates:
+    - Coach talking points
+    - Driver required actions
+    - Due dates and completion evidence
+  - Tie assignments to risk events/coaching plans and check-ins.
+  - Add completion attestations and manager review workflow.
+- Exit criteria:
+  - Every assignment includes actionable content and measurable completion artifacts.
+  - Coaching and training lifecycle can be tracked end-to-end per driver.
+
+### Sprint 14: Fleet Ops Completion (Maintenance + Work Orders + Inspections)
+Reminder: Commit locally and push to GitHub once all checks/tests pass.
+- User story: As a fleet maintenance lead, I can move work from defect detection to completed repair with full status visibility so that downtime is reduced.
+- Goal: Fully productionize fleet operations loop.
+- Scope:
+  - Work order lifecycle hardening (create/assign/start/complete/close/cancel).
+  - Inspection defect-to-remediation linkage with SLA tracking.
+  - Service history roll-up from completed maintenance/work orders.
+  - Reminder automation for overdue inspections and PM intervals.
+  - Fleet ops KPIs for backlog, overdue, MTTR.
+- Exit criteria:
+  - Complete operations loop works without manual DB intervention.
+  - Ops regression suite green in CI.
+
+### Sprint 15: Document and Compliance Reliability
+Reminder: Commit locally and push to GitHub once all checks/tests pass.
+- User story: As a compliance manager, I can reliably access required documents and see what is missing or expiring so that audits are always ready.
+- Goal: Make document and compliance workflows auditable and dependable.
+- Scope:
+  - Harden document retrieval/upload/download/archive with retry + better error handling.
+  - Compliance task queues linked to docs, inspections, and driver status.
+  - Expiration alerts and required-document enforcement.
+  - Bulk import and bulk update flows for documents/compliance data.
+- Exit criteria:
+  - Documents page load and file access pass reliability SLOs.
+  - Compliance gaps are visible and actionable from one queue.
+
+### Sprint 16: Safety Workflow Reliability and Intervention Orchestration
+Reminder: Commit locally and push to GitHub once all checks/tests pass.
+- User story: As a safety director, I can trust risk events and check-ins to update correctly and prioritize interventions so that high-risk drivers are addressed first.
+- Goal: Stabilize risk event and intervention workflows at scale.
+- Scope:
+  - Risk-event ingestion reliability improvements and de-duplication.
+  - Driver check-in workflow redesign with status transitions and audit log.
+  - Watchlist and intervention queue prioritization by risk/severity/recency.
+  - Coaching outcome tracking connected to risk trend movement.
+- Exit criteria:
+  - Risk event logging and check-in updates are stable under load and concurrency.
+  - Safety team can manage interventions from a single prioritized queue.
+
+### Sprint 17: Reporting and Decision Support
+Reminder: Commit locally and push to GitHub once all checks/tests pass.
+- User story: As an executive stakeholder, I can view accurate operational and safety performance dashboards so that I can make weekly decisions with confidence.
+- Goal: Provide cross-functional reporting for safety and operations leadership.
+- Scope:
+  - Unified dashboards: fleet reliability, safety performance, compliance posture, training completion.
+  - Scheduled exports and saved filters/views by role.
+  - Trend and cohort reporting for coaching effectiveness and defect recurrence.
+  - KPI definitions and data dictionary published.
+- Exit criteria:
+  - Leadership weekly review can be run fully from in-app reporting.
+  - Report calculations validated against source-of-truth samples.
+
+### Sprint 18: Data Governance, Permissions, and Auditability
+Reminder: Commit locally and push to GitHub once all checks/tests pass.
+- User story: As a platform owner, I can enforce role-based access and review audit logs for critical actions so that data governance and accountability are maintained.
+- Goal: Strengthen trust boundaries and audit completeness.
+- Scope:
+  - Enforce page/action-level permissions across all new modules.
+  - End-to-end audit logs for critical data changes and admin actions.
+  - Tenant isolation verification for all high-risk queries and APIs.
+  - Data retention and archival policies for safety/compliance evidence.
+- Exit criteria:
+  - No critical access-control or tenant-isolation findings.
+  - Audit logs satisfy internal compliance review requirements.
+
+### Sprint 19: UAT, Performance, and Launch Rehearsal
+Reminder: Commit locally and push to GitHub once all checks/tests pass.
+- User story: As a rollout lead, I can validate user acceptance, system performance, and rollback readiness so that launch risk is minimized.
+- Goal: Validate production readiness after rebaseline.
+- Scope:
+  - Full UAT across operations, safety, compliance, training, and admin.
+  - Load/performance tests for core pages and APIs.
+  - Runbook validation for incidents, rollback, and data restore.
+  - Final training for internal ops/admin teams.
+- Exit criteria:
+  - UAT sign-off complete with no open launch blockers.
+  - Launch rehearsal and rollback drill pass.
+
+### Sprint 20: Controlled Launch and Hypercare
+Reminder: Commit locally and push to GitHub once all checks/tests pass.
+- User story: As a customer operations lead, I can onboard teams in phased rollout with rapid support response so that adoption is smooth and stable.
+- Goal: Deploy safely and stabilize with rapid response loops.
+- Scope:
+  - Phased production rollout (org cohorts).
+  - Hypercare command center for triage, fixes, and comms.
+  - Daily KPI/incident review during stabilization window.
+  - Prioritized post-launch backlog for next roadmap cycle.
+- Exit criteria:
+  - Launch KPIs stable for agreed hypercare window.
+  - Platform transitions from hypercare to normal operations with signed handoff.

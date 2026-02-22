@@ -13,6 +13,11 @@
     "test:e2e": "playwright test",
     "test:smoke": "playwright test e2e/smoke.spec.ts",
     "test:layout": "VITE_E2E_AUTH_BYPASS=true playwright test e2e/layout.spec.ts",
+    "test:comprehensive": "VITE_E2E_AUTH_BYPASS=true playwright test e2e/comprehensive.spec.ts",
+    "test:drivers": "VITE_E2E_AUTH_BYPASS=true playwright test e2e/drivers.spec.ts",
+    "test:equipment": "VITE_E2E_AUTH_BYPASS=true playwright test e2e/equipment.spec.ts",
+    "test:tasks": "VITE_E2E_AUTH_BYPASS=true playwright test e2e/tasks.spec.ts",
+    "test:maintenance": "VITE_E2E_AUTH_BYPASS=true playwright test e2e/maintenance.spec.ts",
     "test:progress": "npm run test:unit && npm run test:smoke",
     "admin:grant": "tsx scripts/grantAdmin.ts"
   },
