@@ -91,7 +91,7 @@ Completed items:
 Design tokens with Space Grotesk + Inter and safety palette.
 Navigation IA updated with Operations/Fleet/Safety/Reporting/Settings.
 Baseline accessibility improvements in navigation and header.
-Baseline form styling and dashboard palette alignment.
+Baseline form styling and palette alignment across core pages.
 
 ### Sprint 3: Fleet Operations Core (Asset + Maintenance)
 Reminder: Commit & push after checks/tests pass.
