@@ -3,13 +3,14 @@ import { Database, RefreshCw, Shield, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { adminService, adminTables } from '../services/adminService';
 import { dataQualityService, type DataQualitySummary } from '../services/dataQualityService';
+import AdminForm from '../components/AdminForm';
 
 const prettyJson = (value: unknown) => JSON.stringify(value, null, 2);
 
 const AdminDashboard: React.FC = () => {
   const [selectedTable, setSelectedTable] = useState(adminTables[0].name);
   const [rows, setRows] = useState<Array<Record<string, unknown>>>([]);
-  const [payloadText, setPayloadText] = useState('{\n  \n}');
+  const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [loading, setLoading] = useState(false);
   const [quality, setQuality] = useState<DataQualitySummary | null>(null);
 
@@ -20,8 +21,15 @@ const AdminDashboard: React.FC = () => {
   const loadRows = async () => {
     try {
       setLoading(true);
-      const data = await adminService.listRows(selectedTable, 25);
+      // guard against mocks or unexpected undefined returns
+      const data = (await adminService.listRows(selectedTable, 25)) || [];
       setRows(data);
+      if (data.length && Object.keys(formData).length === 0) {
+        // start form with a blank copy of the first row
+        const copy = { ...data[0] };
+        delete copy.id;
+        setFormData(copy);
+      }
     } catch (error) {
       console.error(error);
       toast.error(`Failed to load ${selectedTableLabel}`);
@@ -42,18 +50,19 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     loadRows();
     loadQuality();
+    setFormData({});
   }, [selectedTable]);
 
   const insertRow = async () => {
     try {
-      const parsed = JSON.parse(payloadText) as Record<string, unknown>;
-      await adminService.insertRow(selectedTable, parsed);
+      const payload = formData;
+      await adminService.insertRow(selectedTable, payload);
       toast.success('Row created');
-      setPayloadText('{\n  \n}');
+      setFormData({});
       loadRows();
     } catch (error) {
       console.error(error);
-      toast.error('Invalid JSON payload or insert failed');
+      toast.error('Insert failed');
     }
   };
 
@@ -88,8 +97,9 @@ const AdminDashboard: React.FC = () => {
       <section className="grid gap-6 lg:grid-cols-[340px_1fr]">
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">Data Builder</h3>
-          <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Table</label>
+          <label htmlFor="table-select" className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Table</label>
           <select
+            id="table-select"
             value={selectedTable}
             onChange={(event) => setSelectedTable(event.target.value)}
             className="mb-4 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
@@ -99,12 +109,8 @@ const AdminDashboard: React.FC = () => {
             ))}
           </select>
 
-          <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Insert Payload (JSON)</label>
-          <textarea
-            value={payloadText}
-            onChange={(event) => setPayloadText(event.target.value)}
-            className="h-56 w-full rounded-lg border border-slate-300 p-3 font-mono text-xs"
-          />
+          <label htmlFor="admin-form" className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Insert Record</label>
+          <div id="admin-form"><AdminForm table={selectedTable} data={formData} onChange={setFormData} /></div>
 
           <div className="mt-3 flex gap-2">
             <button onClick={insertRow} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
@@ -130,7 +136,7 @@ const AdminDashboard: React.FC = () => {
           <div className="mb-4 flex items-center justify-between">
             <h3 className="inline-flex items-center text-lg font-semibold text-slate-900">
               <Database className="mr-2 h-5 w-5 text-slate-500" />
-              {selectedTableLabel} ({rows.length})
+              {selectedTableLabel} ({rows?.length ?? 0})
             </h3>
           </div>
 
