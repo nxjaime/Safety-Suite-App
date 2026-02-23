@@ -336,7 +336,7 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
   - Navigation usability sign-off from PM/ops users.
 
 ### Sprint 12: Admin Console Usability (No JSON Authoring)
-Reminder: Commit locally and push to GitHub once all checks/tests pass.
+Status: In progress (`2026-02-22`)
 - User story: As an admin user, I can select a table, fill out a form, and save records without writing JSON so that configuration and data maintenance are easy.
 - Goal: Replace technical admin tooling with simple business-user CRUD workflows.
 - Scope:
@@ -348,6 +348,20 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - Exit criteria:
   - Non-technical admin user can create/update common records without JSON.
   - Admin usability test (task completion) >= agreed benchmark.
+
+**Current Tasks:**
+1. Audit `AdminDashboard` code to identify JSON textarea and replaceability.
+2. Design form component library/schema consumption pattern.
+3. Prototype simple CRUD flow for one entity (e.g. `vendors`).
+4. Add role check scaffolding to protect admin actions.
+5. Write unit tests for form generation and submission.
+
+**Next Steps:**
+- Set up database migrations for potential new admin metadata.
+- Coordinate with UX designer on form layouts.
+- Begin implementing services to abstract CRUD operations.
+
+(Updates will be recorded as work progresses.)
 
 ### Sprint 13: Training Assignments v2 (Actionable Coaching Content)
 Reminder: Commit locally and push to GitHub once all checks/tests pass.
