@@ -1,6 +1,6 @@
-import React from 'react';
-import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+// React import no longer needed because JSX runtime handles it automatically
+import { describe, expect, it, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 
 // mock services before importing component
 vi.mock('../services/adminService', () => {
