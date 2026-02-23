@@ -1,12 +1,11 @@
 import React from 'react';
 import { CalendarClock, Wrench } from 'lucide-react';
-import { isTemplateDue } from '../services/maintenanceService';
+import Modal from '../components/UI/Modal';
 
 export const maintenanceIntervals = ['Days', 'Miles', 'Hours'] as const;
 
 const Maintenance: React.FC = () => {
   const [templates, setTemplates] = React.useState<any[]>([]);
-  const [loadingTemplates, setLoadingTemplates] = React.useState(false);
   const [isNewModalOpen, setIsNewModalOpen] = React.useState(false);
   const [newTemplate, setNewTemplate] = React.useState<{
     name: string;
@@ -20,14 +19,11 @@ const Maintenance: React.FC = () => {
   const dueTemplates: any[] = [];
 
   const loadTemplates = async () => {
-    setLoadingTemplates(true);
     try {
       const data = await import('../services/maintenanceService').then(m => m.maintenanceService.getTemplates());
       setTemplates(data);
     } catch (e) {
       console.error('Failed to load maintenance templates', e);
-    } finally {
-      setLoadingTemplates(false);
     }
   };
 
@@ -128,7 +124,7 @@ const Maintenance: React.FC = () => {
 
       {/* New template modal */}
       {isNewModalOpen && (
-        <Modal onClose={() => setIsNewModalOpen(false)}>
+        <Modal isOpen={isNewModalOpen} title="New Maintenance Template" onClose={() => setIsNewModalOpen(false)}>
           <form
             className="space-y-4 p-4"
             onSubmit={async (e) => {

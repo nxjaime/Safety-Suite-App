@@ -1,23 +1,20 @@
 import React from 'react';
 import { ClipboardList, CheckCircle2, Clock } from 'lucide-react';
+import Modal from '../components/UI/Modal';
 
 export const workOrderStatusPipeline = ['Draft', 'Approved', 'In Progress', 'Completed', 'Closed'] as const;
 
 const WorkOrders: React.FC = () => {
   const [workOrders, setWorkOrders] = React.useState<any[]>([]);
-  const [loading, setLoading] = React.useState(false);
   const [isNewModalOpen, setIsNewModalOpen] = React.useState(false);
   const [newOrder, setNewOrder] = React.useState<{ title: string; description?: string; priority?: string }>({ title: '' });
 
   const loadWorkOrders = async () => {
-    setLoading(true);
     try {
       const data = await import('../services/workOrderService').then(m => m.workOrderService.getWorkOrders());
       setWorkOrders(data);
     } catch (e) {
       console.error('Failed to load work orders', e);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -108,7 +105,7 @@ const WorkOrders: React.FC = () => {
 
       {/* new work order modal */}
       {isNewModalOpen && (
-        <Modal onClose={() => setIsNewModalOpen(false)}>
+        <Modal isOpen={isNewModalOpen} title="New Work Order" onClose={() => setIsNewModalOpen(false)}>
           <form
             className="space-y-4 p-4"
             onSubmit={async (e) => {
