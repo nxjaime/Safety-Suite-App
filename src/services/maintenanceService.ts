@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase, getCurrentOrganization } from '../lib/supabase';
 import type { MaintenanceTemplate } from '../types';
 
 export interface DueCheckInput {
@@ -61,21 +61,27 @@ const mapTemplate = (data: any): MaintenanceTemplate => ({
 
 export const maintenanceService = {
     async getTemplates(): Promise<MaintenanceTemplate[]> {
-        const { data, error } = await supabase
+        const orgId = await getCurrentOrganization();
+        let query = supabase
             .from('pm_templates')
-            .select('*')
-            .order('name');
+            .select('*');
+        if (orgId) {
+            query = query.eq('organization_id', orgId);
+        }
+        const { data, error } = await query.order('name');
 
         if (error) throw error;
         return (data || []).map(mapTemplate);
     },
 
     async createTemplate(template: Omit<MaintenanceTemplate, 'id'>) {
+        // ensure organization context is attached
+        const orgId = await getCurrentOrganization();
         const { data, error } = await supabase
             .from('pm_templates')
             .insert([
                 {
-                    organization_id: template.organizationId,
+                    organization_id: template.organizationId || orgId,
                     name: template.name,
                     applies_to_type: template.appliesToType,
                     interval_days: template.intervalDays,

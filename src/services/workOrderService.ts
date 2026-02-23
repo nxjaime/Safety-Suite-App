@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase, getCurrentOrganization } from '../lib/supabase';
 import type { WorkOrder, WorkOrderLineItem } from '../types';
 
 export type WorkOrderStatus = 'Draft' | 'Approved' | 'In Progress' | 'Completed' | 'Closed';
@@ -48,22 +48,27 @@ const mapWorkOrder = (data: any): WorkOrder => ({
 
 export const workOrderService = {
     async getWorkOrders(): Promise<WorkOrder[]> {
-        const { data, error } = await supabase
+        const orgId = await getCurrentOrganization();
+        let query = supabase
             .from('work_orders')
-            .select('*, line_items:work_order_line_items(*)')
-            .order('created_at', { ascending: false });
+            .select('*, line_items:work_order_line_items(*)');
+        if (orgId) {
+            query = query.eq('organization_id', orgId);
+        }
+        const { data, error } = await query.order('created_at', { ascending: false });
 
         if (error) throw error;
         return (data || []).map(mapWorkOrder);
     },
 
     async createWorkOrder(order: Omit<WorkOrder, 'id'>, lineItems: Omit<WorkOrderLineItem, 'id' | 'workOrderId'>[] = []) {
+        const orgId = await getCurrentOrganization();
         const { data, error } = await supabase
             .from('work_orders')
             .insert([
                 {
-                    organization_id: order.organizationId,
-                    equipment_id: order.equipmentId,
+                    organization_id: order.organizationId || orgId,
+                    equipment_id: order.equipmentId || null,
                     title: order.title,
                     description: order.description,
                     status: order.status,

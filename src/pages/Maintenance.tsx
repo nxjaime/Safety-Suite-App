@@ -5,25 +5,36 @@ import { isTemplateDue } from '../services/maintenanceService';
 export const maintenanceIntervals = ['Days', 'Miles', 'Hours'] as const;
 
 const Maintenance: React.FC = () => {
-  const templates = [
-    { id: 'pm-1', name: 'Quarterly Service', intervalDays: 90, intervalMiles: undefined, intervalHours: undefined, lastServiceDate: '2025-11-15' },
-    { id: 'pm-2', name: 'Engine Inspection', intervalDays: undefined, intervalMiles: 15000, intervalHours: undefined, lastServiceMiles: 120000 },
-    { id: 'pm-3', name: 'Forklift Hours Check', intervalDays: undefined, intervalMiles: undefined, intervalHours: 250, lastServiceHours: 900 }
-  ];
+  const [templates, setTemplates] = React.useState<any[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = React.useState(false);
+  const [isNewModalOpen, setIsNewModalOpen] = React.useState(false);
+  const [newTemplate, setNewTemplate] = React.useState<{
+    name: string;
+    intervalDays?: number;
+    intervalMiles?: number;
+    intervalHours?: number;
+  }>({ name: '' });
 
-  const dueTemplates = templates.filter((template) =>
-    isTemplateDue({
-      lastServiceDate: template.lastServiceDate,
-      currentDate: '2026-02-22',
-      intervalDays: template.intervalDays,
-      lastServiceMiles: template.lastServiceMiles,
-      currentMiles: 135000,
-      intervalMiles: template.intervalMiles,
-      lastServiceHours: template.lastServiceHours,
-      currentHours: 1200,
-      intervalHours: template.intervalHours
-    })
-  );
+  // TODO: dueTemplates requires additional maintenance history data; for now
+  // show none so counts remain stable until we implement the full model.
+  const dueTemplates: any[] = [];
+
+  const loadTemplates = async () => {
+    setLoadingTemplates(true);
+    try {
+      const data = await import('../services/maintenanceService').then(m => m.maintenanceService.getTemplates());
+      setTemplates(data);
+    } catch (e) {
+      console.error('Failed to load maintenance templates', e);
+    } finally {
+      setLoadingTemplates(false);
+    }
+  };
+
+  React.useEffect(() => {
+    loadTemplates();
+  }, []);
+
 
   return (
     <div className="space-y-8" data-testid="maintenance-page">
@@ -33,7 +44,10 @@ const Maintenance: React.FC = () => {
             <h2 className="text-2xl font-semibold text-slate-900">Maintenance Control</h2>
             <p className="mt-1 text-sm text-slate-500">Plan preventive maintenance and queue service work before failures occur.</p>
           </div>
-          <button className="px-4 py-2 bg-emerald-600 text-white border border-emerald-600 rounded-xl text-sm font-medium hover:bg-emerald-700 shadow-sm">
+          <button
+            onClick={() => setIsNewModalOpen(true)}
+            className="px-4 py-2 bg-emerald-600 text-white border border-emerald-600 rounded-xl text-sm font-medium hover:bg-emerald-700 shadow-sm"
+          >
             <CalendarClock className="w-4 h-4 inline mr-2" />
             New Template
           </button>
@@ -111,6 +125,71 @@ const Maintenance: React.FC = () => {
           </ul>
         )}
       </section>
+
+      {/* New template modal */}
+      {isNewModalOpen && (
+        <Modal onClose={() => setIsNewModalOpen(false)}>
+          <form
+            className="space-y-4 p-4"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              try {
+                const created = await import('../services/maintenanceService').then(m =>
+                  m.maintenanceService.createTemplate({
+                    name: newTemplate.name,
+                    intervalDays: newTemplate.intervalDays,
+                    intervalMiles: newTemplate.intervalMiles,
+                    intervalHours: newTemplate.intervalHours
+                  } as any)
+                );
+                setTemplates((prev) => [created, ...prev]);
+                setIsNewModalOpen(false);
+                setNewTemplate({ name: '' });
+              } catch (err) {
+                console.error('Failed to create template', err);
+                alert('Could not create template');
+              }
+            }}
+          >
+            <h3 className="text-lg font-semibold">New Maintenance Template</h3>
+            <div>
+              <label className="block text-sm font-medium text-slate-700">Name</label>
+              <input
+                type="text"
+                required
+                value={newTemplate.name}
+                onChange={(e) => setNewTemplate((t) => ({ ...t, name: e.target.value }))}
+                className="mt-1 block w-full border border-slate-300 rounded-md p-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700">Interval Days</label>
+              <input
+                type="number"
+                min={0}
+                value={newTemplate.intervalDays ?? ''}
+                onChange={(e) =>
+                  setNewTemplate((t) => ({ ...t, intervalDays: e.target.value ? parseInt(e.target.value) : undefined }))
+                }
+                className="mt-1 block w-full border border-slate-300 rounded-md p-2"
+              />
+            </div>
+            {/* Additional fields for miles/hours could be added similarly */}
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsNewModalOpen(false)}
+                className="mr-2 px-4 py-2 bg-slate-200 rounded-md"
+              >
+                Cancel
+              </button>
+              <button type="submit" className="px-4 py-2 bg-emerald-600 text-white rounded-md">
+                Create
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 };

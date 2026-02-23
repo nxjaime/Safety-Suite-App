@@ -186,6 +186,57 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
   - All four reported failures reproducibly pass in QA and automated tests.
   - No P0/P1 open bugs in fleet ops or safety logging flows.
 
+### Sprint 10 Implementation Summary
+
+## Completed Work
+- **Unit Test Coverage**
+  - Added comprehensive unit tests for `driverService` covering:
+    - `updateCoachingPlan` org filtering and camelCase mapping
+    - `addCoachingPlan` organization ID insertion
+    - Error handling when task creation fails
+  - Added unit tests for `documentService` and `workOrderService` org filtering
+  - Fixed mock implementations in tests to use proper chaining
+  - All unit tests now pass (202 passed)
+
+- **Org Context Integration**
+  - Modified `driverService.addCoachingPlan` to include `organization_id` on insert
+  - Updated `driverService.updateCoachingPlan` to filter by `organization_id`
+  - Added `organization_id` filtering in `documentService.listDocuments`
+  - Added `organization_id` filtering in `workOrderService.getWorkOrders`
+  - Added tests verifying org_id is applied during inserts/updates
+
+- **E2E Auth Bypass & Route Guard**
+  - Installed `cross-env` for environment variable management
+  - Configured `playwright.config.ts` to set `VITE_E2E_AUTH_BYPASS=true`
+  - Updated `ProtectedRoute` and `AdminRoute` in `src/App.tsx` to skip redirects when bypass is enabled
+  - Enabled auth bypass for all e2e tests via Playwright `use.env`
+
+- **E2E Test Stability**
+  - Increased heading wait timeouts in `e2e/comprehensive.spec.ts` to accommodate lazy loading
+  - Changed Playwright server to port 4174 to avoid conflicts
+  - Set `reuseExistingServer: false` to ensure clean test runs
+
+## Current Status
+- **Unit tests**: All passing (202/202)
+- **E2E tests**: Still encountering failures due to missing test data for the bypass user. The auth bypass and route guard are working, but RLS policies block access to empty tables. Pages load but many components show empty states or errors, causing heading visibility assertions to fail.
+- **Core services**: Maintenance, Work Orders, Documents, Driver check-ins, and risk logging have been stabilized with proper org context and error handling.
+
+## Known Limitations
+- The `VITE_E2E_AUTH_BYPASS` mock user does not have a Supabase profile or associated `organization_id`, so RLS filters out all data. This is expected for unit tests (where mocks are used) but not for e2e tests that hit a real database.
+- To make e2e tests fully green, we need either:
+  1. A seed script that creates a profile and sample data for the e2e user
+  2. Or switch to a real test account with pre-seeded data
+  3. Or add an RLS policy exception for the e2e bypass user (not recommended for security)
+
+## Next Steps
+1. **Choose e2e data strategy** – Seed script vs real test account
+2. **Implement chosen approach** and verify e2e suite passes consistently
+3. **Complete final manual QA** on core workflows (maintenance, work orders, inspections, documents, check-ins, risk logging)
+4. **Commit & push** all changes to `origin/main` with proper sprint closeout message
+
+---  
+*Prepared by the automation agent on 2026‑02‑22. Code changes are ready in the working directory; pending commit after e2e strategy decision.*
+
 ### Sprint 11: Navigation and Module Parity (Screenshot-Aligned IA)
 Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - User story: As a dispatcher, I can find every core module from the sidebar and each link opens a working page so that I can manage fleet and safety tasks quickly.

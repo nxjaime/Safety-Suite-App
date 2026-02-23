@@ -4,11 +4,26 @@ import { ClipboardList, CheckCircle2, Clock } from 'lucide-react';
 export const workOrderStatusPipeline = ['Draft', 'Approved', 'In Progress', 'Completed', 'Closed'] as const;
 
 const WorkOrders: React.FC = () => {
-  const workOrders = [
-    { id: 'WO-1001', title: 'Brake inspection', equipment: 'TRK-101', status: 'Draft', priority: 'High', assignedTo: 'Fleet Manager', dueDate: '2026-03-05' },
-    { id: 'WO-1002', title: 'Trailer lighting repair', equipment: 'TRL-502', status: 'In Progress', priority: 'Medium', assignedTo: 'Maintenance Lead', dueDate: '2026-02-28' },
-    { id: 'WO-1003', title: 'Forklift hydraulic check', equipment: 'FRK-201', status: 'Approved', priority: 'Low', assignedTo: 'Shop Tech', dueDate: '2026-03-12' }
-  ];
+  const [workOrders, setWorkOrders] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [isNewModalOpen, setIsNewModalOpen] = React.useState(false);
+  const [newOrder, setNewOrder] = React.useState<{ title: string; description?: string; priority?: string }>({ title: '' });
+
+  const loadWorkOrders = async () => {
+    setLoading(true);
+    try {
+      const data = await import('../services/workOrderService').then(m => m.workOrderService.getWorkOrders());
+      setWorkOrders(data);
+    } catch (e) {
+      console.error('Failed to load work orders', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    loadWorkOrders();
+  }, []);
 
   return (
     <div className="space-y-8" data-testid="work-orders-page">
@@ -18,7 +33,10 @@ const WorkOrders: React.FC = () => {
             <h2 className="text-2xl font-semibold text-slate-900">Work Order Command</h2>
             <p className="mt-1 text-sm text-slate-500">Track maintenance and repair execution from draft through closeout.</p>
           </div>
-          <button className="px-4 py-2 bg-emerald-600 text-white border border-emerald-600 rounded-xl text-sm font-medium hover:bg-emerald-700 shadow-sm">
+          <button
+            onClick={() => setIsNewModalOpen(true)}
+            className="px-4 py-2 bg-emerald-600 text-white border border-emerald-600 rounded-xl text-sm font-medium hover:bg-emerald-700 shadow-sm"
+          >
             <ClipboardList className="w-4 h-4 inline mr-2" />
             New Work Order
           </button>
@@ -34,15 +52,20 @@ const WorkOrders: React.FC = () => {
       </section>
 
       <section className="rounded-2xl shadow-sm border border-slate-200 overflow-hidden bg-white">
-        <div className="px-6 py-4 border-b border-slate-200">
+        <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
           <h3 className="text-lg font-semibold text-slate-900">Open Work Orders</h3>
+          <button
+            onClick={() => setIsNewModalOpen(true)}
+            className="px-3 py-1 bg-emerald-600 text-white rounded-md text-sm"
+          >
+            New Order
+          </button>
         </div>
         <table className="min-w-full divide-y divide-slate-200">
           <thead className="bg-slate-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Title</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Equipment</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Assignee</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Due</th>
@@ -53,7 +76,6 @@ const WorkOrders: React.FC = () => {
               <tr key={order.id} className="hover:bg-slate-50">
                 <td className="px-6 py-4 whitespace-nowrap font-medium text-slate-900">{order.id}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700">{order.title}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{order.equipment}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-sky-100 text-sky-800">
                     {order.status}
@@ -83,6 +105,66 @@ const WorkOrders: React.FC = () => {
           <p className="text-sm text-slate-500">Completed maintenance and repairs.</p>
         </article>
       </section>
+
+      {/* new work order modal */}
+      {isNewModalOpen && (
+        <Modal onClose={() => setIsNewModalOpen(false)}>
+          <form
+            className="space-y-4 p-4"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              try {
+                const created = await import('../services/workOrderService').then(m =>
+                  m.workOrderService.createWorkOrder({
+                    title: newOrder.title,
+                    description: newOrder.description || '',
+                    priority: newOrder.priority || 'Medium',
+                    status: 'Draft'
+                  } as any)
+                );
+                setWorkOrders((prev) => [created, ...prev]);
+                setIsNewModalOpen(false);
+                setNewOrder({ title: '' });
+              } catch (err) {
+                console.error('Failed to create work order', err);
+                alert('Could not create work order');
+              }
+            }}
+          >
+            <h3 className="text-lg font-semibold">New Work Order</h3>
+            <div>
+              <label className="block text-sm font-medium text-slate-700">Title</label>
+              <input
+                type="text"
+                required
+                value={newOrder.title}
+                onChange={(e) => setNewOrder((o) => ({ ...o, title: e.target.value }))}
+                className="mt-1 block w-full border border-slate-300 rounded-md p-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700">Description</label>
+              <textarea
+                value={newOrder.description || ''}
+                onChange={(e) => setNewOrder((o) => ({ ...o, description: e.target.value }))}
+                className="mt-1 block w-full border border-slate-300 rounded-md p-2"
+              />
+            </div>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsNewModalOpen(false)}
+                className="mr-2 px-4 py-2 bg-slate-200 rounded-md"
+              >
+                Cancel
+              </button>
+              <button type="submit" className="px-4 py-2 bg-emerald-600 text-white rounded-md">
+                Create
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 };

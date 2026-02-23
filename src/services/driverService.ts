@@ -359,10 +359,18 @@ export const driverService = {
     },
 
     async addCoachingPlan(driverId: string, driverName: string, plan: any) {
+        // make sure we annotate the plan with the current organization so that
+        // RLS policies will allow future updates/deletes.  previously we were
+        // omitting org_id which meant the row got inserted with null and then
+        // subsequent updates were denied causing "check-in update failed" errors
+        // on the driver profile page.
+        const orgId = await this._getOrgId();
+
         const { data: planData, error: planError } = await supabase
             .from('coaching_plans')
             .insert([
                 {
+                    organization_id: orgId,
                     driver_id: driverId,
                     type: plan.type,
                     start_date: plan.startDate,
@@ -537,12 +545,13 @@ export const driverService = {
         // Explicitly map camelCase to snake_case for DB
         if (updates.weeklyCheckIns) dbUpdates.weekly_check_ins = updates.weeklyCheckIns;
 
-        const { data, error } = await supabase
-            .from('coaching_plans')
-            .update(dbUpdates)
-            .eq('id', planId)
-            .select()
-            .single();
+        // Optionally include org filter for readability; RLS will enforce anyway.
+        const orgId = await this._getOrgId();
+
+        let query = supabase.from('coaching_plans').update(dbUpdates);
+        if (orgId) query = query.eq('organization_id', orgId);
+
+        const { data, error } = await query.eq('id', planId).select().single();
 
         if (error) throw error;
         return data;

@@ -40,7 +40,8 @@ const ProtectedRoute = () => {
     );
   }
 
-  if (!session) {
+  const isE2EAuthBypass = import.meta.env.VITE_E2E_AUTH_BYPASS === 'true';
+  if (!session && !isE2EAuthBypass) {
     return <Navigate to="/login" replace />;
   }
 
@@ -58,7 +59,9 @@ const AdminRoute = () => {
     );
   }
 
-  if (!isAdmin) {
+  const isE2EAuthBypass = import.meta.env.VITE_E2E_AUTH_BYPASS === 'true';
+  if (!isAdmin && !isE2EAuthBypassuthBypass = import.meta.env.VITE_E2E_AUTH_BYPASS === 'true';
+  if (!isAdmin && !isE2EAuthBypass) {
     return <Navigate to="/" replace />;
   }
 

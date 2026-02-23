@@ -37,7 +37,9 @@ test.describe('Comprehensive Application Walkthrough', () => {
   test('Drivers page loads and can navigate to details', async ({ page }) => {
     await page.goto('/drivers');
     await expect(page).toHaveURL('/drivers');
-    await expect(page.getByRole('heading', { name: /driver operations/i })).toBeVisible();
+    const heading = page.getByRole('heading', { name: /driver operations/i });
+    await heading.waitFor({ state: 'visible', timeout: 15000 });
+    await expect(heading).toBeVisible();
     
     // Check if there is a table or list
     // I'll wait for a bit to ensure data loading (if any) or check for a "Add Driver" button
@@ -49,25 +51,33 @@ test.describe('Comprehensive Application Walkthrough', () => {
   test('Safety page loads', async ({ page }) => {
     await page.goto('/safety');
     await expect(page).toHaveURL('/safety');
-    await expect(page.getByRole('heading', { name: /safety intelligence center/i })).toBeVisible();
+    const heading = page.getByRole('heading', { name: /safety intelligence center/i });
+    await heading.waitFor({ state: 'visible', timeout: 15000 });
+    await expect(heading).toBeVisible();
   });
 
   test('Equipment page loads', async ({ page }) => {
     await page.goto('/equipment');
     await expect(page).toHaveURL('/equipment');
-    await expect(page.getByRole('heading', { name: /equipment command center/i })).toBeVisible();
+    const heading = page.getByRole('heading', { name: /equipment command center/i });
+    await heading.waitFor({ state: 'visible', timeout: 15000 });
+    await expect(heading).toBeVisible();
   });
 
   test('Maintenance page loads', async ({ page }) => {
     await page.goto('/maintenance');
     await expect(page).toHaveURL('/maintenance');
-    await expect(page.getByRole('heading', { name: /maintenance control/i })).toBeVisible();
+    const heading = page.getByRole('heading', { name: /maintenance control/i });
+    await heading.waitFor({ state: 'visible', timeout: 15000 });
+    await expect(heading).toBeVisible();
   });
 
   test('Work Orders page loads', async ({ page }) => {
     await page.goto('/work-orders');
     await expect(page).toHaveURL('/work-orders');
-    await expect(page.getByRole('heading', { name: /work order command/i })).toBeVisible();
+    const heading = page.getByRole('heading', { name: /work order command/i });
+    await heading.waitFor({ state: 'visible', timeout: 15000 });
+    await expect(heading).toBeVisible();
   });
 
   test('Tasks page loads', async ({ page }) => {

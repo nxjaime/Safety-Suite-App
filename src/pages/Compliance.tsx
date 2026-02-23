@@ -173,12 +173,15 @@ const Compliance: React.FC = () => {
             );
 
             if (shouldCreate) {
+                // include org context and potentially link to vehicle if available
                 await workOrderService.createWorkOrder({
                     title: `Inspection OOS: ${inspectionPayload.vehicle_name || 'Vehicle'}`,
                     description: 'Auto-generated from inspection out-of-service status.',
                     status: 'Draft',
-                    priority: 'High'
-                });
+                    priority: 'High',
+                    equipmentId: inspectionPayload.vehicle_id || undefined,
+                    // organizationId will be filled by service fallback if not provided
+                } as any);
             }
             await loadInspections();
             setIsInspectionModalOpen(false);

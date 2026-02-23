@@ -44,11 +44,15 @@ const mapDocument = (row: any): AppDocument => {
 
 export const documentService = {
   async listDocuments(): Promise<AppDocument[]> {
-    const { data, error } = await supabase
+    const orgId = await getCurrentOrganization();
+    let query = supabase
       .from('documents')
       .select('*')
-      .eq('status', 'active')
-      .order('uploaded_at', { ascending: false });
+      .eq('status', 'active');
+    if (orgId) {
+      query = query.eq('organization_id', orgId);
+    }
+    const { data, error } = await query.order('uploaded_at', { ascending: false });
 
     if (error) {
       console.error('Failed to list documents', error);
