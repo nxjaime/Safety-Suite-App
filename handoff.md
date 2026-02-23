@@ -173,16 +173,16 @@ Context for rebaseline:
 - Sprint 20: 2026-07-13 to 2026-07-26
 
 ### Sprint 10: Stability Recovery and Defect Burn-Down
-Reminder: Commit locally and push to GitHub once all checks/tests pass.
+Status: Complete (`2026-02-22`)
 - User story: As an operations manager, I can complete maintenance, work order, inspection, document, check-in, and risk logging workflows without errors so that daily operations are not blocked.
 - Goal: Restore reliability for all currently broken core workflows before adding features.
-- Scope:
-  - Fix end-to-end failures for Maintenance, Work Orders, and Inspections.
-  - Fix driver profile check-in update path (UI validation + service + DB persistence).
-  - Fix document load failures on Documents page (service/query/storage auth).
-  - Fix risk-event logging failures on Safety page (form validation + driver association + write path).
-  - Add targeted regression tests for all above defects.
-- Exit criteria:
+- Scope completed:
+  - Fixed end-to-end failures for Maintenance, Work Orders, and Inspections.
+  - Fixed driver profile check-in update path (UI validation + service + DB persistence).
+  - Fixed document load failures on Documents page (service/query/storage auth).
+  - Fixed risk-event logging failures on Safety page (form validation + driver association + write path).
+  - Added targeted regression tests for all above defects.
+- Exit criteria met:
   - All four reported failures reproducibly pass in QA and automated tests.
   - No P0/P1 open bugs in fleet ops or safety logging flows.
 
@@ -197,6 +197,92 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
   - Added unit tests for `documentService` and `workOrderService` org filtering
   - Fixed mock implementations in tests to use proper chaining
   - All unit tests now pass (202 passed)
+
+## Sprint 11: Fleet Operations Enhancement
+Status: Planned (`2026-03-09`)
+- User story: As a fleet manager, I can efficiently manage equipment, maintenance schedules, and work orders with enhanced features and better user experience.
+- Goal: Enhance fleet operations core with advanced features and improved workflows.
+- Scope:
+  - Equipment model expansion with type-specific fields and attachments
+  - Advanced work order management with line items and approval workflows
+  - Preventive maintenance templates with scheduling and automation
+  - Inspection-to-OOS (Out of Service) auto work order generation
+  - Enhanced UI tabs and navigation for fleet operations
+- Expected outcomes:
+  - Equipment records with comprehensive type-specific data
+  - Work orders with line items, status tracking, and approval workflows
+  - PM templates with automated scheduling and due date generation
+  - Automated work order creation from inspection OOS findings
+  - Improved navigation and user experience for fleet operations
+
+### Sprint 11 Implementation Plan
+
+#### Task 1: Equipment model expansion
+**Files:**
+- Modify: `supabase/migrations/*` (new migration)
+- Modify: `src/types/index.ts`
+- Modify: `src/services/inspectionService.ts` (if needed)
+- Modify: `src/services/driverService.ts` (if equipment is linked to drivers)
+
+**Steps:**
+1. Add `equipment` fields: `type`, `ownership_type`, `usage_miles`, `usage_hours`, `attachments`.
+2. Add vehicle attachments table or JSON field on equipment.
+3. Update TS types and service mappings.
+
+#### Task 2: Work orders
+**Files:**
+- Create: `src/services/workOrderService.ts`
+- Create: `src/pages/WorkOrders.tsx`
+- Modify: `src/pages/Equipment.tsx` (link to work orders tab)
+- Modify: `supabase/migrations/*`
+
+**Steps:**
+1. Add work order table + line items table.
+2. Implement CRUD in service.
+3. Add status flow and approval guardrails.
+
+#### Task 3: Preventive maintenance templates
+**Files:**
+- Create: `src/services/maintenanceService.ts`
+- Create: `src/pages/Maintenance.tsx`
+- Modify: `supabase/migrations/*`
+
+**Steps:**
+1. Add PM template table with time/miles/hours triggers.
+2. Add UI for templates and due list.
+3. Add due generation logic.
+
+#### Task 4: Inspection → OOS → auto work order
+**Files:**
+- Modify: `src/services/inspectionService.ts`
+- Modify: `src/pages/Compliance.tsx`
+- Modify: `src/pages/Equipment.tsx`
+
+**Steps:**
+1. Add OOS toggle in inspection UI.
+2. On OOS, create work order automatically.
+3. Add integration test if feasible.
+
+#### Task 5: UI tabs and navigation
+**Files:**
+- Modify: `src/components/Layout/Sidebar.tsx`
+- Modify: `src/App.tsx`
+- Modify: `src/pages/Equipment.tsx`
+
+**Steps:**
+1. Add Maintenance page route.
+2. Add Work Orders page route.
+3. Add tabs on Equipment profile.
+
+---
+
+## Execution Handoff
+Plan complete and saved to `docs/plans/2026-02-22-sprint-3-implementation-plan.md`.
+
+Two execution options:
+
+1. Subagent-Driven (this session)
+2. Parallel Session (separate)
 
 - **Org Context Integration**
   - Modified `driverService.addCoachingPlan` to include `organization_id` on insert
