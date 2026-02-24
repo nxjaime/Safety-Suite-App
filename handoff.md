@@ -387,6 +387,7 @@ Status: Complete (`2026-02-22`)
 *Sprint 12 has been delivered; commit & push all related changes now.*
 
 ### Sprint 13: Training Assignments v2 (Actionable Coaching Content)
+Status: In progress (`2026-02-23`)
 Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - User story: As a safety coach, I can assign training with talking points and required driver actions so that coaching sessions are specific and measurable.
 - Goal: Make training operationally useful for coaches and drivers.

@@ -21,6 +21,32 @@ export interface TrainingRecord {
     notes?: string;
 }
 
+// new sprint‑13 types
+export interface TrainingTemplate {
+    id: string;
+    name: string;
+    talking_points?: string;
+    driver_actions?: string;
+    organizationId?: string;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export type TrainingStatus = 'Active' | 'Completed' | 'Overdue';
+
+export interface TrainingAssignment {
+    id: string;
+    template_id?: string | null;
+    module_name: string;
+    assignee_id?: string | null;
+    due_date?: string;
+    status: TrainingStatus;
+    progress: number;
+    organizationId?: string;
+    created_at?: string;
+    updated_at?: string;
+}
+
 export interface NoteEntry {
     id: string;
     text: string;

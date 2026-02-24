@@ -3,7 +3,9 @@ import { GraduationCap, CheckCircle, AlertCircle, User, Calendar } from 'lucide-
 import clsx from 'clsx';
 import Modal from '../components/UI/Modal';
 import { driverService } from '../services/driverService';
-import type { Driver } from '../types';
+import { trainingService } from '../services/trainingService';
+import type { Driver, TrainingAssignment } from '../types';
+import toast from 'react-hot-toast';
 
 const Training: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -13,6 +15,7 @@ const Training: React.FC = () => {
         assignee: '',
         dueDate: ''
     });
+    const [assignments, setAssignments] = useState<TrainingAssignment[]>([]);
 
     useEffect(() => {
         const loadDrivers = async () => {
@@ -24,32 +27,42 @@ const Training: React.FC = () => {
             }
         };
         loadDrivers();
+
+        const loadAssignments = async () => {
+            try {
+                const data = await trainingService.listAssignments();
+                setAssignments(data);
+            } catch (error) {
+                console.error("Failed to load training assignments", error);
+            }
+        };
+        loadAssignments();
     }, []);
 
-    const handleAssignTraining = (e: React.FormEvent) => {
+    const handleAssignTraining = async (e: React.FormEvent) => {
         e.preventDefault();
-        // In a real app, update state
-        console.log('New Assignment:', newAssignment);
+        try {
+            const created = await trainingService.insertAssignment({
+                module_name: newAssignment.moduleName,
+                assignee_id: newAssignment.assignee,
+                due_date: newAssignment.dueDate,
+                status: 'Active',
+                progress: 0
+            });
+            setAssignments((prev) => [created, ...prev]);
+            toast.success('Assignment created');
+        } catch (err) {
+            console.error('failed to create assignment', err);
+            toast.error('Unable to assign training');
+        }
+
         setIsModalOpen(false);
         setNewAssignment({ moduleName: '', assignee: '', dueDate: '' });
     };
 
     const [filterStatus, setFilterStatus] = useState<'All' | 'Active' | 'Completed' | 'Overdue'>('All');
 
-    // This would typically come from an API/DB. Mocking a larger dataset for demonstration or fetching if available.
-    // For now, I will use the 'modules' array as the source of truth but move it to state/effect if needed.
-    // But to match the "Data Accuracy" request, I will calculate stats dynamically from this list.
-
-    // Extended mock data to show more variety
-    const [assignments] = useState([
-        { id: 1, title: 'Defensive Driving Basics', assignee: 'John Smith', dueDate: '2023-10-25', status: 'Active', progress: 45 },
-        { id: 2, title: 'HOS Compliance', assignee: 'Sarah Johnson', dueDate: '2023-10-20', status: 'Overdue', progress: 0 },
-        { id: 3, title: 'Pre-Trip Inspection', assignee: 'Mike Brown', dueDate: '2023-10-30', status: 'Active', progress: 10 },
-        { id: 4, title: 'Winter Driving Safety', assignee: 'David Wilson', dueDate: '2023-11-15', status: 'Active', progress: 0 },
-        { id: 5, title: 'Distracted Driving', assignee: 'Emily Davis', dueDate: '2023-10-10', status: 'Completed', progress: 100 },
-        { id: 6, title: 'Hazmat Safety', assignee: 'John Smith', dueDate: '2023-11-20', status: 'Active', progress: 20 },
-        { id: 7, title: 'Fatigue Management', assignee: 'Mike Brown', dueDate: '2023-10-05', status: 'Overdue', progress: 15 },
-    ]);
+    // statistics and filtering operate over the assignments state loaded from the backend
 
     // Calculate Stats
     const activeCount = assignments.filter(a => a.status === 'Active').length;
@@ -227,7 +240,7 @@ const Training: React.FC = () => {
                             >
                                 <option value="">Select Driver</option>
                                 {drivers.map(driver => (
-                                    <option key={driver.id} value={driver.name}>{driver.name}</option>
+                                    <option key={driver.id} value={driver.id}>{driver.name}</option>
                                 ))}
                             </select>
                         </div>
