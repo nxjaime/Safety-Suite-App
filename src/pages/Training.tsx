@@ -11,11 +11,20 @@ const Training: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [drivers, setDrivers] = useState<Driver[]>([]);
     const [newAssignment, setNewAssignment] = useState({
+        templateId: '',
         moduleName: '',
         assignee: '',
         dueDate: ''
     });
     const [assignments, setAssignments] = useState<TrainingAssignment[]>([]);
+    const [templates, setTemplates] = useState<TrainingTemplate[]>([]);
+    const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+    const [newTemplate, setNewTemplate] = useState({
+        name: '',
+        talkingPoints: '',
+        driverActions: ''
+    });
+    const [editingTemplateId, setEditingTemplateId] = useState<string | undefined>(undefined);
 
     useEffect(() => {
         const loadDrivers = async () => {
@@ -36,13 +45,23 @@ const Training: React.FC = () => {
                 console.error("Failed to load training assignments", error);
             }
         };
+        const loadTemplates = async () => {
+            try {
+                const data = await trainingService.listTemplates();
+                setTemplates(data);
+            } catch (error) {
+                console.error("Failed to load training templates", error);
+            }
+        };
         loadAssignments();
+        loadTemplates();
     }, []);
 
     const handleAssignTraining = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             const created = await trainingService.insertAssignment({
+                template_id: newAssignment.templateId || null,
                 module_name: newAssignment.moduleName,
                 assignee_id: newAssignment.assignee,
                 due_date: newAssignment.dueDate,
@@ -173,31 +192,42 @@ const Training: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {getFilteredList().map((module) => (
-                            <tr key={module.id} className="hover:bg-slate-50">
-                                <td className="px-6 py-4 whitespace-nowrap font-medium text-slate-900">{module.title}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{module.assignee}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{module.dueDate}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={clsx(
-                                        "px-2 inline-flex text-xs leading-5 font-semibold rounded-full",
-                                        module.status === 'Active' ? "bg-green-100 text-green-800" :
-                                            module.status === 'Completed' ? "bg-blue-100 text-blue-800" : // Changed for visual distinction
-                                                "bg-red-100 text-red-800"
-                                    )}>
-                                        {module.status}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="w-full bg-slate-200 rounded-full h-2.5 dark:bg-slate-700 max-w-xs">
-                                        <div className={clsx("h-2.5 rounded-full",
-                                            module.status === 'Overdue' ? 'bg-red-600' : 'bg-green-600'
-                                        )} style={{ width: `${module.progress}%` }}></div>
-                                    </div>
-                                    <span className="text-xs text-slate-500 mt-1">{module.progress}%</span>
-                                </td>
-                            </tr>
-                        ))}
+                        {getFilteredList().map((module) => {
+                            const assigneeName = module.assignee_id
+                                ? drivers.find(d => d.id === module.assignee_id)?.name || ''
+                                : '';
+                            return (
+                                <tr key={module.id} className="hover:bg-slate-50">
+                                    <td className="px-6 py-4 whitespace-nowrap font-medium text-slate-900">
+                                        {module.module_name}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                        {assigneeName}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                        {module.due_date}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className={clsx(
+                                            "px-2 inline-flex text-xs leading-5 font-semibold rounded-full",
+                                            module.status === 'Active' ? "bg-green-100 text-green-800" :
+                                                module.status === 'Completed' ? "bg-blue-100 text-blue-800" :
+                                                    "bg-red-100 text-red-800"
+                                        )}>
+                                            {module.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="w-full bg-slate-200 rounded-full h-2.5 dark:bg-slate-700 max-w-xs">
+                                            <div className={clsx("h-2.5 rounded-full",
+                                                module.status === 'Overdue' ? 'bg-red-600' : 'bg-green-600'
+                                            )} style={{ width: `${module.progress}%` }}></div>
+                                        </div>
+                                        <span className="text-xs text-slate-500 mt-1">{module.progress}%</span>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                         {getFilteredList().length === 0 && (
                             <tr>
                                 <td colSpan={5} className="px-6 py-4 text-center text-sm text-slate-500">
@@ -216,23 +246,37 @@ const Training: React.FC = () => {
             >
                 <form onSubmit={handleAssignTraining} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Module Name</label>
+                        <label htmlFor="assign-template" className="block text-sm font-medium text-slate-700 mb-1">Template</label>
                         <select
+                            id="assign-template"
                             className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                            value={newAssignment.moduleName}
-                            onChange={(e) => setNewAssignment({ ...newAssignment, moduleName: e.target.value })}
+                            value={newAssignment.templateId}
+                            onChange={(e) => {
+                                const tmpl = templates.find(t => t.id === e.target.value);
+                                setNewAssignment({
+                                    ...newAssignment,
+                                    templateId: e.target.value,
+                                    moduleName: tmpl?.name || ''
+                                });
+                            }}
                         >
-                            <option value="">Select Module</option>
-                            <option value="Defensive Driving">Defensive Driving</option>
-                            <option value="HOS Compliance">HOS Compliance</option>
-                            <option value="Winter Safety">Winter Safety</option>
+                            <option value="">Select Template</option>
+                            {templates.map(t => (
+                                <option key={t.id} value={t.id}>{t.name}</option>
+                            ))}
                         </select>
+                        <div className="mt-1 text-xs text-slate-500">
+                            <button type="button" className="underline" onClick={() => setIsTemplateModalOpen(true)}>
+                                Manage templates
+                            </button>
+                        </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Assignee</label>
+                        <label htmlFor="assign-assignee" className="block text-sm font-medium text-slate-700 mb-1">Assignee</label>
                         <div className="relative">
                             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                             <select
+                                id="assign-assignee"
                                 required
                                 className="pl-9 w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 value={newAssignment.assignee}
@@ -246,10 +290,11 @@ const Training: React.FC = () => {
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Due Date</label>
+                        <label htmlFor="assign-due" className="block text-sm font-medium text-slate-700 mb-1">Due Date</label>
                         <div className="relative">
                             <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                             <input
+                                id="assign-due"
                                 type="date"
                                 required
                                 className="pl-9 w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -271,6 +316,133 @@ const Training: React.FC = () => {
                             className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700"
                         >
                             Assign Training
+                        </button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* template creation/edit modal */}
+            <Modal
+                isOpen={isTemplateModalOpen}
+                onClose={() => setIsTemplateModalOpen(false)}
+                title="Manage Training Templates"
+            >
+                <form
+                    onSubmit={async (e) => {
+                        e.preventDefault();
+                        try {
+                            if (editingTemplateId) {
+                                const updated = await trainingService.updateTemplate(editingTemplateId, {
+                                    name: newTemplate.name,
+                                    talking_points: newTemplate.talkingPoints,
+                                    driver_actions: newTemplate.driverActions,
+                                });
+                                setTemplates((prev) => prev.map(t => t.id === updated.id ? updated : t));
+                                toast.success('Template updated');
+                            } else {
+                                const created = await trainingService.insertTemplate({
+                                    name: newTemplate.name,
+                                    talking_points: newTemplate.talkingPoints,
+                                    driver_actions: newTemplate.driverActions,
+                                });
+                                console.log('created template from service', created);
+                                // expose for e2e debugging
+                                (window as any).__lastCreatedTemplate = created;
+                                setTemplates((prev) => {
+                                    const next = [...prev, created];
+                                    // expose state for debugging in e2e tests
+                                    (window as any).__templates = next;
+                                    return next;
+                                });
+                                toast.success('Template added');
+                            }
+                            setIsTemplateModalOpen(false);
+                            setNewTemplate({ name: '', talkingPoints: '', driverActions: '' });
+                            setEditingTemplateId(undefined);
+                        } catch (err) {
+                            console.error('failed to save template', err);
+                            toast.error('Unable to save template');
+                        }
+                    }}
+                    className="space-y-4"
+                >
+                    {/* template list + edit/delete */}
+                    {templates.length > 0 && (
+                        <ul className="mb-4">
+                            {templates.map((t) => (
+                                <li key={t.id} className="flex justify-between items-center py-1">
+                                    <span>{t.name}</span>
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            className="text-blue-600 underline text-sm"
+                                            onClick={() => {
+                                                setNewTemplate({
+                                                    name: t.name,
+                                                    talkingPoints: t.talking_points || '',
+                                                    driverActions: t.driver_actions || '',
+                                                });
+                                                setEditingTemplateId(t.id);
+                                            }}
+                                        >
+                                            Edit
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="text-red-600 underline text-sm"
+                                            onClick={async () => {
+                                                await trainingService.deleteTemplate(t.id);
+                                                setTemplates(templates.filter((x) => x.id !== t.id));
+                                            }}
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                    <div>
+                        <label htmlFor="tmpl-name" className="block text-sm font-medium text-slate-700 mb-1">Template Name</label>
+                        <input
+                            id="tmpl-name"
+                            required
+                            className="w-full border border-slate-300 rounded-md px-3 py-2"
+                            value={newTemplate.name}
+                            onChange={(e) => setNewTemplate({ ...newTemplate, name: e.target.value })}
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="tmpl-points" className="block text-sm font-medium text-slate-700 mb-1">Talking Points</label>
+                        <textarea
+                            id="tmpl-points"
+                            className="w-full border border-slate-300 rounded-md px-3 py-2"
+                            value={newTemplate.talkingPoints}
+                            onChange={(e) => setNewTemplate({ ...newTemplate, talkingPoints: e.target.value })}
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="tmpl-actions" className="block text-sm font-medium text-slate-700 mb-1">Driver Actions</label>
+                        <textarea
+                            id="tmpl-actions"
+                            className="w-full border border-slate-300 rounded-md px-3 py-2"
+                            value={newTemplate.driverActions}
+                            onChange={(e) => setNewTemplate({ ...newTemplate, driverActions: e.target.value })}
+                        />
+                    </div>
+                    <div className="flex justify-end space-x-3 mt-6">
+                        <button
+                            type="button"
+                            onClick={() => setIsTemplateModalOpen(false)}
+                            className="px-4 py-2 border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+                        >
+                            {editingTemplateId ? 'Update Template' : 'Save Template'}
                         </button>
                     </div>
                 </form>
