@@ -24,7 +24,7 @@ export const trainingService = {
       .insert([final])
       .select()
       .single();
-    console.log('trainingService.insertAssignment returned data', data);
+    // normalize supabase response; tests previously relied on handling
     let result: any = data;
     if (Array.isArray(result)) {
       result = result[0];
@@ -32,9 +32,6 @@ export const trainingService = {
     if (result && result['0'] !== undefined) {
       result = { ...result['0'], ...result };
       delete result['0'];
-    }
-    if (typeof window !== 'undefined') {
-      (window as any).__lastAssignmentServiceData = result;
     }
     if (error) throw error;
     return result as TrainingAssignment;
@@ -76,7 +73,6 @@ export const trainingService = {
       .insert([final])
       .select()
       .single();
-    console.log('trainingService.insertTemplate returned data', data);
     // handle cases where the supabase client returns unexpected wrappers (array or numeric keys)
     let result: any = data;
     if (Array.isArray(result)) {
@@ -86,10 +82,6 @@ export const trainingService = {
     if (result && result['0'] !== undefined) {
       result = { ...result['0'], ...result };
       delete result['0'];
-    }
-    // expose for e2e debugging when running in browser context
-    if (typeof window !== 'undefined') {
-      (window as any).__lastTemplateServiceData = result;
     }
     if (error) throw error;
     return result as TrainingTemplate;

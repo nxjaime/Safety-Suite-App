@@ -73,6 +73,22 @@ test.describe('Training page', () => {
           contentType: 'application/json',
           body: JSON.stringify([newA])
         });
+      } else if (req.method() === 'PATCH') {
+        const body = req.postDataJSON();
+        const url = new URL(req.url());
+        const idParam = url.searchParams.get('id') || '';
+        const id = idParam.startsWith('eq.') ? idParam.slice(3) : idParam;
+        const idx = id ? assignments.findIndex((a: any) => a.id === id) : -1;
+        if (idx >= 0) {
+          assignments[idx] = { ...assignments[idx], ...body };
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify(assignments[idx])
+          });
+        } else {
+          await route.fulfill({ status: 404, body: 'Not found' });
+        }
       } else {
         await route.continue();
       }
@@ -104,11 +120,6 @@ test.describe('Training page', () => {
     // modal should close when template saved (form fields disappear)
     await expect(page.getByLabel('Template Name')).toBeHidden();
 
-    // debug inspect created object stored on window by page
-    const createdObj = await page.evaluate(() => (window as any).__lastCreatedTemplate);
-    console.log('createdObj from window:', createdObj);
-    const templatesState = await page.evaluate(() => (window as any).__templates);
-    console.log('templates state from window:', templatesState);
 
     // back to assign modal (it should still be visible)
     await expect(assignModal).toBeVisible();
@@ -132,5 +143,63 @@ test.describe('Training page', () => {
     const assignmentRow = page.locator('table tbody tr').first();
     await expect(assignmentRow.getByText('Safety Basics')).toBeVisible();
     await expect(assignmentRow.getByText('Jane Doe')).toBeVisible();
+  });
+
+  test('opens assignment detail and marks complete with notes', async ({ page }) => {
+    // Pre-seed one template and one assignment via network
+    await page.route('**/rest/v1/training_templates*', async route => {
+      const req = route.request();
+      if (req.method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([{ id: 'tmpl-1', name: 'Safety Basics', talking_points: 'Wear helmet', driver_actions: 'Inspect gear' }]),
+          headers: { 'content-range': '0-0/1' }
+        });
+      } else {
+        await route.continue();
+      }
+    });
+    await page.route('**/rest/v1/training_assignments*', async route => {
+      const req = route.request();
+      let assignments: any[] = [{ id: 'assign-1', template_id: 'tmpl-1', module_name: 'Safety Basics', assignee_id: 'd1', due_date: '2024-12-31', status: 'Active', progress: 0 }];
+      if (req.method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(assignments),
+          headers: { 'content-range': '0-0/1' }
+        });
+      } else if (req.method() === 'PATCH') {
+        const body = req.postDataJSON();
+        assignments[0] = { ...assignments[0], ...body };
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(assignments[0])
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    await page.goto('/training');
+    await expect(page.getByRole('heading', { name: /Training & Development/i })).toBeVisible();
+
+    // Open detail via View button on first row
+    await page.getByRole('button', { name: /View assignment details/i }).first().click();
+    const detailModal = page.locator('role=dialog[name="Assignment Details"]');
+    await expect(detailModal).toBeVisible();
+    await expect(detailModal.getByText(/Coach talking points/i)).toBeVisible();
+    await expect(detailModal.getByText(/Wear helmet/i)).toBeVisible();
+    await expect(detailModal.getByText(/Driver required actions/i)).toBeVisible();
+    await expect(detailModal.getByText(/Inspect gear/i)).toBeVisible();
+
+    await detailModal.getByRole('button', { name: /Mark complete/i }).click();
+    await expect(detailModal.getByLabel(/Completion notes/i)).toBeVisible();
+    await detailModal.getByLabel(/Completion notes/i).fill('Completed with coach.');
+    await detailModal.getByRole('button', { name: /Submit completion/i }).click();
+
+    await expect(detailModal.getByText(/Completed:/)).toBeVisible();
   });
 });

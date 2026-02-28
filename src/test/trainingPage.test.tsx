@@ -4,6 +4,9 @@ import { render, screen, fireEvent, waitFor, within } from '@testing-library/rea
 import { trainingService } from '../services/trainingService';
 
 // mocks
+vi.mock('../contexts/AuthContext', () => ({
+    useAuth: () => ({ user: { id: 'test-user-id' } }),
+}));
 vi.mock('../services/driverService', () => ({
     driverService: {
         fetchDrivers: vi.fn().mockResolvedValue([{ id: 'd1', name: 'John' }]),
@@ -15,6 +18,7 @@ vi.mock('../services/trainingService', () => ({
         insertAssignment: vi.fn().mockResolvedValue({ id: 'a1', module_name: 'Test', status: 'Active', progress: 0 }),
         insertTemplate: vi.fn().mockResolvedValue({ id: 'tnew', name: 'New', talking_points: '', driver_actions: '' }),
         updateTemplate: vi.fn().mockResolvedValue({ id: 't1', name: 'Updated' }),
+        updateAssignment: vi.fn().mockResolvedValue({ id: 'a1', status: 'Completed', progress: 100, completed_at: '2024-01-01T00:00:00Z', completed_by: 'test-user-id', completion_notes: 'Done' }),
         listTemplates: vi.fn().mockResolvedValue([]),
     }
 }));

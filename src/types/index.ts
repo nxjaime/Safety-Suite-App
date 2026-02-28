@@ -42,6 +42,13 @@ export interface TrainingAssignment {
     due_date?: string;
     status: TrainingStatus;
     progress: number;
+    completed_at?: string | null;
+    completed_by?: string | null;
+    completion_notes?: string | null;
+    reviewed_at?: string | null;
+    reviewed_by?: string | null;
+    risk_event_id?: string | null;
+    coaching_plan_id?: string | null;
     organizationId?: string;
     created_at?: string;
     updated_at?: string;

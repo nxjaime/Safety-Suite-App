@@ -387,7 +387,7 @@ Status: Complete (`2026-02-22`)
 *Sprint 12 has been delivered; commit & push all related changes now.*
 
 ### Sprint 13: Training Assignments v2 (Actionable Coaching Content)
-Status: In progress (`2026-02-23`)
+Status: Complete (`2026-02-28`)
 Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - User story: As a safety coach, I can assign training with talking points and required driver actions so that coaching sessions are specific and measurable.
 - Goal: Make training operationally useful for coaches and drivers.
@@ -402,6 +402,18 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - Exit criteria:
   - Every assignment includes actionable content and measurable completion artifacts.
   - Coaching and training lifecycle can be tracked end-to-end per driver.
+
+#### Sprint 13 Implementation Summary
+- **Types and schema:** Fixed `TrainingTemplate` import in Training.tsx. Added migration `20260228000000_training_completion_review.sql` (completed_at, completed_by, completion_notes, reviewed_at, reviewed_by, optional risk_event_id/coaching_plan_id). Extended `TrainingAssignment` in types.
+- **Assignment detail modal:** View button on each row opens a detail modal showing module, assignee, due date, status, progress, **Coach talking points** and **Driver required actions** from the linked template, plus completed/reviewed info when set.
+- **Completion and attestation:** "Mark complete" in detail modal opens completion-notes form; submit calls `trainingService.updateAssignment` with status Completed, progress 100, completed_at, completed_by, completion_notes.
+- **Manager review:** "Mark reviewed" sets reviewed_at/reviewed_by via updateAssignment; detail modal shows "Reviewed: &lt;date&gt;" when set.
+- **Driver Profile:** New Training tab lists assignments for the driver (filtered from listAssignments), with module name, due date, display status (including Overdue), and "View all in Training" link.
+- **Overdue display:** Assignments with due_date &lt; today and status !== Completed show as Overdue in stats and table (UI-only; no DB status write).
+- **Tests:** Unit tests for trainingService.updateAssignment (completion/review fields); training page tests mock useAuth and updateAssignment. E2E: PATCH handler for assignments; new spec "opens assignment detail and marks complete with notes". tsconfig.app.json excludes src/test for build.
+- **Build:** All unit tests pass; build passes.
+
+- **Commit & push:** Sprint 13 changes committed and pushed to `origin/main` (sprint-13: Training Assignments v2 – detail modal, completion attestation, manager review, Driver Profile training tab, overdue display).
 
 ### Sprint 14: Fleet Ops Completion (Maintenance + Work Orders + Inspections)
 Reminder: Commit locally and push to GitHub once all checks/tests pass.

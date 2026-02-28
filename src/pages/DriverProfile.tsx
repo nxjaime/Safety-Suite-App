@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Save, ChevronDown, ChevronRight, UserPlus, AlertTriangle, FileText, Trash2, Upload, Mail } from 'lucide-react';
+import { Save, ChevronDown, ChevronRight, UserPlus, AlertTriangle, FileText, Trash2, Upload, Mail, GraduationCap } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Modal from '../components/UI/Modal';
 // import { storage } from '../utils/storage';
 import { driverService } from '../services/driverService';
 import { emailService } from '../services/emailService';
 import { taskService } from '../services/taskService';
+import { trainingService } from '../services/trainingService';
 import { generateCheckIns } from '../utils/riskLogic';
-import type { Driver } from '../types';
+import type { Driver, TrainingAssignment } from '../types';
 import { motiveService } from '../services/motiveService'; // Import Service
 import toast from 'react-hot-toast';
 import DriverSafetyTab from '../components/drivers/DriverSafetyTab';
@@ -89,7 +90,8 @@ const DriverProfile: React.FC = () => {
     });
 
     // Tab State
-    const [activeTab, setActiveTab] = useState<'overview' | 'safety' | 'documents'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'safety' | 'documents' | 'training'>('overview');
+    const [trainingAssignments, setTrainingAssignments] = useState<TrainingAssignment[]>([]);
 
     // Motive Events State
     const [motiveEvents, setMotiveEvents] = useState<any[]>([]);
@@ -168,6 +170,15 @@ const DriverProfile: React.FC = () => {
                 } catch (docError) {
                     console.warn("Failed to fetch driver documents", docError);
                     setDriverDocuments([]);
+                }
+
+                // Fetch training assignments for this driver
+                try {
+                    const allAssignments = await trainingService.listAssignments();
+                    setTrainingAssignments((allAssignments || []).filter((a: TrainingAssignment) => a.assignee_id === id));
+                } catch (trainError) {
+                    console.warn("Failed to fetch training assignments", trainError);
+                    setTrainingAssignments([]);
                 }
             } catch (error) {
                 console.error("Failed to fetch driver data", error);
@@ -661,6 +672,12 @@ const DriverProfile: React.FC = () => {
                     >
                         Documents
                     </button>
+                    <button
+                        onClick={() => setActiveTab('training')}
+                        className={`pb-3 px-2 text-sm font-medium transition-colors border-b-2 ${activeTab === 'training' ? 'border-green-600 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Training
+                    </button>
                 </div>
             </div>
 
@@ -898,6 +915,50 @@ const DriverProfile: React.FC = () => {
                         onDelete={handleDeleteDocument}
                         onDownload={handleDownloadDocument}
                     />
+                )
+            }
+
+            {/* Training Tab Content */}
+            {
+                activeTab === 'training' && driver && (
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-semibold text-gray-800">Training Assignments</h3>
+                            <button
+                                type="button"
+                                onClick={() => navigate('/training')}
+                                className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-md hover:bg-green-100"
+                            >
+                                <GraduationCap className="w-4 h-4 mr-1" />
+                                View all in Training
+                            </button>
+                        </div>
+                        {trainingAssignments.length === 0 ? (
+                            <p className="text-sm text-slate-500">No training assignments for this driver.</p>
+                        ) : (
+                            <ul className="divide-y divide-gray-200">
+                                {trainingAssignments.map((a) => {
+                                    const today = new Date().toISOString().split('T')[0];
+                                    const isOverdue = a.due_date && a.due_date < today && a.status !== 'Completed';
+                                    const displayStatus = isOverdue ? 'Overdue' : a.status;
+                                    return (
+                                        <li key={a.id} className="py-3 flex justify-between items-center">
+                                            <div>
+                                                <span className="font-medium text-gray-900">{a.module_name}</span>
+                                                <span className="text-sm text-gray-500 ml-2">Due: {a.due_date || '—'}</span>
+                                            </div>
+                                            <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
+                                                displayStatus === 'Completed' ? 'bg-green-100 text-green-800' :
+                                                displayStatus === 'Overdue' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
+                                            }`}>
+                                                {displayStatus}
+                                            </span>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        )}
+                    </div>
                 )
             }
 

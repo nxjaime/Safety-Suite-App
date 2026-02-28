@@ -96,4 +96,49 @@ describe('trainingService', () => {
     expect(deleteSpy).toHaveBeenCalled();
     expect(eqSpy).toHaveBeenCalledWith('id', 't99');
   });
+
+  it('updates assignment with completion and review fields', async () => {
+    const updateSpy = vi.fn().mockReturnThis();
+    const selectSpy = vi.fn().mockReturnThis();
+    const singleSpy = vi.fn().mockReturnThis();
+    const eqSpy = vi.fn().mockReturnThis();
+    const chain: any = { update: updateSpy, eq: eqSpy, select: selectSpy, single: singleSpy };
+    singleSpy.mockReturnValue({
+      data: {
+        id: 'a1',
+        status: 'Completed',
+        progress: 100,
+        completed_at: '2024-01-01T12:00:00Z',
+        completed_by: 'user-1',
+        completion_notes: 'Attestation note',
+        reviewed_at: '2024-01-02T12:00:00Z',
+        reviewed_by: 'user-2',
+      },
+      error: null,
+    });
+    vi.spyOn(supa, 'supabase', 'get').mockReturnValue({ from: vi.fn().mockReturnValue(chain) } as any);
+
+    const updated = await trainingService.updateAssignment('a1', {
+      status: 'Completed',
+      progress: 100,
+      completed_at: '2024-01-01T12:00:00Z',
+      completed_by: 'user-1',
+      completion_notes: 'Attestation note',
+      reviewed_at: '2024-01-02T12:00:00Z',
+      reviewed_by: 'user-2',
+    });
+    expect(updateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'Completed',
+        progress: 100,
+        completed_at: '2024-01-01T12:00:00Z',
+        completed_by: 'user-1',
+        completion_notes: 'Attestation note',
+        reviewed_at: '2024-01-02T12:00:00Z',
+        reviewed_by: 'user-2',
+      })
+    );
+    expect(updated.status).toBe('Completed');
+    expect(updated.completion_notes).toBe('Attestation note');
+  });
 });
