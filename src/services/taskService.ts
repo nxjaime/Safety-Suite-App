@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase, getCurrentOrganization } from '../lib/supabase';
 import type { TaskItem } from '../types';
 
 const mapTaskData = (data: any): TaskItem => {
@@ -9,6 +9,7 @@ const mapTaskData = (data: any): TaskItem => {
         dueDate: data.due_date,
         priority: data.priority,
         status: data.status,
+        organizationId: data.organization_id,
         assignee: data.assignee,
         type: data.type,
         relatedId: data.related_id,
@@ -21,10 +22,15 @@ const mapTaskData = (data: any): TaskItem => {
 
 export const taskService = {
     async fetchTasks(): Promise<TaskItem[]> {
-        const { data, error } = await supabase
+        const orgId = await getCurrentOrganization();
+        let query = supabase
             .from('tasks')
-            .select('*')
-            .order('created_at', { ascending: false });
+            .select('*');
+        if (orgId) {
+            query = query.eq('organization_id', orgId);
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false });
 
         if (error) {
             console.error('Error fetching tasks:', error);
@@ -34,9 +40,11 @@ export const taskService = {
     },
 
     async addTask(task: Omit<TaskItem, 'id'>) {
+        const orgId = await getCurrentOrganization();
         const { data, error } = await supabase
             .from('tasks')
             .insert([{
+                organization_id: orgId,
                 title: task.title,
                 description: task.description,
                 due_date: task.dueDate,
@@ -76,28 +84,34 @@ export const taskService = {
         if (updates.assignee) dbUpdates.assignee = updates.assignee;
         if (updates.driverId) dbUpdates.driver_id = updates.driverId;
 
-        const { data, error } = await supabase
+        const orgId = await getCurrentOrganization();
+        let query = supabase
             .from('tasks')
             .update(dbUpdates)
-            .eq('id', id)
-            .select()
-            .single();
+            .eq('id', id);
+        if (orgId) {
+            query = query.eq('organization_id', orgId);
+        }
+        const { data, error } = await query.select().single();
 
         if (error) throw error;
         return mapTaskData(data);
     },
 
     async closeTask(id: string, notes: string) {
-        const { data, error } = await supabase
+        const orgId = await getCurrentOrganization();
+        let query = supabase
             .from('tasks')
             .update({
                 status: 'Completed',
                 closed_notes: notes,
                 closed_at: new Date().toISOString()
             })
-            .eq('id', id)
-            .select()
-            .single();
+            .eq('id', id);
+        if (orgId) {
+            query = query.eq('organization_id', orgId);
+        }
+        const { data, error } = await query.select().single();
 
         if (error) {
             console.error('Error closing task:', error);
@@ -108,32 +122,46 @@ export const taskService = {
     },
 
     async deleteTask(id: string) {
-        const { error } = await supabase
+        const orgId = await getCurrentOrganization();
+        let query = supabase
             .from('tasks')
             .delete()
             .eq('id', id);
+        if (orgId) {
+            query = query.eq('organization_id', orgId);
+        }
+        const { error } = await query;
 
         if (error) throw error;
     },
 
     async updateTaskStatus(id: string, status: TaskItem['status']) {
-        const { error } = await supabase
+        const orgId = await getCurrentOrganization();
+        let query = supabase
             .from('tasks')
             .update({ status })
             .eq('id', id);
+        if (orgId) {
+            query = query.eq('organization_id', orgId);
+        }
+        const { error } = await query;
 
         if (error) throw error;
     },
 
     // Mark a coaching check-in task as complete based on the plan ID and week
     async markCheckInTaskComplete(planId: string, week: number, driverName: string) {
+        const orgId = await getCurrentOrganization();
         // Find the task matching this coaching check-in
-        const { data, error: fetchError } = await supabase
+        let findQuery = supabase
             .from('tasks')
             .select('id')
             .eq('related_id', planId)
-            .ilike('title', `%Week ${week}%`)
-            .single();
+            .ilike('title', `%Week ${week}%`);
+        if (orgId) {
+            findQuery = findQuery.eq('organization_id', orgId);
+        }
+        const { data, error: fetchError } = await findQuery.single();
 
         if (fetchError || !data) {
             console.log(`No matching task found for plan ${planId} week ${week}`);
@@ -141,7 +169,7 @@ export const taskService = {
         }
 
         // Update the task status to Completed
-        const { error } = await supabase
+        let updateQuery = supabase
             .from('tasks')
             .update({
                 status: 'Completed',
@@ -149,10 +177,13 @@ export const taskService = {
                 closed_at: new Date().toISOString()
             })
             .eq('id', data.id);
+        if (orgId) {
+            updateQuery = updateQuery.eq('organization_id', orgId);
+        }
+        const { error } = await updateQuery;
 
         if (error) {
             console.error('Failed to update check-in task:', error);
         }
     }
 };
-

@@ -682,6 +682,40 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
   - `npm run test:unit -- src/test/reportingPreferencesService.test.ts src/test/reportingService.test.ts` passed.
   - `npm run build` passed.
 
+#### Sprint 18 Additional Progress Update (`2026-03-01`)
+- Added explicit tenant-isolation filters (`organization_id`) across remaining high-risk service paths:
+  - `src/services/taskService.ts`
+    - fetch/add/update/close/delete/status/check-in task completion
+  - `src/services/inspectionService.ts`
+    - inspection listing fetch
+  - `src/services/trainingService.ts`
+    - list/update/delete for assignments and templates
+- Added/updated unit coverage for explicit org scoping:
+  - New: `src/test/taskService.test.ts`
+  - Updated: `src/test/inspectionService.test.ts`, `src/test/trainingService.test.ts`
+- Updated sprint artifact:
+  - `docs/sprint-18/README.md`
+- Validation run:
+  - `npm run test:unit -- src/test/trainingService.test.ts src/test/taskService.test.ts src/test/inspectionService.test.ts src/test/reportingPreferencesService.test.ts` passed.
+  - `npm run test:unit` passed (`238/238`).
+  - `npm run build` passed.
+
+#### Sprint 18 Retention Policy Progress Update (`2026-03-01`)
+- Added `src/services/retentionPolicyService.ts` to support governance evidence reviews with org-scoped retention candidate analysis:
+  - Active documents older than a policy window (`uploaded_at` cutoff).
+  - Completed tasks older than a policy window (`closed_at` cutoff).
+  - Completed training assignments older than a policy window (`completed_at` cutoff).
+- Service output includes:
+  - policy window metadata (`days`, `cutoffDate`, `evaluatedAt`)
+  - normalized retention candidates with reason strings
+  - per-entity and total counts for operational review.
+- Added unit coverage:
+  - `src/test/retentionPolicyService.test.ts`
+- Validation run:
+  - `npm run test:unit -- src/test/retentionPolicyService.test.ts src/test/trainingService.test.ts src/test/taskService.test.ts src/test/inspectionService.test.ts src/test/reportingPreferencesService.test.ts` passed.
+  - `npm run test:unit` passed (`238/238`).
+  - `npm run build` passed.
+
 ### Sprint 19: UAT, Performance, and Launch Rehearsal
 Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - User story: As a rollout lead, I can validate user acceptance, system performance, and rollback readiness so that launch risk is minimized.

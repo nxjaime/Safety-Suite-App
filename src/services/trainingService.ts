@@ -9,10 +9,14 @@ async function applyOrg(payload: Record<string, unknown>) {
 
 export const trainingService = {
   async listAssignments(): Promise<TrainingAssignment[]> {
-    const { data, error } = await supabase
+    const orgId = await getCurrentOrganization();
+    let query = supabase
       .from('training_assignments')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('*');
+    if (orgId) {
+      query = query.eq('organization_id', orgId);
+    }
+    const { data, error } = await query.order('created_at', { ascending: false });
     if (error) throw error;
     return (data || []) as TrainingAssignment[];
   },
@@ -38,30 +42,42 @@ export const trainingService = {
   },
 
   async updateAssignment(id: string, updates: Partial<TrainingAssignment>) {
-    const { data, error } = await supabase
+    const orgId = await getCurrentOrganization();
+    let query = supabase
       .from('training_assignments')
       .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
+      .eq('id', id);
+    if (orgId) {
+      query = query.eq('organization_id', orgId);
+    }
+    const { data, error } = await query.select().single();
     if (error) throw error;
     return data as TrainingAssignment;
   },
 
   async deleteAssignment(id: string) {
-    const { error } = await supabase
+    const orgId = await getCurrentOrganization();
+    let query = supabase
       .from('training_assignments')
       .delete()
       .eq('id', id);
+    if (orgId) {
+      query = query.eq('organization_id', orgId);
+    }
+    const { error } = await query;
     if (error) throw error;
   },
 
   // template methods
   async listTemplates(): Promise<TrainingTemplate[]> {
-    const { data, error } = await supabase
+    const orgId = await getCurrentOrganization();
+    let query = supabase
       .from('training_templates')
-      .select('*')
-      .order('name');
+      .select('*');
+    if (orgId) {
+      query = query.eq('organization_id', orgId);
+    }
+    const { data, error } = await query.order('name');
     if (error) throw error;
     return (data || []) as TrainingTemplate[];
   },
@@ -88,21 +104,29 @@ export const trainingService = {
   },
 
   async updateTemplate(id: string, updates: Partial<TrainingTemplate>) {
-    const { data, error } = await supabase
+    const orgId = await getCurrentOrganization();
+    let query = supabase
       .from('training_templates')
       .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
+      .eq('id', id);
+    if (orgId) {
+      query = query.eq('organization_id', orgId);
+    }
+    const { data, error } = await query.select().single();
     if (error) throw error;
     return data as TrainingTemplate;
   },
 
   async deleteTemplate(id: string) {
-    const { error } = await supabase
+    const orgId = await getCurrentOrganization();
+    let query = supabase
       .from('training_templates')
       .delete()
       .eq('id', id);
+    if (orgId) {
+      query = query.eq('organization_id', orgId);
+    }
+    const { error } = await query;
     if (error) throw error;
   }
 };

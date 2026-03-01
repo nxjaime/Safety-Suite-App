@@ -147,10 +147,14 @@ export const buildInspectionComplianceTasks = (
 
 export const inspectionService = {
     async getInspections() {
-        const { data, error } = await supabase
+        const orgId = await getCurrentOrganization();
+        let query = supabase
             .from('inspections')
-            .select('*')
-            .order('date', { ascending: false });
+            .select('*');
+        if (orgId) {
+            query = query.eq('organization_id', orgId);
+        }
+        const { data, error } = await query.order('date', { ascending: false });
 
         if (error) {
             console.error('Error fetching inspections:', error);

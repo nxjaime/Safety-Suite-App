@@ -7,9 +7,10 @@ describe('trainingService', () => {
     const orgId = 'org-abc';
     vi.spyOn(supa, 'getCurrentOrganization').mockResolvedValue(orgId);
 
+    const eqSpy = vi.fn().mockReturnThis();
     const orderSpy = vi.fn().mockReturnThis();
     const selectSpy = vi.fn().mockReturnThis();
-    const chain: any = { select: selectSpy, order: orderSpy };
+    const chain: any = { select: selectSpy, eq: eqSpy, order: orderSpy };
     orderSpy.mockReturnValue({ data: [{ id: 'a1' }], error: null });
 
     vi.spyOn(supa, 'supabase', 'get').mockReturnValue({
@@ -23,9 +24,11 @@ describe('trainingService', () => {
   });
 
   it('lists templates and sorts by name', async () => {
+    vi.spyOn(supa, 'getCurrentOrganization').mockResolvedValue('org-abc');
+    const eqSpy = vi.fn().mockReturnThis();
     const orderSpy = vi.fn().mockReturnThis();
     const selectSpy = vi.fn().mockReturnThis();
-    const chain: any = { select: selectSpy, order: orderSpy };
+    const chain: any = { select: selectSpy, eq: eqSpy, order: orderSpy };
     orderSpy.mockReturnValue({ data: [{ id: 't1', name: 'Temp' }], error: null });
     vi.spyOn(supa, 'supabase', 'get').mockReturnValue({ from: vi.fn().mockReturnValue(chain) } as any);
 
@@ -72,10 +75,12 @@ describe('trainingService', () => {
   });
 
   it('updates a template', async () => {
+    vi.spyOn(supa, 'getCurrentOrganization').mockResolvedValue('org-xyz');
+    const eqSpy = vi.fn().mockReturnThis();
     const updateSpy = vi.fn().mockReturnThis();
     const selectSpy = vi.fn().mockReturnThis();
     const singleSpy = vi.fn().mockReturnThis();
-    const chain: any = { update: updateSpy, eq: vi.fn().mockReturnThis(), select: selectSpy, single: singleSpy };
+    const chain: any = { update: updateSpy, eq: eqSpy, select: selectSpy, single: singleSpy };
     singleSpy.mockReturnValue({ data: { id: 't42', name: 'Updated' }, error: null });
     vi.spyOn(supa, 'supabase', 'get').mockReturnValue({ from: vi.fn().mockReturnValue(chain) } as any);
 
@@ -85,11 +90,11 @@ describe('trainingService', () => {
   });
 
   it('deletes a template', async () => {
-    const eqSpy = vi.fn().mockReturnThis();
+    vi.spyOn(supa, 'getCurrentOrganization').mockResolvedValue('org-xyz');
     const deleteSpy = vi.fn().mockReturnThis();
+    const eqSpy = vi.fn();
     const chain: any = { delete: deleteSpy, eq: eqSpy };
-    // simulate final result after eq
-    eqSpy.mockReturnValue({ error: null });
+    eqSpy.mockReturnValueOnce(chain).mockReturnValueOnce({ error: null });
     vi.spyOn(supa, 'supabase', 'get').mockReturnValue({ from: vi.fn().mockReturnValue(chain) } as any);
 
     await trainingService.deleteTemplate('t99');
@@ -98,6 +103,7 @@ describe('trainingService', () => {
   });
 
   it('updates assignment with completion and review fields', async () => {
+    vi.spyOn(supa, 'getCurrentOrganization').mockResolvedValue('org-xyz');
     const updateSpy = vi.fn().mockReturnThis();
     const selectSpy = vi.fn().mockReturnThis();
     const singleSpy = vi.fn().mockReturnThis();
