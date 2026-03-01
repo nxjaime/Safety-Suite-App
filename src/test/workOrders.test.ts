@@ -20,4 +20,9 @@ describe('work order status transitions', () => {
         expect(canTransitionStatus('Draft', 'Completed')).toBe(false);
         expect(canTransitionStatus('Closed', 'In Progress')).toBe(false);
     });
+
+    it('allows draft and approved to cancel', () => {
+        expect(canTransitionStatus('Draft', 'Cancelled')).toBe(true);
+        expect(canTransitionStatus('Approved', 'Cancelled')).toBe(true);
+    });
 });

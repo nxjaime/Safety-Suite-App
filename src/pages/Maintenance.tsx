@@ -107,7 +107,8 @@ const Maintenance: React.FC = () => {
       </section>
 
       <section className="rounded-2xl shadow-sm border border-slate-200 p-6 bg-white">
-        <h3 className="text-lg font-semibold text-slate-900 mb-2">Work Orders Due</h3>
+        <h3 className="text-lg font-semibold text-slate-900 mb-2">Overdue / Due Reminders</h3>
+        <p className="text-xs text-slate-500 mb-3">Connect equipment usage and last service dates to see PM due by interval (days/miles/hours).</p>
         {dueTemplates.length === 0 ? (
           <p className="text-sm text-slate-500">No preventive maintenance is due right now.</p>
         ) : (

@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Truck, AlertTriangle, Wrench, ClipboardList, FileText, CalendarClock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Truck, AlertTriangle, Wrench, ClipboardList, FileText, CalendarClock, CheckCircle } from 'lucide-react';
 import clsx from 'clsx';
 import Modal from '../components/UI/Modal';
 import toast from 'react-hot-toast';
 import { settingsService } from '../services/settingsService';
+import { workOrderService } from '../services/workOrderService';
+import type { WorkOrder } from '../types';
 
 export const equipmentProfileTabs = ['Overview', 'Inspections', 'Maintenance', 'Work Orders'] as const;
 
@@ -24,6 +27,7 @@ type EquipmentRow = {
 };
 
 const Equipment: React.FC = () => {
+    const navigate = useNavigate();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'Trucks' | 'Trailers' | 'Forklifts' | 'Pallet Jacks' | 'Sales Vehicles'>('Trucks');
     const [profileTab, setProfileTab] = useState<(typeof equipmentProfileTabs)[number]>('Overview');
@@ -52,8 +56,11 @@ const Equipment: React.FC = () => {
         { id: 'SAL-401', type: 'Sales Vehicle', make: 'Ford', model: 'Transit', year: 2023, status: 'active', nextService: '2024-01-10', category: 'Sales Vehicles', ownership: 'owned', usageMiles: 18400, usageHours: 0, attachments: ['Camera'], forkliftAttachments: [] },
     ]);
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
 
     const filteredVehicles = vehicles.filter(v => v.category === activeTab);
+    const openWorkOrders = workOrders.filter(o => !['Completed', 'Closed', 'Cancelled'].includes(o.status));
+    const serviceHistory = workOrders.filter(o => o.status === 'Completed' || o.status === 'Closed');
 
     useEffect(() => {
         const loadSettings = async () => {
@@ -62,7 +69,6 @@ const Equipment: React.FC = () => {
                 if (types && types.length > 0) {
                     setVehicleTypes(types.map(t => t.value));
                 } else {
-                    // Fallback defaults
                     setVehicleTypes(['Truck', 'Trailer', 'Forklift', 'Pallet Jack', 'Sales Vehicle']);
                 }
             } catch (err) {
@@ -72,6 +78,12 @@ const Equipment: React.FC = () => {
         };
         loadSettings();
     }, []);
+
+    useEffect(() => {
+        if (profileTab === 'Work Orders') {
+            workOrderService.getWorkOrders().then(setWorkOrders).catch(() => setWorkOrders([]));
+        }
+    }, [profileTab]);
 
     const handleAddAsset = (e: React.FormEvent) => {
         e.preventDefault();
@@ -316,18 +328,54 @@ const Equipment: React.FC = () => {
             )}
 
             {profileTab === 'Work Orders' && (
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <div>
-                            <h3 className="text-lg font-bold text-slate-800">Open Work Orders</h3>
-                            <p className="text-sm text-slate-500">Track repairs and service requests.</p>
+                <div className="space-y-6">
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-800">Open Work Orders</h3>
+                                <p className="text-sm text-slate-500">Track repairs and service requests.</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => navigate('/work-orders')}
+                                className="px-3 py-2 text-sm font-medium border border-slate-200 rounded-md hover:bg-slate-50 inline-flex items-center"
+                            >
+                                <ClipboardList className="w-4 h-4 inline mr-2" />
+                                Create Work Order
+                            </button>
                         </div>
-                        <button className="px-3 py-2 text-sm font-medium border border-slate-200 rounded-md hover:bg-slate-50">
-                            <ClipboardList className="w-4 h-4 inline mr-2" />
-                            Create Work Order
-                        </button>
+                        {openWorkOrders.length === 0 ? (
+                            <p className="text-sm text-slate-500">No active work orders.</p>
+                        ) : (
+                            <ul className="divide-y divide-slate-100">
+                                {openWorkOrders.slice(0, 10).map((wo) => (
+                                    <li key={wo.id} className="py-2 flex justify-between items-center">
+                                        <span className="font-medium text-slate-900">{wo.title}</span>
+                                        <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-sky-100 text-sky-800">{wo.status}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </div>
-                    <div className="text-sm text-slate-500">No active work orders for this equipment.</div>
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                            <h3 className="text-lg font-bold text-slate-800">Service History</h3>
+                        </div>
+                        <p className="text-sm text-slate-500 mb-3">Completed maintenance and repairs (roll-up from work orders).</p>
+                        {serviceHistory.length === 0 ? (
+                            <p className="text-sm text-slate-500">No completed work orders yet.</p>
+                        ) : (
+                            <ul className="divide-y divide-slate-100">
+                                {serviceHistory.slice(0, 15).map((wo) => (
+                                    <li key={wo.id} className="py-2 flex justify-between items-center">
+                                        <span className="text-slate-700">{wo.title}</span>
+                                        <span className="text-xs text-slate-500">{wo.completedAt ? new Date(wo.completedAt).toLocaleDateString() : wo.status}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
                 </div>
             )}
 

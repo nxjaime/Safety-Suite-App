@@ -1,11 +1,45 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, CheckCircle, Clock, FileText, Plus, User, Calendar, Trash2, AlertTriangle, Truck } from 'lucide-react';
+import { AlertCircle, CheckCircle, Clock, FileText, Plus, User, Calendar, Trash2, AlertTriangle, Truck, ClipboardList } from 'lucide-react';
 import Modal from '../components/UI/Modal';
 import { inspectionService, shouldCreateWorkOrderFromInspection } from '../services/inspectionService';
 import type { Inspection, ViolationItem } from '../services/inspectionService';
 import { driverService } from '../services/driverService';
 import type { Driver } from '../types';
 import { workOrderService } from '../services/workOrderService';
+import toast from 'react-hot-toast';
+
+function CreateWorkOrderFromInspectionButton({ inspection, onCreated }: { inspection: Inspection; onCreated?: () => void }) {
+    const [loading, setLoading] = useState(false);
+    const handleCreate = async () => {
+        setLoading(true);
+        try {
+            await workOrderService.createWorkOrder({
+                title: `Inspection ${inspection.report_number || inspection.id} remediation`,
+                description: `Defect remediation for inspection ${inspection.report_number || ''}. Vehicle: ${inspection.vehicle_name || 'Unknown'}, Driver: ${inspection.driver_name || 'Unknown'}.`,
+                status: 'Draft',
+                priority: inspection.out_of_service ? 'High' : 'Medium',
+                inspectionId: inspection.id,
+            });
+            toast.success('Work order created');
+            onCreated?.();
+        } catch (e) {
+            console.error('Create WO from inspection', e);
+            toast.error('Failed to create work order');
+        } finally {
+            setLoading(false);
+        }
+    };
+    return (
+        <button
+            type="button"
+            onClick={handleCreate}
+            disabled={loading}
+            className="text-emerald-600 hover:text-emerald-900 inline-flex items-center disabled:opacity-50"
+        >
+            <ClipboardList className="w-4 h-4 mr-1" /> Create WO
+        </button>
+    );
+}
 
 const Compliance: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -69,11 +103,13 @@ const Compliance: React.FC = () => {
     const [newInspection, setNewInspection] = useState<Partial<Inspection>>(initialInspectionState);
     const [currentViolation, setCurrentViolation] = useState<ViolationItem>({ code: '', description: '', type: 'Vehicle', oos: false });
 
-    // Fetch inspections when view changes to 'inspections' or on mount
+    // Load inspections on mount (for overdue count on overview) and when entering inspections view (for drivers)
+    useEffect(() => {
+        loadInspections();
+    }, []);
     useEffect(() => {
         if (view === 'inspections') {
-            loadInspections();
-            loadDrivers(); // Fetch drivers when entering inspection view
+            loadDrivers();
         }
     }, [view]);
 
@@ -226,6 +262,11 @@ const Compliance: React.FC = () => {
         { id: 3, item: 'HOS Logs', status: 'Warning', score: '88%' },
     ];
 
+    const today = new Date().toISOString().split('T')[0];
+    const overdueRemediationsCount = inspections.filter(
+        (i) => i.remediation_status !== 'Closed' && i.remediation_due_date && i.remediation_due_date < today
+    ).length;
+
     const renderOverview = () => (
         <>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -248,8 +289,19 @@ const Compliance: React.FC = () => {
                         <h3 className="text-sm font-medium text-slate-500">DOT Inspections</h3>
                         <FileText className="w-5 h-5 text-blue-500" />
                     </div>
-                    <p className="text-2xl font-bold text-slate-900">8</p>
-                    <p className="text-xs text-blue-600 mt-1">Last 30 days</p>
+                    <p className="text-2xl font-bold text-slate-900">{inspections.length}</p>
+                    <p className="text-xs text-blue-600 mt-1">Total on file</p>
+                </div>
+                <div
+                    onClick={() => setView('inspections')}
+                    className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors"
+                >
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-medium text-slate-500">Overdue Remediations</h3>
+                        <AlertTriangle className="w-5 h-5 text-amber-500" />
+                    </div>
+                    <p className="text-2xl font-bold text-slate-900">{overdueRemediationsCount}</p>
+                    <p className="text-xs text-amber-600 mt-1">Past SLA due date</p>
                 </div>
                 <div
                     onClick={() => setView('dq')}
@@ -475,46 +527,64 @@ const Compliance: React.FC = () => {
                                         <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Vehicle</th>
                                         <th className="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Violations</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Remediation</th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">File</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">SLA Due</th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
                                     {inspections.length === 0 ? (
                                         <tr>
-                                            <td colSpan={7} className="px-6 py-4 text-center text-slate-500 text-sm">
+                                            <td colSpan={8} className="px-6 py-4 text-center text-slate-500 text-sm">
                                                 No inspections found. Upload one to get started.
                                             </td>
                                         </tr>
                                     ) : (
-                                        inspections.map((item) => (
-                                            <tr key={item.id} className="hover:bg-slate-50">
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{item.date}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap font-medium text-slate-900">{item.report_number}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{item.driver_name || 'Unknown'}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{item.vehicle_name || 'Unknown'}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${(item.violations_count || 0) > 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                                                        }`}>
-                                                        {item.violations_count}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${item.remediation_status === 'Closed'
-                                                        ? 'bg-emerald-100 text-emerald-700'
-                                                        : item.remediation_status === 'In Progress'
-                                                            ? 'bg-amber-100 text-amber-700'
-                                                            : 'bg-rose-100 text-rose-700'
-                                                        }`}>
-                                                        {item.remediation_status || 'Open'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                    <button className="text-blue-600 hover:text-blue-900 flex items-center justify-end w-full">
-                                                        <FileText className="w-4 h-4 mr-1" /> PDF
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))
+                                        inspections.map((item) => {
+                                            const today = new Date().toISOString().split('T')[0];
+                                            const slaDue = item.remediation_due_date;
+                                            const isOverdue = slaDue && item.remediation_status !== 'Closed' && slaDue < today;
+                                            return (
+                                                <tr key={item.id} className="hover:bg-slate-50">
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{item.date}</td>
+                                                    <td className="px-6 py-4 whitespace-nowrap font-medium text-slate-900">{item.report_number}</td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{item.driver_name || 'Unknown'}</td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{item.vehicle_name || 'Unknown'}</td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${(item.violations_count || 0) > 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                                                            }`}>
+                                                            {item.violations_count}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${item.remediation_status === 'Closed'
+                                                            ? 'bg-emerald-100 text-emerald-700'
+                                                            : item.remediation_status === 'In Progress'
+                                                                ? 'bg-amber-100 text-amber-700'
+                                                                : 'bg-rose-100 text-rose-700'
+                                                            }`}>
+                                                            {item.remediation_status || 'Open'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                        {slaDue ? (
+                                                            <span className={isOverdue ? 'text-red-600 font-semibold' : 'text-slate-500'}>
+                                                                {slaDue}{isOverdue ? ' (Overdue)' : ''}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-slate-400">—</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                                        {(item.remediation_status === 'Open' || item.remediation_status === 'In Progress') && (
+                                                            <CreateWorkOrderFromInspectionButton inspection={item} onCreated={loadInspections} />
+                                                        )}
+                                                        <button className="text-blue-600 hover:text-blue-900 inline-flex items-center">
+                                                            <FileText className="w-4 h-4 mr-1" /> PDF
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
                                     )}
                                 </tbody>
                             </table>

@@ -221,7 +221,7 @@ export interface MaintenanceTemplate {
     intervalHours?: number;
 }
 
-export type WorkOrderStatus = 'Draft' | 'Approved' | 'In Progress' | 'Completed' | 'Closed';
+export type WorkOrderStatus = 'Draft' | 'Approved' | 'In Progress' | 'Completed' | 'Closed' | 'Cancelled';
 export type WorkOrderPriority = 'Low' | 'Medium' | 'High';
 
 export interface WorkOrderLineItem {
@@ -238,6 +238,7 @@ export interface WorkOrder {
     id: string;
     organizationId?: string;
     equipmentId?: string;
+    inspectionId?: string;
     title: string;
     description?: string;
     status: WorkOrderStatus;
@@ -246,6 +247,8 @@ export interface WorkOrder {
     approvedAt?: string;
     assignedTo?: string;
     dueDate?: string;
+    completedAt?: string;
+    createdAt?: string;
     totalPartsCost?: number;
     totalLaborCost?: number;
     totalCost?: number;

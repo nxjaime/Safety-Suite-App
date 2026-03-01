@@ -416,6 +416,7 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - **Commit & push:** Sprint 13 changes committed and pushed to `origin/main` (sprint-13: Training Assignments v2 – detail modal, completion attestation, manager review, Driver Profile training tab, overdue display).
 
 ### Sprint 14: Fleet Ops Completion (Maintenance + Work Orders + Inspections)
+Status: Complete (`2026-02-28`)
 Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - User story: As a fleet maintenance lead, I can move work from defect detection to completed repair with full status visibility so that downtime is reduced.
 - Goal: Fully productionize fleet operations loop.
@@ -428,6 +429,13 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - Exit criteria:
   - Complete operations loop works without manual DB intervention.
   - Ops regression suite green in CI.
+
+#### Sprint 14 Implementation Summary
+- **Work order lifecycle:** Added `Cancelled` status; transitions Draft→Approved/Cancelled, Approved→In Progress/Cancelled, In Progress→Completed, Completed→Closed. Migration `20260228100000_work_orders_sprint14.sql`: `completed_at`, `inspection_id`, indexes. Types and `workOrderService`: `completedAt`, `createdAt`, `inspectionId`; auto-set `completed_at` when status→Completed; `getNextStatuses`, `getBacklogCount`, `getOverdueCount`, `getMTTRDays`. Work Orders page: status action buttons (Approve, Start, Complete, Close, Cancel), KPIs (Backlog, Overdue, MTTR), create form with assignee/due date.
+- **Inspection–work order link:** Compliance inspections table: SLA Due column (remediation_due_date, Overdue badge); "Create WO" button per inspection (creates draft WO with `inspectionId`, title/description from inspection). Compliance overview: "Overdue Remediations" card (count inspections past SLA); inspections loaded on mount for count.
+- **Service history:** Equipment page Work Orders tab: load work orders, show Open Work Orders list and Service History (completed/closed) roll-up with completion date; "Create Work Order" navigates to /work-orders.
+- **Overdue reminders:** Compliance: overdue remediations count and card; Maintenance: Overdue/Due Reminders section with note to connect equipment and last service for PM due.
+- **Tests:** workOrders.test.ts: allow Draft/Approved→Cancelled; workOrdersPage.test.ts: pipeline includes Cancelled. Unit 215 passed; build passed.
 
 ### Sprint 15: Document and Compliance Reliability
 Reminder: Commit locally and push to GitHub once all checks/tests pass.
