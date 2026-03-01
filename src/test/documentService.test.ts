@@ -22,7 +22,7 @@ describe('documentService', () => {
     expect(eqSpy).toHaveBeenCalledWith('status', 'active');
     expect(eqSpy).toHaveBeenCalledWith('organization_id', orgId);
     expect(orderSpy).toHaveBeenCalledWith('uploaded_at', { ascending: false });
-    expect(docs).toEqual([{ id: 'doc1' }]);
+    expect(docs[0].id).toBe('doc1');
   });
 
   it('throws when supabase returns an error', async () => {
@@ -39,4 +39,55 @@ describe('documentService', () => {
     await expect(documentService.listDocuments()).rejects.toBe(err);
   });
 
+  it('retries listDocuments on transient failure', async () => {
+    vi.spyOn(supa, 'getCurrentOrganization').mockResolvedValue('org-1');
+    const transient = new Error('temporary');
+
+    const eqSpy = vi.fn().mockReturnThis();
+    const orderSpy = vi.fn()
+      .mockReturnValueOnce({ data: null, error: transient })
+      .mockReturnValueOnce({
+        data: [{
+          id: 'doc1',
+          name: 'Safety Handbook',
+          category: 'Handbooks',
+          storage_path: 'org-1/doc1.pdf',
+          uploaded_at: '2026-01-01T00:00:00.000Z'
+        }],
+        error: null
+      });
+    const selectSpy = vi.fn().mockReturnThis();
+    const chain: any = { select: selectSpy, eq: eqSpy, order: orderSpy };
+
+    vi.spyOn(supa, 'supabase', 'get').mockReturnValue({ from: vi.fn().mockReturnValue(chain) } as any);
+
+    const docs = await documentService.listDocuments();
+    expect(orderSpy).toHaveBeenCalledTimes(2);
+    expect(docs[0].id).toBe('doc1');
+  });
+
+  it('bulkArchiveDocuments reports per-item failures', async () => {
+    const first = {
+      id: 'doc-1',
+      name: 'Doc 1',
+      category: 'Compliance',
+      storagePath: 'org-1/doc-1.pdf',
+      uploadedAt: '2026-01-01T00:00:00.000Z'
+    };
+    const second = {
+      id: 'doc-2',
+      name: 'Doc 2',
+      category: 'Compliance',
+      storagePath: 'org-1/doc-2.pdf',
+      uploadedAt: '2026-01-01T00:00:00.000Z'
+    };
+
+    vi.spyOn(documentService, 'deleteDocument')
+      .mockResolvedValueOnce()
+      .mockRejectedValueOnce(new Error('boom'));
+
+    const result = await documentService.bulkArchiveDocuments([first, second]);
+    expect(result.archived).toBe(1);
+    expect(result.failedIds).toEqual(['doc-2']);
+  });
 });

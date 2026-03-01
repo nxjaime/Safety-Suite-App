@@ -6,6 +6,7 @@ import type { Inspection, ViolationItem } from '../services/inspectionService';
 import { driverService } from '../services/driverService';
 import type { Driver } from '../types';
 import { workOrderService } from '../services/workOrderService';
+import { getComplianceSnapshot, type ComplianceSnapshot } from '../services/complianceService';
 import toast from 'react-hot-toast';
 
 function CreateWorkOrderFromInspectionButton({ inspection, onCreated }: { inspection: Inspection; onCreated?: () => void }) {
@@ -55,6 +56,8 @@ const Compliance: React.FC = () => {
     const [inspections, setInspections] = useState<Inspection[]>([]);
     const [loadingInspections, setLoadingInspections] = useState(false);
     const [drivers, setDrivers] = useState<Driver[]>([]); // New state for drivers
+    const [snapshot, setSnapshot] = useState<ComplianceSnapshot | null>(null);
+    const [loadingSnapshot, setLoadingSnapshot] = useState(false);
 
     // Form State
     const [isInspectionModalOpen, setIsInspectionModalOpen] = useState(false);
@@ -106,6 +109,7 @@ const Compliance: React.FC = () => {
     // Load inspections on mount (for overdue count on overview) and when entering inspections view (for drivers)
     useEffect(() => {
         loadInspections();
+        loadComplianceSnapshot();
     }, []);
     useEffect(() => {
         if (view === 'inspections') {
@@ -151,6 +155,18 @@ const Compliance: React.FC = () => {
             console.error('Failed to load inspections', error);
         } finally {
             setLoadingInspections(false);
+        }
+    };
+
+    const loadComplianceSnapshot = async () => {
+        setLoadingSnapshot(true);
+        try {
+            const next = await getComplianceSnapshot();
+            setSnapshot(next);
+        } catch (error) {
+            console.error('Failed to load compliance snapshot', error);
+        } finally {
+            setLoadingSnapshot(false);
         }
     };
 
@@ -237,24 +253,15 @@ const Compliance: React.FC = () => {
         setNewDQFile({ driverName: '', documentType: '', expirationDate: '' });
     };
 
-    const expirations = [
-        { id: 1, driver: 'Sarah Jenkins', type: 'CDL', date: '2025-10-15', status: 'Good' },
-        { id: 2, driver: 'Mike Ross', type: 'Medical Card', date: '2024-02-20', status: 'Critical' },
-        { id: 3, driver: 'David Kim', type: 'MVR', date: '2024-03-01', status: 'Warning' },
-        { id: 4, driver: 'Elena Rodriguez', type: 'Hazmat Endorsement', date: '2025-06-10', status: 'Good' },
-        { id: 5, driver: 'Sarah Jenkins', type: 'Annual Review', date: '2024-11-15', status: 'Good' },
-    ];
-
     const hosViolations = [
         { id: 1, driver: 'Mike Ross', violation: '11 Hour Rule', date: '2024-01-15', status: 'Open' },
         { id: 2, driver: 'David Kim', violation: '14 Hour Rule', date: '2023-12-20', status: 'Resolved' },
         { id: 3, driver: 'Elena Rodriguez', violation: '30 Minute Break', date: '2024-01-05', status: 'Open' },
     ];
 
-    const missingDQFiles = [
-        { id: 1, driver: 'Mike Ross', file: 'Medical Card', status: 'Expired' },
-        { id: 2, driver: 'David Kim', file: 'MVR', status: 'Missing' },
-    ];
+    const missingDQFiles = (snapshot?.expiringCredentials || [])
+        .filter((item) => item.status === 'Critical')
+        .map((item) => ({ id: item.id, driver: item.driver, file: item.type, status: 'Expired' }));
 
     const auditItems = [
         { id: 1, item: 'Driver Files', status: 'Compliant', score: '100%' },
@@ -278,8 +285,8 @@ const Compliance: React.FC = () => {
                         <h3 className="text-sm font-medium text-slate-500">HOS Violations</h3>
                         <AlertCircle className="w-5 h-5 text-red-500" />
                     </div>
-                    <p className="text-2xl font-bold text-slate-900">12</p>
-                    <p className="text-xs text-red-600 mt-1">+2 from last week</p>
+                    <p className="text-2xl font-bold text-slate-900">{snapshot?.openComplianceTasks ?? 0}</p>
+                    <p className="text-xs text-red-600 mt-1">Open compliance action items</p>
                 </div>
                 <div
                     onClick={() => setView('inspections')}
@@ -311,7 +318,7 @@ const Compliance: React.FC = () => {
                         <h3 className="text-sm font-medium text-slate-500">Missing DQ Files</h3>
                         <FileText className="w-5 h-5 text-yellow-500" />
                     </div>
-                    <p className="text-2xl font-bold text-slate-900">5</p>
+                    <p className="text-2xl font-bold text-slate-900">{missingDQFiles.length}</p>
                     <p className="text-xs text-yellow-600 mt-1">Action required</p>
                 </div>
                 <div
@@ -322,7 +329,9 @@ const Compliance: React.FC = () => {
                         <h3 className="text-sm font-medium text-slate-500">Expiring CDLs</h3>
                         <Clock className="w-5 h-5 text-orange-500" />
                     </div>
-                    <p className="text-2xl font-bold text-slate-900">3</p>
+                    <p className="text-2xl font-bold text-slate-900">
+                        {(snapshot?.expiringCredentials || []).filter((item) => item.type === 'CDL' && item.status !== 'Good').length}
+                    </p>
                     <p className="text-xs text-slate-500 mt-1">Next 30 days</p>
                 </div>
                 <div
@@ -353,7 +362,7 @@ const Compliance: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {expirations.map((item) => (
+                        {(snapshot?.expiringCredentials || []).map((item) => (
                             <tr key={item.id} className="hover:bg-slate-50">
                                 <td className="px-6 py-4 whitespace-nowrap font-medium text-slate-900">{item.driver}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{item.type}</td>
@@ -371,6 +380,13 @@ const Compliance: React.FC = () => {
                                 </td>
                             </tr>
                         ))}
+                        {!loadingSnapshot && (snapshot?.expiringCredentials || []).length === 0 && (
+                            <tr>
+                                <td colSpan={5} className="px-6 py-4 text-center text-sm text-slate-500">
+                                    No expiring credentials found.
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
@@ -475,7 +491,7 @@ const Compliance: React.FC = () => {
             {view === 'cdl' && renderDetailView(
                 'Expiring CDLs',
                 ['Driver', 'Document Type', 'Expiration Date', 'Status'],
-                expirations.filter(e => e.type === 'CDL'),
+                (snapshot?.expiringCredentials || []).filter(e => e.type === 'CDL'),
                 (item) => (
                     <tr key={item.id} className="hover:bg-slate-50">
                         <td className="px-6 py-4 whitespace-nowrap font-medium text-slate-900">{item.driver}</td>

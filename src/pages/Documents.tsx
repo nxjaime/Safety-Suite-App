@@ -8,6 +8,9 @@ const Documents: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [documents, setDocuments] = useState<AppDocument[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
+    const [archivingSelected, setArchivingSelected] = useState(false);
+    const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
 
@@ -26,10 +29,12 @@ const Documents: React.FC = () => {
     const loadDocuments = async () => {
         try {
             setLoading(true);
+            setLoadError(null);
             const data = await documentService.listDocuments();
             setDocuments(data);
         } catch (error) {
             console.error('Failed to load documents', error);
+            setLoadError('Failed to load documents. Please retry.');
             toast.error('Failed to load documents');
         } finally {
             setLoading(false);
@@ -71,6 +76,7 @@ const Documents: React.FC = () => {
                 docType: newDocument.docType
             });
             setDocuments((prev) => [uploaded, ...prev]);
+            setSelectedDocumentIds((prev) => prev.filter((id) => id !== uploaded.id));
             setIsModalOpen(false);
             setNewDocument({
                 name: '',
@@ -101,10 +107,51 @@ const Documents: React.FC = () => {
         try {
             await documentService.deleteDocument(doc);
             setDocuments((prev) => prev.filter((item) => item.id !== doc.id));
+            setSelectedDocumentIds((prev) => prev.filter((id) => id !== doc.id));
             toast.success('Document archived');
         } catch (error) {
             console.error('Delete failed', error);
             toast.error('Failed to archive document');
+        }
+    };
+
+    const toggleSelectedDocument = (docId: string) => {
+        setSelectedDocumentIds((prev) => (
+            prev.includes(docId) ? prev.filter((id) => id !== docId) : [...prev, docId]
+        ));
+    };
+
+    const toggleSelectAllVisible = () => {
+        const visibleIds = filteredDocuments.map((doc) => doc.id);
+        const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedDocumentIds.includes(id));
+        if (allVisibleSelected) {
+            setSelectedDocumentIds((prev) => prev.filter((id) => !visibleIds.includes(id)));
+            return;
+        }
+        setSelectedDocumentIds((prev) => Array.from(new Set([...prev, ...visibleIds])));
+    };
+
+    const handleBulkArchive = async () => {
+        const selectedDocuments = documents.filter((doc) => selectedDocumentIds.includes(doc.id));
+        if (selectedDocuments.length === 0) return;
+        if (!window.confirm(`Archive ${selectedDocuments.length} selected document(s)?`)) return;
+
+        setArchivingSelected(true);
+        try {
+            const result = await documentService.bulkArchiveDocuments(selectedDocuments);
+            setDocuments((prev) => prev.filter((doc) => !selectedDocumentIds.includes(doc.id)));
+            setSelectedDocumentIds([]);
+
+            if (result.failedIds.length > 0) {
+                toast.error(`${result.failedIds.length} document(s) failed to archive`);
+            } else {
+                toast.success(`${result.archived} document(s) archived`);
+            }
+        } catch (error) {
+            console.error('Bulk archive failed', error);
+            toast.error('Bulk archive failed');
+        } finally {
+            setArchivingSelected(false);
         }
     };
 
@@ -123,6 +170,19 @@ const Documents: React.FC = () => {
                         <Upload className="mr-2 h-4 w-4" />
                         Upload Document
                     </button>
+                </div>
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <button
+                        onClick={handleBulkArchive}
+                        disabled={selectedDocumentIds.length === 0 || archivingSelected}
+                        className="inline-flex items-center rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Archive Selected
+                    </button>
+                    <span className="text-sm text-slate-500">
+                        {selectedDocumentIds.length} selected
+                    </span>
                 </div>
             </section>
 
@@ -157,10 +217,28 @@ const Documents: React.FC = () => {
             <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 {loading ? (
                     <div className="p-8 text-center text-sm text-slate-500">Loading documents...</div>
+                ) : loadError ? (
+                    <div className="space-y-3 p-8 text-center">
+                        <p className="text-sm text-rose-600">{loadError}</p>
+                        <button
+                            onClick={loadDocuments}
+                            className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        >
+                            Retry
+                        </button>
+                    </div>
                 ) : (
                     <table className="min-w-full divide-y divide-slate-200">
                         <thead className="bg-slate-50">
                             <tr>
+                                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                    <input
+                                        type="checkbox"
+                                        onChange={toggleSelectAllVisible}
+                                        checked={filteredDocuments.length > 0 && filteredDocuments.every((doc) => selectedDocumentIds.includes(doc.id))}
+                                        aria-label="Select all visible documents"
+                                    />
+                                </th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Name</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Category</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Type</th>
@@ -172,6 +250,14 @@ const Documents: React.FC = () => {
                         <tbody className="divide-y divide-slate-100 bg-white">
                             {filteredDocuments.map((doc) => (
                                 <tr key={doc.id} className="hover:bg-slate-50">
+                                    <td className="px-4 py-4 text-sm text-slate-600">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedDocumentIds.includes(doc.id)}
+                                            onChange={() => toggleSelectedDocument(doc.id)}
+                                            aria-label={`Select ${doc.name}`}
+                                        />
+                                    </td>
                                     <td className="px-6 py-4 text-sm font-medium text-slate-900">
                                         <div className="flex items-center">
                                             <FileText className="mr-2 h-4 w-4 text-slate-400" />
@@ -204,7 +290,7 @@ const Documents: React.FC = () => {
                             ))}
                             {filteredDocuments.length === 0 && (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-8 text-center text-sm text-slate-500">
+                                    <td colSpan={7} className="px-6 py-8 text-center text-sm text-slate-500">
                                         No documents found for this filter.
                                     </td>
                                 </tr>

@@ -438,6 +438,7 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - **Tests:** workOrders.test.ts: allow Draft/Approved→Cancelled; workOrdersPage.test.ts: pipeline includes Cancelled. Unit 215 passed; build passed.
 
 ### Sprint 15: Document and Compliance Reliability
+Status: In Progress (`2026-03-01`)
 Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - User story: As a compliance manager, I can reliably access required documents and see what is missing or expiring so that audits are always ready.
 - Goal: Make document and compliance workflows auditable and dependable.
@@ -449,6 +450,25 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - Exit criteria:
   - Documents page load and file access pass reliability SLOs.
   - Compliance gaps are visible and actionable from one queue.
+
+#### Sprint 15 Progress Update (`2026-03-01`)
+- Added retry/backoff wrapper (`src/services/retry.ts`) and applied it to document listing, upload metadata insert, signed URL creation, and archival operations in `src/services/documentService.ts`.
+- Added bulk archive support in `documentService.bulkArchiveDocuments` with per-document failure reporting.
+- Updated `Documents` page with:
+  - Load error + retry state
+  - Multi-select checkboxes
+  - Bulk archive action for selected rows
+- Added new live compliance snapshot service (`src/services/complianceService.ts`) that combines:
+  - Open compliance tasks
+  - Overdue inspection remediations
+  - Expiring driver credentials (CDL + medical card)
+- Updated `Compliance` overview to use snapshot-backed values for open action items, missing critical credentials, expiring CDLs, and upcoming expiration rows.
+- Added/updated tests:
+  - `src/test/documentService.test.ts` (retry + bulk archive coverage)
+  - `src/test/complianceService.test.ts` (snapshot aggregation coverage)
+- Validation run:
+  - `npm run test:unit` passed (`218/218`)
+  - `npm run build` passed
 
 ### Sprint 16: Safety Workflow Reliability and Intervention Orchestration
 Reminder: Commit locally and push to GitHub once all checks/tests pass.
