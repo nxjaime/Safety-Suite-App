@@ -12,6 +12,9 @@
   - `docs/runbooks/launch-rehearsal.md`
   - Defines preconditions, execution flow, failure triage expectations, rollback/restore checks, and go/no-go output.
 - Began Sprint 19 artifacting for UAT/performance/launch rehearsal readiness.
+- Added UAT execution matrix:
+  - `docs/sprint-19/uat-checklist.md`
+  - Covers auth, fleet ops, inspections/compliance, safety, training, reporting, and admin permission validation.
 
 ## Validation
 

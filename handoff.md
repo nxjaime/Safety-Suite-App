@@ -739,6 +739,9 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
   - `docs/runbooks/launch-rehearsal.md` with preconditions, execution checklist, rollback/restore checks, and go/no-go criteria.
 - Added sprint artifact:
   - `docs/sprint-19/README.md`
+- Added UAT execution checklist:
+  - `docs/sprint-19/uat-checklist.md`
+  - Includes cross-module validation matrix and sign-off fields for UAT lead/product/engineering.
 - Validation run:
   - `SKIP_SMOKE=1 npm run rehearsal:launch` passed.
 
