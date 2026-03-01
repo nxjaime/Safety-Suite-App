@@ -38,6 +38,26 @@ describe('driverService', () => {
       await driverService.updateCoachingPlan('plan-1', { status: 'Active', weeklyCheckIns: [] });
       expect(updateSpy).toHaveBeenCalled();
     });
+
+    it('persists outcome when provided', async () => {
+      vi.spyOn(driverService as any, '_getOrgId').mockResolvedValue('org-abc');
+      const eqSpy = vi.fn().mockReturnThis();
+      const selectSpy = vi.fn().mockReturnThis();
+      const singleSpy = vi.fn().mockReturnValue({ data: {}, error: null });
+      const chain: any = { eq: eqSpy, select: selectSpy, single: singleSpy };
+      const updateSpy = vi.fn().mockReturnValue(chain);
+      (supa.supabase as any).from = vi.fn().mockReturnValue({ update: updateSpy });
+
+      await driverService.updateCoachingPlan('plan-9', {
+        status: 'Completed',
+        outcome: '12 points improved'
+      });
+
+      expect(updateSpy).toHaveBeenCalledWith({
+        status: 'Completed',
+        outcome: '12 points improved'
+      });
+    });
   });
 
   describe('addCoachingPlan', () => {

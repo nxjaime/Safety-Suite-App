@@ -471,6 +471,7 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
   - `npm run build` passed
 
 ### Sprint 16: Safety Workflow Reliability and Intervention Orchestration
+Status: Complete (`2026-03-01`)
 Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - User story: As a safety director, I can trust risk events and check-ins to update correctly and prioritize interventions so that high-risk drivers are addressed first.
 - Goal: Stabilize risk event and intervention workflows at scale.
@@ -482,6 +483,75 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - Exit criteria:
   - Risk event logging and check-in updates are stable under load and concurrency.
   - Safety team can manage interventions from a single prioritized queue.
+
+#### Sprint 16 Progress Update (`2026-03-01`)
+- **Risk-event ingestion de-duplication**
+  - Updated `riskService.ingestEvent` to detect duplicate events by `driver_id + event_type + occurred_at + source` before insert.
+  - Duplicate ingest now returns existing row and avoids double-writing risk events.
+  - Test coverage added in `src/test/riskService.test.ts`.
+
+- **Check-in workflow transitions + audit trail**
+  - Added `src/services/checkInWorkflowService.ts` with explicit transition rules:
+    - `Pending -> In Progress | Complete | Missed`
+    - `In Progress -> Complete | Missed`
+    - `Missed -> In Progress | Complete`
+    - `Complete -> In Progress` (controlled reopen)
+  - Added per-check-in audit entries (`status` and `notes` changes with actor/timestamp).
+  - Updated Driver Profile coaching UI to use status dropdown (`Pending/In Progress/Complete/Missed`) instead of boolean checkbox.
+  - Added tests in `src/test/checkInWorkflowService.test.ts`.
+
+- **Prioritized intervention queue**
+  - Added `src/services/interventionQueueService.ts` to compute queue priority from:
+    - driver risk score
+    - recent event count
+    - event severity
+    - recency
+    - active coaching coverage
+  - Added `fetchInterventionQueue` query path and integrated queue table into `src/pages/Safety.tsx`.
+  - Added tests in `src/test/interventionQueueService.test.ts`.
+
+- **Validation**
+  - `npm run test:unit -- src/test/checkInWorkflowService.test.ts src/test/interventionQueueService.test.ts src/test/riskService.test.ts` passed.
+  - `npm run build` passed.
+
+#### Sprint 16 Additional Progress Update (`2026-03-01`)
+- **Dedicated Watchlist module**
+  - Added `src/pages/Watchlist.tsx` with prioritized intervention table, refresh flow, and driver-profile deep links.
+  - Added `/watchlist` route in `src/App.tsx`.
+  - Added Watchlist navigation entry under Safety in `src/components/Layout/Sidebar.tsx`.
+  - Added nav regression coverage in `src/test/navigation.test.tsx` (Safety includes Watchlist).
+
+- **Safety page intervention workflow polish**
+  - Updated Safety intervention queue card to deep-link into driver profiles and full watchlist view.
+
+- **Check-in audit visibility**
+  - Driver Profile check-in rows now show the last audit timestamp/actor inline so status and note changes are traceable in the coaching workflow UI.
+
+- **Validation**
+  - `npm run test:unit -- src/test/navigation.test.tsx src/test/checkInWorkflowService.test.ts src/test/interventionQueueService.test.ts src/test/riskService.test.ts` passed.
+  - `npm run build` passed.
+
+#### Sprint 16 Completion Update (`2026-03-01`)
+- **Coaching outcome tracking connected to risk movement**
+  - Added `src/services/coachingOutcomeService.ts` to compute baseline-vs-latest score deltas per coaching plan.
+  - Integrated outcome summaries into Driver Profile coaching cards (live summary plus persisted outcome when plans complete).
+  - Updated `driverService.updateCoachingPlan` to persist `outcome`.
+  - Added tests: `src/test/coachingOutcomeService.test.ts` and expanded `src/test/driverService.test.ts`.
+
+- **Risk workflow hardening**
+  - Added retry wrapping in `riskService` read/write paths to improve resilience under transient failures.
+
+- **Sprint artifact**
+  - Added sprint artifact: `docs/sprint-16/README.md`.
+
+- **Final validation**
+  - `npm run test:unit -- src/test/coachingOutcomeService.test.ts src/test/driverService.test.ts src/test/riskService.test.ts src/test/checkInWorkflowService.test.ts src/test/interventionQueueService.test.ts src/test/navigation.test.tsx` passed.
+  - `npm run test:unit` passed (`228/228`).
+  - `npm run build` passed.
+
+- **Exit criteria met**
+  - Risk event logging and check-in updates are stable with dedupe + retries + status/audit workflow.
+  - Safety team can manage interventions from prioritized queue surfaces (`/safety` and `/watchlist`).
 
 ### Sprint 17: Reporting and Decision Support
 Reminder: Commit locally and push to GitHub once all checks/tests pass.

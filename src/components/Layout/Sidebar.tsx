@@ -60,6 +60,7 @@ export const navSections: Array<{ label: string; items: LegacyNavItem[] }> = [
         items: [
             { type: 'link', name: 'Drivers', path: '/drivers', icon: Users },
             { type: 'link', name: 'Risk & Coaching', path: '/safety', icon: ShieldAlert },
+            { type: 'link', name: 'Watchlist', path: '/watchlist', icon: ShieldAlert },
             { type: 'link', name: 'Compliance', path: '/compliance', icon: Files },
             { type: 'link', name: 'Training', path: '/training', icon: GraduationCap },
             { type: 'link', name: 'Regulations', path: '/fmcsa', icon: BookOpen }
@@ -105,6 +106,7 @@ const menuGroups: MenuGroup[] = [
         items: [
             { name: 'Drivers', path: '/drivers', icon: Users },
             { name: 'Risk & Coaching', path: '/safety', icon: ShieldAlert },
+            { name: 'Watchlist', path: '/watchlist', icon: ShieldAlert },
             { name: 'Compliance', path: '/compliance', icon: Files },
             { name: 'Training', path: '/training', icon: GraduationCap },
             { name: 'Regulations', path: '/fmcsa', icon: BookOpen }

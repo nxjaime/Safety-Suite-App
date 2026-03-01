@@ -5,6 +5,7 @@ import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Ba
 import Modal from '../components/UI/Modal';
 import toast from 'react-hot-toast';
 import { driverService } from '../services/driverService';
+import { fetchInterventionQueue, type InterventionQueueItem } from '../services/interventionQueueService';
 
 const Safety: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -18,6 +19,7 @@ const Safety: React.FC = () => {
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [interventionQueue, setInterventionQueue] = useState<InterventionQueueItem[]>([]);
     const [drivers, setDrivers] = useState<{ id: string; name: string }[]>([]);
     const [loadingDrivers, setLoadingDrivers] = useState(false);
     const [newCoaching, setNewCoaching] = useState({
@@ -57,8 +59,12 @@ const Safety: React.FC = () => {
         try {
             setLoading(true);
             setError(null);
-            const stats = await driverService.fetchSafetyStats();
+            const [stats, queue] = await Promise.all([
+                driverService.fetchSafetyStats(),
+                fetchInterventionQueue(8)
+            ]);
             setStats(stats);
+            setInterventionQueue(queue);
         } catch (error) {
             setError('Failed to load safety data');
             toast.error('Failed to load safety data');
@@ -231,6 +237,58 @@ const Safety: React.FC = () => {
                     </div>
                 </Link>
             </div>
+
+            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="mb-4 flex items-center justify-between">
+                    <div>
+                        <h3 className="text-lg font-semibold text-slate-900">Intervention Queue</h3>
+                        <p className="text-sm text-slate-500">Prioritized by risk, severity, and event recency.</p>
+                    </div>
+                    <Link to="/watchlist" className="text-sm font-medium text-emerald-700 hover:text-emerald-900">
+                        Full Watchlist
+                    </Link>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-slate-200">
+                        <thead className="bg-slate-50">
+                            <tr>
+                                <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Driver</th>
+                                <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Risk</th>
+                                <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Recent Events</th>
+                                <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Priority</th>
+                                <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Action</th>
+                                <th className="px-4 py-2 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Open</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 bg-white">
+                            {interventionQueue.map((item) => (
+                                <tr key={item.driverId} className="hover:bg-slate-50">
+                                    <td className="px-4 py-3 text-sm font-medium text-slate-900">{item.driverName}</td>
+                                    <td className="px-4 py-3 text-sm text-slate-600">{item.riskScore}</td>
+                                    <td className="px-4 py-3 text-sm text-slate-600">{item.recentEventCount}</td>
+                                    <td className="px-4 py-3 text-sm text-slate-600">{item.priorityScore}</td>
+                                    <td className="px-4 py-3 text-sm text-slate-600">{item.recommendedAction}</td>
+                                    <td className="px-4 py-3 text-right text-sm">
+                                        <Link
+                                            to={`/drivers/${item.driverId}`}
+                                            className="font-medium text-emerald-700 hover:text-emerald-900"
+                                        >
+                                            Driver
+                                        </Link>
+                                    </td>
+                                </tr>
+                            ))}
+                            {interventionQueue.length === 0 && !loading && (
+                                <tr>
+                                    <td colSpan={6} className="px-4 py-6 text-center text-sm text-slate-500">
+                                        No prioritized interventions right now.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
 
             <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
                 <div className="flex items-center justify-between mb-2">

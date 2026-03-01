@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Save, ChevronDown, ChevronRight, UserPlus, AlertTriangle, FileText, Trash2, Upload, Mail, GraduationCap } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -8,6 +8,8 @@ import { driverService } from '../services/driverService';
 import { emailService } from '../services/emailService';
 import { taskService } from '../services/taskService';
 import { trainingService } from '../services/trainingService';
+import { applyCheckInTransition, type CheckInStatus } from '../services/checkInWorkflowService';
+import { buildCoachingOutcomeInsights, evaluateCoachingOutcome } from '../services/coachingOutcomeService';
 import { generateCheckIns } from '../utils/riskLogic';
 import type { Driver, TrainingAssignment } from '../types';
 import { motiveService } from '../services/motiveService'; // Import Service
@@ -272,38 +274,51 @@ const DriverProfile: React.FC = () => {
         const planToUpdate = driver.coachingPlans?.find((p: any) => p.id === planId);
         if (!planToUpdate) return;
 
-        const updatedCheckIns = planToUpdate.weeklyCheckIns.map((checkIn: any) => {
-            if (checkIn.week === week) {
-                const updatedCheckIn = { ...checkIn };
-                if (field === 'notes') updatedCheckIn.notes = value;
-                if (field === 'assignedTo') updatedCheckIn.assignedTo = value;
-                if (field === 'status') {
-                    updatedCheckIn.status = value ? 'Complete' : 'Pending';
-                    updatedCheckIn.completedDate = value ? new Date().toLocaleDateString() : undefined;
-                }
-                return updatedCheckIn;
-            }
-            return checkIn;
-        });
+        const targetCheckIn = planToUpdate.weeklyCheckIns.find((checkIn: any) => checkIn.week === week);
+        if (!targetCheckIn) return;
+
+        const nextStatus: CheckInStatus = field === 'status'
+            ? value as CheckInStatus
+            : (targetCheckIn.status as CheckInStatus);
+        const nextNotes = field === 'notes' ? value : targetCheckIn.notes;
+
+        let updatedCheckIns: any[] = [];
+        try {
+            const transition = applyCheckInTransition({
+                checkIns: planToUpdate.weeklyCheckIns,
+                week,
+                nextStatus,
+                notes: nextNotes,
+                actor: 'Current User'
+            });
+            updatedCheckIns = transition.updated;
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Invalid check-in transition');
+            return;
+        }
 
         const allComplete = updatedCheckIns.every((c: any) => c.status === 'Complete');
         const newStatus = allComplete ? 'Completed' : planToUpdate.status;
+        const computedOutcome = allComplete
+            ? evaluateCoachingOutcome(planToUpdate, riskHistory as any).summary
+            : planToUpdate.outcome;
 
         // Optimistic Update
         const previousPlans = driver.coachingPlans;
         const updatedPlans = (driver.coachingPlans || []).map((p: any) =>
-            p.id === planId ? { ...p, weeklyCheckIns: updatedCheckIns, status: newStatus } : p
+            p.id === planId ? { ...p, weeklyCheckIns: updatedCheckIns, status: newStatus, outcome: computedOutcome } : p
         );
         setDriver({ ...driver, coachingPlans: updatedPlans });
 
         try {
             await driverService.updateCoachingPlan(planId, {
                 weeklyCheckIns: updatedCheckIns, // Service maps this to weekly_check_ins
-                status: newStatus
+                status: newStatus,
+                outcome: computedOutcome
             });
 
             // If a check-in was marked complete, also update the corresponding task
-            if (field === 'status' && value === true) {
+            if (field === 'status' && value === 'Complete') {
                 await taskService.markCheckInTaskComplete(planId, week, driver.name);
             }
 
@@ -431,6 +446,11 @@ const DriverProfile: React.FC = () => {
     const latestScoreEntry = riskHistory[0];
     const scoreParts = latestScoreEntry?.composite_parts || latestScoreEntry?.compositeParts || null;
     const riskBand = (driver?.riskScore || 0) >= 80 ? 'Red' : (driver?.riskScore || 0) >= 50 ? 'Yellow' : 'Green';
+    const coachingOutcomeByPlanId = useMemo(() => {
+        if (!driver?.coachingPlans || driver.coachingPlans.length === 0) return new Map<string, string>();
+        const insights = buildCoachingOutcomeInsights(driver.coachingPlans as any, riskHistory as any);
+        return new Map(insights.map((insight) => [insight.planId, insight.summary]));
+    }, [driver?.coachingPlans, riskHistory]);
 
     const handleLogRiskEvent = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -744,6 +764,9 @@ const DriverProfile: React.FC = () => {
                                                         <p className="text-sm text-gray-500">
                                                             Started: {new Date(plan.startDate).toLocaleDateString()} • {plan.durationWeeks} Weeks
                                                         </p>
+                                                        <p className="text-xs text-gray-500 mt-1">
+                                                            Outcome: {plan.outcome || coachingOutcomeByPlanId.get(plan.id) || 'In progress'}
+                                                        </p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center space-x-3">
@@ -765,27 +788,40 @@ const DriverProfile: React.FC = () => {
                                                     <h5 className="text-sm font-medium text-gray-700 mb-3 block">Weekly Check-ins</h5>
                                                     <div className="space-y-3">
                                                         {plan.weeklyCheckIns?.map((checkIn: any) => (
-                                                            <div key={checkIn.week} className="flex items-center justify-between bg-gray-50 p-3 rounded border border-gray-100">
-                                                                <div className="flex items-center space-x-3">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={checkIn.status === 'Complete'}
-                                                                        onChange={(e) => handleUpdateCheckIn(plan.id, checkIn.week, 'status', e.target.checked)}
-                                                                        className="h-4 w-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
-                                                                    />
-                                                                    <span className={checkIn.status === 'Complete' ? 'text-gray-400 line-through' : 'text-gray-700'}>
-                                                                        Week {checkIn.week} Check-in
-                                                                    </span>
+                                                            <div key={checkIn.week} className="space-y-2 bg-gray-50 p-3 rounded border border-gray-100">
+                                                                <div className="flex items-center justify-between">
+                                                                    <div className="flex items-center space-x-3">
+                                                                        <select
+                                                                            value={checkIn.status}
+                                                                            onChange={(e) => handleUpdateCheckIn(plan.id, checkIn.week, 'status', e.target.value)}
+                                                                            className="rounded border-gray-300 px-2 py-1 text-xs focus:border-green-500 focus:ring-green-500"
+                                                                        >
+                                                                            <option value="Pending">Pending</option>
+                                                                            <option value="In Progress">In Progress</option>
+                                                                            <option value="Complete">Complete</option>
+                                                                            <option value="Missed">Missed</option>
+                                                                        </select>
+                                                                        <span className={checkIn.status === 'Complete' ? 'text-gray-400 line-through' : 'text-gray-700'}>
+                                                                            Week {checkIn.week} Check-in
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="flex items-center space-x-2">
+                                                                        <input
+                                                                            type="text"
+                                                                            placeholder="Add note..."
+                                                                            value={checkIn.notes || ''}
+                                                                            onChange={(e) => handleUpdateCheckIn(plan.id, checkIn.week, 'notes', e.target.value)}
+                                                                            className="text-xs border-gray-200 rounded py-1 px-2 w-48 focus:ring-green-500 focus:border-green-500"
+                                                                        />
+                                                                    </div>
                                                                 </div>
-                                                                <div className="flex items-center space-x-2">
-                                                                    <input
-                                                                        type="text"
-                                                                        placeholder="Add note..."
-                                                                        value={checkIn.notes || ''}
-                                                                        onChange={(e) => handleUpdateCheckIn(plan.id, checkIn.week, 'notes', e.target.value)}
-                                                                        className="text-xs border-gray-200 rounded py-1 px-2 w-48 focus:ring-green-500 focus:border-green-500"
-                                                                    />
-                                                                </div>
+                                                                {checkIn.auditTrail?.length > 0 && (
+                                                                    <div className="text-xs text-gray-500">
+                                                                        Last update:{' '}
+                                                                        {new Date(checkIn.auditTrail[checkIn.auditTrail.length - 1].at).toLocaleString()}
+                                                                        {' '}by {checkIn.auditTrail[checkIn.auditTrail.length - 1].actor}
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         ))}
                                                     </div>

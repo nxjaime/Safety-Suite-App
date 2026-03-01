@@ -1,5 +1,6 @@
 import { getCurrentOrganization, supabase } from '../lib/supabase';
 import { motiveService } from './motiveService';
+import { withRetry } from './retry';
 
 export type RiskBand = 'green' | 'yellow' | 'red';
 
@@ -114,11 +115,24 @@ export const createRiskService = (deps: RiskServiceDeps) => {
     }) {
       const organizationId = await deps.getCurrentOrganization();
       if (!organizationId) throw new Error('No organization context available');
+      const normalizedSource = input.source ?? 'manual';
+
+      const { data: duplicates, error: dedupeError } = await withRetry(async () => {
+        return deps.supabase
+          .from('risk_events')
+          .select('id, driver_id, event_type, occurred_at, source')
+          .eq('driver_id', input.driverId)
+          .eq('event_type', input.eventType)
+          .eq('occurred_at', input.occurredAt);
+      });
+      if (dedupeError) throw dedupeError;
+      const existing = (duplicates || []).find((row: any) => row.source === normalizedSource);
+      if (existing) return existing;
 
       const payload = {
         driver_id: input.driverId,
         organization_id: organizationId,
-        source: input.source ?? 'manual',
+        source: normalizedSource,
         event_type: input.eventType,
         severity: Math.min(5, Math.max(1, Math.round(input.severity))),
         score_delta: input.scoreDelta ?? null,
@@ -128,11 +142,13 @@ export const createRiskService = (deps: RiskServiceDeps) => {
         date: input.occurredAt
       };
 
-      const { data, error } = await deps.supabase
-        .from('risk_events')
-        .insert([payload])
-        .select()
-        .single();
+      const { data, error } = await withRetry(async () => {
+        return deps.supabase
+          .from('risk_events')
+          .insert([payload])
+          .select()
+          .single();
+      });
 
       if (error) throw error;
       return data;
@@ -161,11 +177,13 @@ export const createRiskService = (deps: RiskServiceDeps) => {
       const localWindowDays = parseWindowDays(window);
       const cutoff = subtractDays(now, localWindowDays).toISOString();
 
-      const { data: eventRows, error: eventsError } = await deps.supabase
-        .from('risk_events')
-        .select('event_type, severity, score_delta, occurred_at')
-        .eq('driver_id', driverId)
-        .gte('occurred_at', cutoff);
+      const { data: eventRows, error: eventsError } = await withRetry(async () => {
+        return deps.supabase
+          .from('risk_events')
+          .select('event_type, severity, score_delta, occurred_at')
+          .eq('driver_id', driverId)
+          .gte('occurred_at', cutoff);
+      });
 
       if (eventsError) throw eventsError;
 
@@ -177,22 +195,26 @@ export const createRiskService = (deps: RiskServiceDeps) => {
         band: getRiskBand(score)
       };
 
-      const { error: historyError } = await deps.supabase
-        .from('driver_risk_scores')
-        .insert([{
-          driver_id: driverId,
-          organization_id: organizationId,
-          score,
-          composite_parts: parts,
-          source_window: window,
-          as_of: now.toISOString()
-        }]);
+      const { error: historyError } = await withRetry(async () => {
+        return deps.supabase
+          .from('driver_risk_scores')
+          .insert([{
+            driver_id: driverId,
+            organization_id: organizationId,
+            score,
+            composite_parts: parts,
+            source_window: window,
+            as_of: now.toISOString()
+          }]);
+      });
       if (historyError) throw historyError;
 
-      const { error: updateError } = await deps.supabase
-        .from('drivers')
-        .update({ risk_score: score })
-        .eq('id', driverId);
+      const { error: updateError } = await withRetry(async () => {
+        return deps.supabase
+          .from('drivers')
+          .update({ risk_score: score })
+          .eq('id', driverId);
+      });
       if (updateError) throw updateError;
 
       return { score, parts };

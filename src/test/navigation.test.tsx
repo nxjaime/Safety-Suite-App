@@ -23,6 +23,13 @@ describe('Navigation IA', () => {
     expect(hasCompliance).toBe(true);
   });
 
+  it('includes Watchlist under Safety', () => {
+    const safety = navSections.find(section => section.label === 'Safety');
+    expect(safety).toBeTruthy();
+    const hasWatchlist = safety?.items.some(item => item.type === 'link' && item.name === 'Watchlist');
+    expect(hasWatchlist).toBe(true);
+  });
+
   it('includes Analytics under Reporting', () => {
     const reporting = navSections.find(section => section.label === 'Reporting');
     expect(reporting).toBeTruthy();

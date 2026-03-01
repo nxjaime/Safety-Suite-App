@@ -64,10 +64,17 @@ export interface NoteEntry {
 export interface WeeklyCheckIn {
     week: number;
     assignedTo: string;
-    status: 'Pending' | 'Complete';
+    status: 'Pending' | 'In Progress' | 'Complete' | 'Missed';
     notes: string;
     completedDate?: string;
     date: string; // Scheduled date
+    auditTrail?: Array<{
+        at: string;
+        actor: string;
+        field: 'status' | 'notes';
+        from: string;
+        to: string;
+    }>;
 }
 
 export interface TaskItem {

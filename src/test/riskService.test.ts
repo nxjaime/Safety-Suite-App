@@ -1,12 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { createRiskService, getRiskBand } from '../services/riskService';
 
-const buildSupabaseMock = (events: Array<any>, motiveId: string | null = 'motive-1') => {
+const buildSupabaseMock = (
+  events: Array<any>,
+  motiveId: string | null = 'motive-1',
+  duplicateRiskEvent: any | null = null
+) => {
   const inserts: Array<any> = [];
   const updates: Array<any> = [];
 
   const makeSingle = (data: any) => ({
     single: async () => ({ data, error: null })
+  });
+
+  const makeInsertResult = (data: any) => ({
+    select: () => makeSingle(data)
   });
 
   const makeMaybeSingle = (data: any) => ({
@@ -35,6 +43,14 @@ const buildSupabaseMock = (events: Array<any>, motiveId: string | null = 'motive
     })
   };
 
+  const riskEventsDedupSelect = {
+    eq: () => ({
+      eq: () => ({
+        eq: async () => ({ data: duplicateRiskEvent ? [duplicateRiskEvent] : [], error: null })
+      })
+    })
+  };
+
   return {
     inserts,
     updates,
@@ -51,10 +67,15 @@ const buildSupabaseMock = (events: Array<any>, motiveId: string | null = 'motive
 
       if (table === 'risk_events') {
         return {
-          select: () => riskEventsSelect,
+          select: (_fields?: string) => {
+            if (_fields === 'id, driver_id, event_type, occurred_at, source') {
+              return riskEventsDedupSelect;
+            }
+            return riskEventsSelect;
+          },
           insert: (payload: any) => {
             inserts.push({ table, payload });
-            return makeSingle(payload[0]);
+            return makeInsertResult(payload[0]);
           }
         };
       }
@@ -142,5 +163,35 @@ describe('riskService', () => {
     expect(historyInsert.payload[0].source_window).toBe('90d');
     expect(historyInsert.payload[0].organization_id).toBe('org-1');
     expect(historyInsert.payload[0].driver_id).toBe('driver-1');
+  });
+
+  it('deduplicates risk event ingestion by driver/type/timestamp/source', async () => {
+    const duplicate = {
+      id: 'existing-1',
+      driver_id: 'driver-1',
+      event_type: 'Speeding',
+      occurred_at: '2026-02-22T00:00:00.000Z',
+      source: 'manual'
+    };
+    const supabase = buildSupabaseMock([], 'motive-1', duplicate);
+
+    const service = createRiskService({
+      supabase,
+      getCurrentOrganization: async () => 'org-1',
+      getMotiveScores: async () => ({ users: [] }),
+      now: () => new Date('2026-02-22T00:00:00Z')
+    });
+
+    const result = await service.ingestEvent({
+      driverId: 'driver-1',
+      source: 'manual',
+      eventType: 'Speeding',
+      severity: 3,
+      occurredAt: '2026-02-22T00:00:00.000Z'
+    });
+
+    expect(result.id).toBe('existing-1');
+    const riskEventInserts = supabase.inserts.filter((entry: any) => entry.table === 'risk_events');
+    expect(riskEventInserts).toHaveLength(0);
   });
 });

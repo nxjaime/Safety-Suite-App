@@ -544,6 +544,7 @@ export const driverService = {
         if (updates.status) dbUpdates.status = updates.status;
         // Explicitly map camelCase to snake_case for DB
         if (updates.weeklyCheckIns) dbUpdates.weekly_check_ins = updates.weeklyCheckIns;
+        if (updates.outcome !== undefined) dbUpdates.outcome = updates.outcome;
 
         // Optionally include org filter for readability; RLS will enforce anyway.
         const orgId = await this._getOrgId();
