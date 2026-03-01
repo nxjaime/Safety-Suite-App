@@ -438,7 +438,7 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - **Tests:** workOrders.test.ts: allow Draft/Approved→Cancelled; workOrdersPage.test.ts: pipeline includes Cancelled. Unit 215 passed; build passed.
 
 ### Sprint 15: Document and Compliance Reliability
-Status: In Progress (`2026-03-01`)
+Status: Complete (`2026-03-01`)
 Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - User story: As a compliance manager, I can reliably access required documents and see what is missing or expiring so that audits are always ready.
 - Goal: Make document and compliance workflows auditable and dependable.
@@ -468,6 +468,26 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
   - `src/test/complianceService.test.ts` (snapshot aggregation coverage)
 - Validation run:
   - `npm run test:unit` passed (`218/218`)
+  - `npm run build` passed
+
+#### Sprint 15 Completion Update (`2026-03-01`)
+- Added required-document metadata support on document records (`metadata.required`, `metadata.expirationDate`) and mapped metadata in `documentService`.
+- Added bulk document import flow (`uploadDocumentsBulk`) for multi-file upload in a single action.
+- Added bulk document update flow (`bulkUpdateDocuments`) to apply category/type/required/expiration metadata updates across selected rows.
+- Updated Documents UI to support:
+  - Multi-file upload
+  - Required + expiration metadata capture
+  - Bulk update controls for selected documents
+- Extended compliance snapshot logic with required-document enforcement:
+  - Tracks organization required categories (`Insurance`, `Registration`) and flags missing/expired coverage
+  - Flags per-driver missing CDL / Medical Card requirements
+  - Surfaces required-document gaps in compliance action queue prioritization
+- Updated Compliance page “Missing DQ Files” view to use snapshot-backed required-document gaps instead of static critical-expiration derivation.
+- Added/updated tests:
+  - `src/test/documentService.test.ts` (bulk upload + bulk update coverage)
+  - `src/test/complianceService.test.ts` (required-document gap coverage)
+- Validation run:
+  - `npm run test:unit -- src/test/documentService.test.ts src/test/complianceService.test.ts` passed
   - `npm run build` passed
 
 ### Sprint 16: Safety Workflow Reliability and Intervention Orchestration
@@ -554,6 +574,7 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
   - Safety team can manage interventions from prioritized queue surfaces (`/safety` and `/watchlist`).
 
 ### Sprint 17: Reporting and Decision Support
+Status: Complete (`2026-03-01`)
 Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - User story: As an executive stakeholder, I can view accurate operational and safety performance dashboards so that I can make weekly decisions with confidence.
 - Goal: Provide cross-functional reporting for safety and operations leadership.
@@ -566,7 +587,69 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
   - Leadership weekly review can be run fully from in-app reporting.
   - Report calculations validated against source-of-truth samples.
 
+#### Sprint 17 Progress Update (`2026-03-01`)
+- Added `src/services/reportingService.ts` to produce a unified live snapshot for reporting:
+  - Fleet reliability metrics: total, backlog, overdue, MTTR, completion rate.
+  - Safety metrics: total drivers, average risk score, high-risk count.
+  - Compliance metrics: open action items, overdue remediations, required document gaps, critical credentials.
+  - Training metrics: total/completed/overdue assignments and completion rate.
+  - Trend rows for completed work orders and completed training over the last 6 months.
+  - KPI data dictionary payload (definitions + formulas) for transparency.
+- Replaced placeholder reporting UI in `src/pages/Reporting.tsx` with snapshot-backed dashboard:
+  - Window selector (`30d`, `90d`, `365d`) and refresh flow.
+  - KPI cards across fleet, safety, compliance, and training.
+  - Compliance action summary and 6-month trends table.
+  - CSV export for the current reporting snapshot.
+  - KPI data dictionary section rendered in-page.
+- Added reporting unit coverage:
+  - `src/test/reportingService.test.ts`.
+- Added sprint artifact:
+  - `docs/sprint-17/README.md`.
+- Validation run:
+  - `npm run test:unit -- src/test/reportingService.test.ts` passed.
+  - `npm run build` passed.
+
+#### Sprint 17 Additional Progress Update (`2026-03-01`)
+- Added role-scoped reporting preferences scaffolding:
+  - New local persistence service `src/services/reportingPreferencesService.ts` for:
+    - Saved views by role (`save/list/delete`)
+    - Scheduled exports by role (`create/list/enable-disable/delete`)
+- Extended Reporting UI (`src/pages/Reporting.tsx`) with:
+  - Saved view controls (save current window, apply, delete)
+  - Scheduled export controls (name, frequency, recipients, enable/disable, delete)
+  - Role-aware preference loading using `useAuth().role`
+- Added tests:
+  - `src/test/reportingPreferencesService.test.ts`
+- Updated sprint artifact:
+  - `docs/sprint-17/README.md`
+- Validation run:
+  - `npm run test:unit -- src/test/reportingPreferencesService.test.ts src/test/reportingService.test.ts` passed.
+  - `npm run build` passed.
+
+#### Sprint 17 Completion Update (`2026-03-01`)
+- Added cohort and recurrence reporting in `src/services/reportingService.ts`:
+  - Coaching effectiveness cohorts by risk band (green/yellow/red) with per-band driver counts and average score.
+  - Defect recurrence metrics from inspection-linked work orders:
+    - inspection-linked order count
+    - recurring inspection groups
+    - recurring order count
+    - recurrence rate
+- Updated Reporting UI (`src/pages/Reporting.tsx`) with:
+  - Cohort reporting table section
+  - Defect recurrence KPI section
+- Extended reporting tests:
+  - Updated `src/test/reportingService.test.ts` to cover cohort and recurrence calculations.
+- Updated sprint artifact:
+  - `docs/sprint-17/README.md`
+- Validation run:
+  - `npm run test:unit -- src/test/reportingService.test.ts src/test/reportingPreferencesService.test.ts` passed.
+  - `npm run build` passed.
+- Exit criteria status:
+  - Unified in-app leadership review dashboard is now live for fleet, safety, compliance, training, cohort, and recurrence views.
+  - Report calculations are covered by deterministic unit tests against mocked source-of-truth samples.
+
 ### Sprint 18: Data Governance, Permissions, and Auditability
+Status: In Progress (`2026-03-01`)
 Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - User story: As a platform owner, I can enforce role-based access and review audit logs for critical actions so that data governance and accountability are maintained.
 - Goal: Strengthen trust boundaries and audit completeness.
@@ -578,6 +661,26 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - Exit criteria:
   - No critical access-control or tenant-isolation findings.
   - Audit logs satisfy internal compliance review requirements.
+
+#### Sprint 18 Early Progress Update (`2026-03-01`)
+- Implemented action-level permission guardrails for reporting preferences:
+  - `viewer` role cannot mutate saved views or scheduled exports.
+  - Enforced in `src/services/reportingPreferencesService.ts` via explicit role checks.
+- Added audit logging for reporting preference mutations:
+  - `view_saved`, `view_deleted`, `schedule_created`, `schedule_enabled`, `schedule_disabled`, `schedule_deleted`.
+  - Role-scoped audit retrieval for read paths.
+- Updated Reporting UI (`src/pages/Reporting.tsx`) to:
+  - Render read-only state for viewer role controls.
+  - Show reporting preference audit trail section.
+- Added tests:
+  - Expanded `src/test/reportingPreferencesService.test.ts` to verify:
+    - viewer mutation blocking
+    - audit event emission for manager mutations
+- Added sprint artifact:
+  - `docs/sprint-18/README.md`
+- Validation run:
+  - `npm run test:unit -- src/test/reportingPreferencesService.test.ts src/test/reportingService.test.ts` passed.
+  - `npm run build` passed.
 
 ### Sprint 19: UAT, Performance, and Launch Rehearsal
 Reminder: Commit locally and push to GitHub once all checks/tests pass.

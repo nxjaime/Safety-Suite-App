@@ -10,20 +10,29 @@ const Documents: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [archivingSelected, setArchivingSelected] = useState(false);
+    const [applyingBulkUpdate, setApplyingBulkUpdate] = useState(false);
     const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
+    const [bulkCategory, setBulkCategory] = useState('');
+    const [bulkDocType, setBulkDocType] = useState('');
+    const [bulkRequired, setBulkRequired] = useState(false);
+    const [bulkExpirationDate, setBulkExpirationDate] = useState('');
 
     const [newDocument, setNewDocument] = useState<{
         name: string;
         category: string;
         docType: string;
-        file: File | null;
+        files: File[];
+        required: boolean;
+        expirationDate: string;
     }>({
         name: '',
         category: 'Policies',
         docType: 'PDF',
-        file: null
+        files: [],
+        required: false,
+        expirationDate: ''
     });
 
     const loadDocuments = async () => {
@@ -63,31 +72,96 @@ const Documents: React.FC = () => {
     const handleUploadDocument = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!newDocument.file) {
+        if (newDocument.files.length === 0) {
             toast.error('Please choose a file to upload');
             return;
         }
 
         try {
-            const uploaded = await documentService.uploadDocument({
-                file: newDocument.file,
-                name: newDocument.name || newDocument.file.name,
-                category: newDocument.category,
-                docType: newDocument.docType
-            });
-            setDocuments((prev) => [uploaded, ...prev]);
-            setSelectedDocumentIds((prev) => prev.filter((id) => id !== uploaded.id));
+            const metadata = {
+                required: newDocument.required,
+                expirationDate: newDocument.expirationDate || null
+            };
+
+            if (newDocument.files.length === 1) {
+                const uploaded = await documentService.uploadDocument({
+                    file: newDocument.files[0],
+                    name: newDocument.name || newDocument.files[0].name,
+                    category: newDocument.category,
+                    docType: newDocument.docType,
+                    metadata
+                });
+                setDocuments((prev) => [uploaded, ...prev]);
+                setSelectedDocumentIds((prev) => prev.filter((id) => id !== uploaded.id));
+            } else {
+                const result = await documentService.uploadDocumentsBulk({
+                    files: newDocument.files,
+                    category: newDocument.category,
+                    docType: newDocument.docType,
+                    metadata
+                });
+                setDocuments((prev) => [...result.uploaded, ...prev]);
+                if (result.failedFiles.length > 0) {
+                    toast.error(`${result.failedFiles.length} file(s) failed to upload`);
+                } else {
+                    toast.success(`${result.uploaded.length} documents uploaded`);
+                }
+            }
+
             setIsModalOpen(false);
             setNewDocument({
                 name: '',
                 category: 'Policies',
                 docType: 'PDF',
-                file: null
+                files: [],
+                required: false,
+                expirationDate: ''
             });
-            toast.success('Document uploaded');
+            if (newDocument.files.length === 1) {
+                toast.success('Document uploaded');
+            }
         } catch (error) {
             console.error('Failed to upload document', error);
             toast.error('Document upload failed');
+        }
+    };
+
+    const handleApplyBulkUpdate = async () => {
+        if (selectedDocumentIds.length === 0) return;
+        if (!bulkCategory && !bulkDocType && !bulkExpirationDate && !bulkRequired) {
+            toast.error('Select at least one bulk update field');
+            return;
+        }
+
+        setApplyingBulkUpdate(true);
+        try {
+            const result = await documentService.bulkUpdateDocuments({
+                documentIds: selectedDocumentIds,
+                category: bulkCategory || undefined,
+                docType: bulkDocType || undefined,
+                metadata: {
+                    required: bulkRequired,
+                    expirationDate: bulkExpirationDate || null
+                }
+            });
+
+            if (result.failedIds.length > 0) {
+                toast.error(`${result.failedIds.length} document(s) failed to update`);
+            } else {
+                toast.success(`${result.updated} document(s) updated`);
+            }
+
+            await loadDocuments();
+            setSelectedDocumentIds((prev) => prev.filter((id) => result.failedIds.includes(id)));
+            setBulkCategory('');
+            setBulkDocType('');
+            setBulkRequired(false);
+            setBulkExpirationDate('');
+        } catch (error) {
+            console.error('Bulk update failed', error);
+            toast.error('Bulk update failed');
+        } finally {
+            setApplyingBulkUpdate(false);
         }
     };
 
@@ -183,6 +257,51 @@ const Documents: React.FC = () => {
                     <span className="text-sm text-slate-500">
                         {selectedDocumentIds.length} selected
                     </span>
+                </div>
+                <div className="mt-4 grid gap-3 md:grid-cols-5">
+                    <select
+                        value={bulkCategory}
+                        onChange={(e) => setBulkCategory(e.target.value)}
+                        className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                    >
+                        <option value="">Update category...</option>
+                        <option value="Policies">Policies</option>
+                        <option value="Handbooks">Handbooks</option>
+                        <option value="Forms">Forms</option>
+                        <option value="Training">Training</option>
+                        <option value="Compliance">Compliance</option>
+                        <option value="Insurance">Insurance</option>
+                        <option value="Registration">Registration</option>
+                    </select>
+                    <input
+                        type="text"
+                        value={bulkDocType}
+                        onChange={(e) => setBulkDocType(e.target.value)}
+                        placeholder="Update type..."
+                        className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                    />
+                    <input
+                        type="date"
+                        value={bulkExpirationDate}
+                        onChange={(e) => setBulkExpirationDate(e.target.value)}
+                        className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                    />
+                    <label className="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700">
+                        <input
+                            type="checkbox"
+                            checked={bulkRequired}
+                            onChange={(e) => setBulkRequired(e.target.checked)}
+                            className="mr-2"
+                        />
+                        Mark required
+                    </label>
+                    <button
+                        onClick={handleApplyBulkUpdate}
+                        disabled={selectedDocumentIds.length === 0 || applyingBulkUpdate}
+                        className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        Apply Bulk Update
+                    </button>
                 </div>
             </section>
 
@@ -328,6 +447,8 @@ const Documents: React.FC = () => {
                             <option value="Forms">Forms</option>
                             <option value="Training">Training</option>
                             <option value="Compliance">Compliance</option>
+                            <option value="Insurance">Insurance</option>
+                            <option value="Registration">Registration</option>
                         </select>
                     </div>
                     <div>
@@ -341,13 +462,34 @@ const Documents: React.FC = () => {
                         />
                     </div>
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">File</label>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">File(s)</label>
                         <input
                             type="file"
                             required
+                            multiple
                             className="w-full rounded-md border border-slate-300 px-3 py-2"
-                            onChange={(e) => setNewDocument({ ...newDocument, file: e.target.files?.[0] || null })}
+                            onChange={(e) => setNewDocument({ ...newDocument, files: Array.from(e.target.files || []) })}
                         />
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                        <label className="inline-flex items-center text-sm text-slate-700">
+                            <input
+                                type="checkbox"
+                                className="mr-2"
+                                checked={newDocument.required}
+                                onChange={(e) => setNewDocument({ ...newDocument, required: e.target.checked })}
+                            />
+                            Required compliance document
+                        </label>
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-slate-700">Expiration Date</label>
+                            <input
+                                type="date"
+                                className="w-full rounded-md border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+                                value={newDocument.expirationDate}
+                                onChange={(e) => setNewDocument({ ...newDocument, expirationDate: e.target.value })}
+                            />
+                        </div>
                     </div>
                     <div className="flex justify-end gap-3 pt-2">
                         <button

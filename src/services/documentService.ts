@@ -14,6 +14,7 @@ export interface AppDocument {
   uploadedAt: string;
   uploadedBy?: string;
   linkedDriverId?: string;
+  metadata?: Record<string, unknown>;
 }
 
 interface UploadDocumentInput {
@@ -22,10 +23,36 @@ interface UploadDocumentInput {
   category: string;
   docType?: string;
   linkedDriverId?: string;
+  metadata?: Record<string, unknown>;
 }
 
 interface BulkArchiveResult {
   archived: number;
+  failedIds: string[];
+}
+
+interface BulkUploadInput {
+  files: File[];
+  category: string;
+  docType?: string;
+  linkedDriverId?: string;
+  metadata?: Record<string, unknown>;
+}
+
+interface BulkUploadResult {
+  uploaded: AppDocument[];
+  failedFiles: string[];
+}
+
+interface BulkUpdateInput {
+  documentIds: string[];
+  category?: string;
+  docType?: string;
+  metadata?: Record<string, unknown>;
+}
+
+interface BulkUpdateResult {
+  updated: number;
   failedIds: string[];
 }
 
@@ -44,7 +71,8 @@ const mapDocument = (row: any): AppDocument => {
     storagePath: row.storage_path,
     uploadedAt: row.uploaded_at,
     uploadedBy: row.uploaded_by,
-    linkedDriverId: row.linked_driver_id
+    linkedDriverId: row.linked_driver_id,
+    metadata: row.metadata || {}
   };
 };
 
@@ -109,7 +137,8 @@ export const documentService = {
           storage_bucket: DOCUMENT_BUCKET,
           storage_path: storagePath,
           uploaded_by: userData.user?.id || null,
-          linked_driver_id: input.linkedDriverId || null
+          linked_driver_id: input.linkedDriverId || null,
+          metadata: input.metadata || {}
         }])
         .select()
         .single();
@@ -176,5 +205,61 @@ export const documentService = {
     }
 
     return { archived, failedIds };
+  },
+
+  async uploadDocumentsBulk(input: BulkUploadInput): Promise<BulkUploadResult> {
+    const uploaded: AppDocument[] = [];
+    const failedFiles: string[] = [];
+
+    for (const file of input.files) {
+      try {
+        const saved = await this.uploadDocument({
+          file,
+          name: file.name,
+          category: input.category,
+          docType: input.docType,
+          linkedDriverId: input.linkedDriverId,
+          metadata: input.metadata
+        });
+        uploaded.push(saved);
+      } catch (error) {
+        console.error(`Failed to bulk upload file ${file.name}`, error);
+        failedFiles.push(file.name);
+      }
+    }
+
+    return { uploaded, failedFiles };
+  },
+
+  async bulkUpdateDocuments(input: BulkUpdateInput): Promise<BulkUpdateResult> {
+    const updatePayload: Record<string, unknown> = {};
+    if (input.category !== undefined) updatePayload.category = input.category;
+    if (input.docType !== undefined) updatePayload.doc_type = input.docType;
+    if (input.metadata !== undefined) updatePayload.metadata = input.metadata;
+
+    if (Object.keys(updatePayload).length === 0 || input.documentIds.length === 0) {
+      return { updated: 0, failedIds: [] };
+    }
+
+    let updated = 0;
+    const failedIds: string[] = [];
+
+    for (const documentId of input.documentIds) {
+      const { error } = await withRetry(async () => {
+        return supabase
+          .from('documents')
+          .update(updatePayload)
+          .eq('id', documentId);
+      });
+
+      if (error) {
+        console.error(`Failed to bulk update document ${documentId}`, error);
+        failedIds.push(documentId);
+      } else {
+        updated += 1;
+      }
+    }
+
+    return { updated, failedIds };
   }
 };

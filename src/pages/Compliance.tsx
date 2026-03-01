@@ -259,9 +259,13 @@ const Compliance: React.FC = () => {
         { id: 3, driver: 'Elena Rodriguez', violation: '30 Minute Break', date: '2024-01-05', status: 'Open' },
     ];
 
-    const missingDQFiles = (snapshot?.expiringCredentials || [])
-        .filter((item) => item.status === 'Critical')
-        .map((item) => ({ id: item.id, driver: item.driver, file: item.type, status: 'Expired' }));
+    const missingDQFiles = (snapshot?.requiredDocumentGaps || [])
+        .map((item) => ({
+            id: item.id,
+            driver: item.driverName || 'Organization',
+            file: item.requirement,
+            status: item.status
+        }));
 
     const auditItems = [
         { id: 1, item: 'Driver Files', status: 'Compliant', score: '100%' },

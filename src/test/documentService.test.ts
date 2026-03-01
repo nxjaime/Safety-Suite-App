@@ -90,4 +90,53 @@ describe('documentService', () => {
     expect(result.archived).toBe(1);
     expect(result.failedIds).toEqual(['doc-2']);
   });
+
+  it('uploadDocumentsBulk returns uploaded docs and failed file names', async () => {
+    const files = [
+      new File(['a'], 'first.pdf', { type: 'application/pdf' }),
+      new File(['b'], 'second.pdf', { type: 'application/pdf' })
+    ];
+
+    vi.spyOn(documentService, 'uploadDocument')
+      .mockResolvedValueOnce({
+        id: 'doc-1',
+        name: 'first.pdf',
+        category: 'Compliance',
+        storagePath: 'org-1/first.pdf',
+        uploadedAt: '2026-01-01T00:00:00.000Z'
+      } as any)
+      .mockRejectedValueOnce(new Error('upload failed'));
+
+    const result = await documentService.uploadDocumentsBulk({
+      files,
+      category: 'Compliance',
+      docType: 'PDF'
+    });
+
+    expect(result.uploaded).toHaveLength(1);
+    expect(result.uploaded[0].id).toBe('doc-1');
+    expect(result.failedFiles).toEqual(['second.pdf']);
+  });
+
+  it('bulkUpdateDocuments updates selected docs and tracks failures', async () => {
+    const updateSpy = vi.fn().mockReturnThis();
+    const eqSpy = vi.fn()
+      .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ error: new Error('boom') });
+    const chain: any = { update: updateSpy, eq: eqSpy };
+
+    vi.spyOn(supa, 'supabase', 'get').mockReturnValue({
+      from: vi.fn().mockReturnValue(chain)
+    } as any);
+
+    const result = await documentService.bulkUpdateDocuments({
+      documentIds: ['doc-1', 'doc-2'],
+      category: 'Insurance',
+      metadata: { required: true, expirationDate: '2026-05-01' }
+    });
+
+    expect(updateSpy).toHaveBeenCalledTimes(2);
+    expect(result.updated).toBe(1);
+    expect(result.failedIds).toEqual(['doc-2']);
+  });
 });
