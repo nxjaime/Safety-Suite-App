@@ -746,6 +746,7 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
   - `SKIP_SMOKE=1 npm run rehearsal:launch` passed.
 
 ### Sprint 20: Controlled Launch and Hypercare
+Status: In Progress (`2026-03-01`)
 Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - User story: As a customer operations lead, I can onboard teams in phased rollout with rapid support response so that adoption is smooth and stable.
 - Goal: Deploy safely and stabilize with rapid response loops.
@@ -757,3 +758,10 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - Exit criteria:
   - Launch KPIs stable for agreed hypercare window.
   - Platform transitions from hypercare to normal operations with signed handoff.
+
+#### Sprint 20 Progress Update (`2026-03-01`)
+- Added hypercare operations runbook:
+  - `docs/runbooks/hypercare-command-center.md`
+  - Documents command-center cadence, KPI review inputs, escalation triggers, and hypercare exit criteria.
+- Added sprint artifact:
+  - `docs/sprint-20/README.md`
