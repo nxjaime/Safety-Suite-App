@@ -717,6 +717,7 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
   - `npm run build` passed.
 
 ### Sprint 19: UAT, Performance, and Launch Rehearsal
+Status: In Progress (`2026-03-01`)
 Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - User story: As a rollout lead, I can validate user acceptance, system performance, and rollback readiness so that launch risk is minimized.
 - Goal: Validate production readiness after rebaseline.
@@ -728,6 +729,18 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - Exit criteria:
   - UAT sign-off complete with no open launch blockers.
   - Launch rehearsal and rollback drill pass.
+
+#### Sprint 19 Progress Update (`2026-03-01`)
+- Added launch rehearsal automation:
+  - New script: `scripts/release-rehearsal.sh`
+  - New npm command: `npm run rehearsal:launch`
+  - Rehearsal runs unit tests + production build + smoke e2e (smoke can be skipped with `SKIP_SMOKE=1` for constrained environments).
+- Added runbook support:
+  - `docs/runbooks/launch-rehearsal.md` with preconditions, execution checklist, rollback/restore checks, and go/no-go criteria.
+- Added sprint artifact:
+  - `docs/sprint-19/README.md`
+- Validation run:
+  - `SKIP_SMOKE=1 npm run rehearsal:launch` passed.
 
 ### Sprint 20: Controlled Launch and Hypercare
 Reminder: Commit locally and push to GitHub once all checks/tests pass.

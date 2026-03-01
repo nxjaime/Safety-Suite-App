@@ -19,6 +19,7 @@
     "test:tasks": "VITE_E2E_AUTH_BYPASS=true playwright test e2e/tasks.spec.ts",
     "test:maintenance": "VITE_E2E_AUTH_BYPASS=true playwright test e2e/maintenance.spec.ts",
     "test:progress": "npm run test:unit && npm run test:smoke",
+    "rehearsal:launch": "bash scripts/release-rehearsal.sh",
     "admin:grant": "tsx scripts/grantAdmin.ts"
   },
   "dependencies": {
