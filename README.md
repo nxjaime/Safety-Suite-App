@@ -44,6 +44,25 @@ Behavior:
 - Commits with `sprint-<n>: closeout` (parsed from `handoff.md`)
 - Pushes to the current branch
 
+## Demo Data Seed
+
+Populate realistic sample data across drivers, safety, coaching/tasks, inspections/compliance, documents, fleet operations, and training:
+
+```sh
+npm run seed:demo
+```
+
+Target a specific organization:
+
+```sh
+npm run seed:demo -- --org-id <organization-uuid>
+```
+
+Notes:
+- `seed:demo` requires `SUPABASE_SERVICE_ROLE_KEY`; anon keys will fail under RLS.
+- You can set `DEMO_ORG_ID=<organization-uuid>` as an alternative to `--org-id`.
+- The script is idempotent for the seeded records and safe to rerun.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

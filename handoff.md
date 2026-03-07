@@ -742,6 +742,17 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
 - Added UAT execution checklist:
   - `docs/sprint-19/uat-checklist.md`
   - Includes cross-module validation matrix and sign-off fields for UAT lead/product/engineering.
+- Added realistic demo-data seeding flow for user walkthroughs:
+  - New script: `scripts/seedDemoData.ts`
+  - New command: `npm run seed:demo` (supports `--org-id` and `DEMO_ORG_ID`)
+  - Seeds data across drivers, risk/coaching, tasks, inspections/compliance, documents, maintenance/work orders, and training.
+- Demo seed execution note (`2026-03-01`):
+  - Attempted run failed with RLS error on `organizations` because `SUPABASE_SERVICE_ROLE_KEY` was not configured in the local environment.
+  - Required local setup to run seed successfully:
+    1. Add `SUPABASE_SERVICE_ROLE_KEY=<service_role_key>` to local `.env` (do not commit).
+    2. Run `npm run seed:demo` (optionally `-- --org-id <uuid>` if targeting a specific org).
+  - Security note: keep service role key server-side/local only; never expose with `VITE_*` or client bundle usage.
+  - Hardening update (`2026-03-07`): `seed:demo` now fails fast when `SUPABASE_SERVICE_ROLE_KEY` is missing, instead of attempting anon-key startup that cannot seed RLS-protected tables.
 - Validation run:
   - `SKIP_SMOKE=1 npm run rehearsal:launch` passed.
 

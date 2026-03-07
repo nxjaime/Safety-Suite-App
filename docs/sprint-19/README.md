@@ -15,6 +15,11 @@
 - Added UAT execution matrix:
   - `docs/sprint-19/uat-checklist.md`
   - Covers auth, fleet ops, inspections/compliance, safety, training, reporting, and admin permission validation.
+- Added demo-data seeding command for UAT walkthroughs:
+  - `scripts/seedDemoData.ts`
+  - `npm run seed:demo`
+  - Seeds realistic records across all core modules so reviewers can experience populated workflows end-to-end.
+  - Requires local `SUPABASE_SERVICE_ROLE_KEY`; anon-only envs are blocked by RLS.
 
 ## Validation
 
