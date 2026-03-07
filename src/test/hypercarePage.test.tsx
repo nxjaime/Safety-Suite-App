@@ -96,7 +96,8 @@ describe('Hypercare page', () => {
 
     expect(await screen.findByRole('heading', { name: /Hypercare Command Center/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Rollout Cohorts/i })).toBeInTheDocument();
-    expect(screen.getByText(/Escalate/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Daily Reviews/i })).toBeInTheDocument();
+    expect(screen.getAllByText(/^Escalate$/).length).toBeGreaterThan(0);
     expect(screen.getByText(/Open feedback items/i)).toBeInTheDocument();
     expect(screen.getByText(/Compliance pressure requires escalation/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Open Reporting Analytics/i })).toBeInTheDocument();
@@ -172,5 +173,6 @@ describe('Hypercare page', () => {
 
     expect(await screen.findByText(/No active escalation triggers/i)).toBeInTheDocument();
     expect(screen.getByText(/No rollout cohorts configured yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/No daily reviews logged yet/i)).toBeInTheDocument();
   });
 });

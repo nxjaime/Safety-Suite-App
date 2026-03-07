@@ -805,3 +805,20 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
   - `src/test/rolloutCohortService.test.ts`
   - `src/test/rolloutCohortsPanel.test.tsx`
   - updated `src/test/hypercarePage.test.tsx`
+
+#### Sprint 20 Daily Review Workflow Progress Update (`2026-03-07`)
+- Added the runbook-closing daily review workflow inside Hypercare:
+  - New role-aware local service: `src/services/hypercareReviewService.ts`
+  - New UI section/component: `src/components/HypercareDailyReviewsPanel.tsx`
+  - Manager/admin users can log AM/PM daily reviews, capture risks/actions, and publish internal launch-status updates
+  - Viewer users have read-only access to review history and published status
+- Hypercare now exposes:
+  - latest published launch-status summary
+  - structured daily review capture for owner, incident summary, risks, mitigation actions, and cohort go/no-go decision
+  - local review mutation audit trail via the service layer
+- Added focused coverage:
+  - `src/test/hypercareReviewService.test.ts`
+  - `src/test/hypercareDailyReviewsPanel.test.tsx`
+  - updated `src/test/hypercarePage.test.tsx`
+- Remaining explicit Sprint 20 scope after this slice:
+  - prioritized post-launch backlog for the next roadmap cycle

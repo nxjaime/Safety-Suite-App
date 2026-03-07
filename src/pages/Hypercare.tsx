@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import HypercareDailyReviewsPanel from '../components/HypercareDailyReviewsPanel';
 import RolloutCohortsPanel from '../components/RolloutCohortsPanel';
 import { hypercareService, type HypercareSnapshot } from '../services/hypercareService';
 
@@ -208,6 +209,7 @@ const Hypercare: React.FC = () => {
           </section>
 
           <RolloutCohortsPanel />
+          <HypercareDailyReviewsPanel />
         </>
       ) : null}
     </div>
