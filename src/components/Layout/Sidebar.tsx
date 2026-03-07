@@ -20,6 +20,7 @@ import {
 import clsx from 'clsx';
 import CarrierHealthWidget from './CarrierHealthWidget';
 import { useAuth } from '../../contexts/AuthContext';
+import { canAccessPlatformAdmin, type ProfileRole } from '../../services/authorizationService';
 
 type LinkItem = {
     name: string;
@@ -125,8 +126,24 @@ const menuGroups: MenuGroup[] = [
     }
 ];
 
+export const getVisibleMenuGroups = (role: ProfileRole): MenuGroup[] => {
+    const hasPlatformAdminAccess = canAccessPlatformAdmin(role);
+    if (!hasPlatformAdminAccess) {
+        return menuGroups;
+    }
+
+    return [
+        ...menuGroups,
+        {
+            id: 'administration',
+            label: 'Administration',
+            items: [{ name: 'Admin Dashboard', path: '/admin', icon: ShieldAlert, disabled: false }]
+        }
+    ];
+};
+
 const Sidebar: React.FC = () => {
-    const { isAdmin } = useAuth();
+    const { capabilities, role } = useAuth();
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
         quick: true,
         operations: true,
@@ -136,16 +153,9 @@ const Sidebar: React.FC = () => {
     });
 
     const visibleGroups = useMemo<MenuGroup[]>(() => {
-        if (!isAdmin) return menuGroups;
-        return [
-            ...menuGroups,
-            {
-                id: 'administration',
-                label: 'Administration',
-                items: [{ name: 'Admin Dashboard', path: '/admin', icon: ShieldAlert, disabled: false }]
-            }
-        ];
-    }, [isAdmin]);
+        const hasPlatformAdminAccess = capabilities?.canAccessPlatformAdmin ?? canAccessPlatformAdmin(role);
+        return getVisibleMenuGroups(hasPlatformAdminAccess ? 'platform_admin' : role);
+    }, [capabilities, role]);
 
     const toggleGroup = (groupId: string) => {
         setOpenGroups((prev) => ({

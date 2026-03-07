@@ -1,8 +1,9 @@
 import { supabase, getCurrentOrganization } from '../lib/supabase';
 import type { WorkOrder, WorkOrderLineItem } from '../types';
+import { canManageFleet, type ProfileRole } from './authorizationService';
 
 export type WorkOrderStatus = 'Draft' | 'Approved' | 'In Progress' | 'Completed' | 'Closed' | 'Cancelled';
-export type WorkOrderRole = 'admin' | 'manager' | 'viewer';
+export type WorkOrderRole = ProfileRole;
 
 export const allowedTransitions: Record<WorkOrderStatus, WorkOrderStatus[]> = {
     Draft: ['Approved', 'Cancelled'],
@@ -17,7 +18,7 @@ export const getNextStatuses = (current: WorkOrderStatus): WorkOrderStatus[] =>
     allowedTransitions[current] ?? [];
 
 export const canApproveWorkOrder = (role?: WorkOrderRole) => {
-    return role === 'admin' || role === 'manager';
+    return canManageFleet(role);
 };
 
 export const canTransitionStatus = (

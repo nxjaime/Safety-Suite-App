@@ -1,4 +1,4 @@
-import type { ProfileRole } from './profileService';
+import { canManageHypercare, type ProfileRole } from './authorizationService';
 
 const ROLLOUT_COHORTS_KEY = 'hypercare_rollout_cohorts_v1';
 const ROLLOUT_COHORT_AUDIT_KEY = 'hypercare_rollout_cohort_audit_v1';
@@ -54,7 +54,7 @@ const writeAuditEntries = (entries: RolloutCohortAuditEntry[]) => {
 const nextId = (prefix: string): string => `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
 
 const ensureCanMutate = (role: ProfileRole) => {
-  if (role === 'viewer') {
+  if (!canManageHypercare(role)) {
     throw new Error('Insufficient permissions for this action');
   }
 };

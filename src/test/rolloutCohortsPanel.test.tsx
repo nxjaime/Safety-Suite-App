@@ -4,7 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { rolloutCohortService } from '../services/rolloutCohortService';
 
 const authState = vi.hoisted(() => ({
-  role: 'manager'
+  role: 'maintenance'
 }));
 
 vi.mock('../contexts/AuthContext', () => ({
@@ -16,10 +16,10 @@ import RolloutCohortsPanel from '../components/RolloutCohortsPanel';
 describe('RolloutCohortsPanel', () => {
   beforeEach(() => {
     localStorage.clear();
-    authState.role = 'manager';
+    authState.role = 'maintenance';
   });
 
-  it('allows manager users to add a rollout cohort', async () => {
+  it('allows hypercare-capable users to add a rollout cohort', async () => {
     render(<RolloutCohortsPanel />);
 
     expect(screen.getByText(/No rollout cohorts configured yet/i)).toBeInTheDocument();
@@ -35,7 +35,7 @@ describe('RolloutCohortsPanel', () => {
     expect(screen.getAllByText(/Planned/i).length).toBeGreaterThan(0);
   });
 
-  it('renders viewer role as read-only', () => {
+  it('renders readonly role as read-only', () => {
     rolloutCohortService.createCohort({
       name: 'Wave 1 - West',
       targetDate: '2026-03-20',
@@ -45,10 +45,10 @@ describe('RolloutCohortsPanel', () => {
       role: 'admin'
     });
 
-    authState.role = 'viewer';
+    authState.role = 'readonly';
     render(<RolloutCohortsPanel />);
 
-    expect(screen.getByText(/Viewer role has read-only access to rollout cohorts/i)).toBeInTheDocument();
+    expect(screen.getByText(/Readonly role has read-only access to rollout cohorts/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Add Cohort/i })).not.toBeInTheDocument();
     expect(screen.getAllByText(/Wave 1 - West/i).length).toBeGreaterThan(0);
   });

@@ -1,4 +1,5 @@
 import { supabase, getCurrentOrganization } from '../lib/supabase';
+import { canAccessPlatformAdmin, type ProfileRole } from './authorizationService';
 
 export interface AdminTableOption {
   name: string;
@@ -38,8 +39,15 @@ const applyOrgIfNeeded = async (table: string, payload: Record<string, unknown>)
   };
 };
 
+const ensurePlatformAdmin = (role: ProfileRole) => {
+  if (!canAccessPlatformAdmin(role)) {
+    throw new Error('Insufficient permissions for this action');
+  }
+};
+
 export const adminService = {
-  async listRows(table: string, limit = 25): Promise<Array<Record<string, unknown>>> {
+  async listRows(table: string, role: ProfileRole, limit = 25): Promise<Array<Record<string, unknown>>> {
+    ensurePlatformAdmin(role);
     const { data, error } = await supabase
       .from(table)
       .select('*')
@@ -50,7 +58,8 @@ export const adminService = {
     return (data || []) as Array<Record<string, unknown>>;
   },
 
-  async insertRow(table: string, payload: Record<string, unknown>) {
+  async insertRow(table: string, role: ProfileRole, payload: Record<string, unknown>) {
+    ensurePlatformAdmin(role);
     const finalPayload = await applyOrgIfNeeded(table, payload);
     const { data, error } = await supabase
       .from(table)
@@ -62,7 +71,8 @@ export const adminService = {
     return data as Record<string, unknown>;
   },
 
-  async deleteRow(table: string, id: string) {
+  async deleteRow(table: string, role: ProfileRole, id: string) {
+    ensurePlatformAdmin(role);
     const { error } = await supabase
       .from(table)
       .delete()

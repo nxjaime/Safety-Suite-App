@@ -14,7 +14,7 @@ vi.mock('../services/hypercareService', () => ({
 }));
 
 vi.mock('../contexts/AuthContext', () => ({
-  useAuth: () => ({ role: 'manager' })
+  useAuth: () => ({ role: 'full' })
 }));
 
 import Hypercare from '../pages/Hypercare';

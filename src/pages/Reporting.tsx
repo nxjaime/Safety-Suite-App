@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { reportingService, type ReportingSnapshot, type ReportingWindow } from '../services/reportingService';
 import { useAuth } from '../contexts/AuthContext';
+import { canManageReportingPreferences } from '../services/authorizationService';
 import {
   reportingPreferencesService,
   type ReportingExportSchedule,
@@ -20,7 +21,7 @@ const windowOptions: Array<{ value: ReportingWindow; label: string }> = [
 const metricCardClassName = 'rounded-xl border border-slate-200 bg-white p-5 shadow-sm';
 
 const Reporting: React.FC = () => {
-  const { role } = useAuth();
+  const { role, capabilities } = useAuth();
   const [window, setWindow] = useState<ReportingWindow>('90d');
   const [loading, setLoading] = useState(true);
   const [snapshot, setSnapshot] = useState<ReportingSnapshot | null>(null);
@@ -32,7 +33,7 @@ const Reporting: React.FC = () => {
   const [scheduleName, setScheduleName] = useState('');
   const [scheduleFrequency, setScheduleFrequency] = useState<'weekly' | 'monthly'>('weekly');
   const [scheduleRecipients, setScheduleRecipients] = useState('');
-  const canManagePreferences = role !== 'viewer';
+  const canManagePreferences = capabilities?.canManageReportingPreferences ?? canManageReportingPreferences(role);
 
   const refreshPreferences = () => {
     setSavedViews(reportingPreferencesService.listSavedViews(role));
@@ -233,7 +234,7 @@ const Reporting: React.FC = () => {
               </button>
             </div>
             {!canManagePreferences && (
-              <p className="mt-2 text-xs text-slate-500">Viewer role has read-only access to saved views and schedules.</p>
+              <p className="mt-2 text-xs text-slate-500">Readonly role has read-only access to saved views and schedules.</p>
             )}
             <div className="mt-3 space-y-2">
               {savedViews.length === 0 ? (

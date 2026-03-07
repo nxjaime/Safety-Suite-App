@@ -51,7 +51,7 @@ describe('hypercareReviewService', () => {
         topRisks: 'Training completion lag',
         mitigationActions: 'Assigned owner',
         cohortDecision: 'Hold',
-        role: 'viewer'
+        role: 'readonly'
       })
     ).toThrow('Insufficient permissions for this action');
   });
@@ -80,5 +80,25 @@ describe('hypercareReviewService', () => {
     const audit = hypercareReviewService.listAuditEntries();
     expect(audit.some((entry) => entry.action === 'review_created')).toBe(true);
     expect(audit.some((entry) => entry.action === 'review_published' && entry.targetId === review.id)).toBe(true);
+  });
+
+  it('allows coaching users to create and publish hypercare reviews', async () => {
+    const { hypercareReviewService } = await import('../services/hypercareReviewService');
+
+    const review = hypercareReviewService.createReview({
+      reviewDate: '2026-03-08',
+      reviewWindow: 'PM',
+      owner: 'Enablement Lead',
+      overallHealth: 'Monitor',
+      incidentSummary: 'Training backlog elevated after launch huddle',
+      topRisks: 'Completion lag in newly activated cohort',
+      mitigationActions: 'Coaching team assigned follow-up outreach',
+      cohortDecision: 'Hold',
+      role: 'coaching'
+    });
+
+    hypercareReviewService.publishReview(review.id, 'coaching');
+
+    expect(hypercareReviewService.listReviews()[0].status).toBe('Published');
   });
 });

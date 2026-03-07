@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
+import { canManageHypercare } from '../services/authorizationService';
 import {
   rolloutCohortService,
   type RolloutCohort,
@@ -15,8 +16,8 @@ const statusClassNames: Record<RolloutCohortStatus, string> = {
 };
 
 const RolloutCohortsPanel: React.FC = () => {
-  const { role } = useAuth();
-  const canManage = role !== 'viewer';
+  const { capabilities, role } = useAuth();
+  const canManage = capabilities?.canManageHypercare ?? canManageHypercare(role);
   const [cohorts, setCohorts] = useState<RolloutCohort[]>([]);
   const [name, setName] = useState('');
   const [targetDate, setTargetDate] = useState('');
@@ -152,7 +153,7 @@ const RolloutCohortsPanel: React.FC = () => {
           </div>
         </div>
       ) : (
-        <p className="mt-4 text-sm text-slate-500">Viewer role has read-only access to rollout cohorts.</p>
+        <p className="mt-4 text-sm text-slate-500">Readonly role has read-only access to rollout cohorts.</p>
       )}
 
       {cohorts.length === 0 ? (

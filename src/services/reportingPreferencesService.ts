@@ -1,5 +1,5 @@
-import type { ProfileRole } from './profileService';
 import type { ReportingWindow } from './reportingService';
+import { canManageReportingPreferences, type ProfileRole } from './authorizationService';
 
 const SAVED_VIEWS_KEY = 'reporting_saved_views_v1';
 const EXPORT_SCHEDULES_KEY = 'reporting_export_schedules_v1';
@@ -77,7 +77,7 @@ const writeAuditEntries = (entries: ReportingPreferenceAuditEntry[]) => {
 const nextId = (prefix: string): string => `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
 
 const ensureCanMutate = (role: ProfileRole) => {
-  if (role === 'viewer') {
+  if (!canManageReportingPreferences(role)) {
     throw new Error('Insufficient permissions for this action');
   }
 };
@@ -218,7 +218,7 @@ export const reportingPreferencesService = {
 
   listAuditEntries(role?: ProfileRole): ReportingPreferenceAuditEntry[] {
     const all = readAuditEntries();
-    if (!role || role === 'admin') {
+    if (!role || role === 'platform_admin') {
       return all;
     }
     return all.filter((entry) => entry.role === role);

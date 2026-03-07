@@ -40,8 +40,8 @@ describe('reportingPreferencesService', () => {
 
   it('blocks viewer mutations and records audit entries for manager actions', () => {
     expect(() => reportingPreferencesService.saveView({
-      name: 'Viewer View',
-      role: 'viewer',
+      name: 'Readonly View',
+      role: 'readonly',
       window: '30d'
     })).toThrow('Insufficient permissions for this action');
 
@@ -69,5 +69,26 @@ describe('reportingPreferencesService', () => {
     expect(managerAudit.some((entry) => entry.action === 'schedule_disabled')).toBe(true);
     expect(managerAudit.some((entry) => entry.action === 'view_deleted')).toBe(true);
     expect(managerAudit.some((entry) => entry.action === 'schedule_deleted')).toBe(true);
+  });
+
+  it('allows safety users to manage reporting preferences under the Sprint 21 model', () => {
+    const saved = reportingPreferencesService.saveView({
+      name: 'Safety Risk Review',
+      role: 'safety',
+      window: '30d'
+    });
+
+    const schedule = reportingPreferencesService.createExportSchedule({
+      name: 'Safety Weekly Export',
+      role: 'safety',
+      window: '90d',
+      frequency: 'weekly',
+      recipients: ['safety@example.com']
+    });
+
+    expect(saved.role).toBe('safety');
+    expect(schedule.role).toBe('safety');
+    expect(reportingPreferencesService.listSavedViews('safety')).toHaveLength(1);
+    expect(reportingPreferencesService.listExportSchedules('safety')).toHaveLength(1);
   });
 });

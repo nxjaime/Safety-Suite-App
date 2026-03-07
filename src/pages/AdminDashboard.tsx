@@ -4,10 +4,12 @@ import toast from 'react-hot-toast';
 import { adminService, adminTables } from '../services/adminService';
 import { dataQualityService, type DataQualitySummary } from '../services/dataQualityService';
 import AdminForm from '../components/AdminForm';
+import { useAuth } from '../contexts/AuthContext';
 
 const prettyJson = (value: unknown) => JSON.stringify(value, null, 2);
 
 const AdminDashboard: React.FC = () => {
+  const { role } = useAuth();
   const [selectedTable, setSelectedTable] = useState(adminTables[0].name);
   const [rows, setRows] = useState<Array<Record<string, unknown>>>([]);
   const [formData, setFormData] = useState<Record<string, unknown>>({});
@@ -22,7 +24,7 @@ const AdminDashboard: React.FC = () => {
     try {
       setLoading(true);
       // guard against mocks or unexpected undefined returns
-      const data = (await adminService.listRows(selectedTable, 25)) || [];
+      const data = (await adminService.listRows(selectedTable, role, 25)) || [];
       setRows(data);
       if (data.length && Object.keys(formData).length === 0) {
         // start form with a blank copy of the first row
@@ -56,7 +58,7 @@ const AdminDashboard: React.FC = () => {
   const insertRow = async () => {
     try {
       const payload = formData;
-      await adminService.insertRow(selectedTable, payload);
+      await adminService.insertRow(selectedTable, role, payload);
       toast.success('Row created');
       setFormData({});
       loadRows();
@@ -70,7 +72,7 @@ const AdminDashboard: React.FC = () => {
     if (!window.confirm(`Delete row ${id}?`)) return;
 
     try {
-      await adminService.deleteRow(selectedTable, id);
+      await adminService.deleteRow(selectedTable, role, id);
       setRows((prev) => prev.filter((row) => String(row.id) !== id));
       toast.success('Row deleted');
     } catch (error) {

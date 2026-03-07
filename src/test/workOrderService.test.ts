@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { workOrderService } from '../services/workOrderService';
+import { canApproveWorkOrder, workOrderService } from '../services/workOrderService';
 import * as supa from '../lib/supabase';
 
 // mock getCurrentOrganization to return known value
@@ -15,6 +15,15 @@ vi.mock('../lib/supabase', async () => {
 });
 
 describe('workOrderService', () => {
+  it('limits work-order approval to fleet-capable roles', () => {
+    expect(canApproveWorkOrder('platform_admin')).toBe(true);
+    expect(canApproveWorkOrder('full')).toBe(true);
+    expect(canApproveWorkOrder('maintenance')).toBe(true);
+    expect(canApproveWorkOrder('safety')).toBe(false);
+    expect(canApproveWorkOrder('coaching')).toBe(false);
+    expect(canApproveWorkOrder('readonly')).toBe(false);
+  });
+
   it('adds organization filter when fetching', async () => {
     const eqSpy = vi.fn().mockReturnThis();
     const orderSpy = vi.fn().mockReturnThis();

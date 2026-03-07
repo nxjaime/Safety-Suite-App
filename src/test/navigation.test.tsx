@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { navSections } from '../components/Layout/Sidebar';
+import { getVisibleMenuGroups, navSections } from '../components/Layout/Sidebar';
 
 describe('Navigation IA', () => {
   it('includes required top-level sections', () => {
@@ -51,5 +51,15 @@ describe('Navigation IA', () => {
     const hasWorkOrders = operations?.items.some(item => item.type === 'link' && item.name === 'Work Orders');
     expect(hasMaintenance).toBe(true);
     expect(hasWorkOrders).toBe(true);
+  });
+
+  it('shows Administration only to platform admins', () => {
+    const platformAdminGroups = getVisibleMenuGroups('platform_admin');
+    const fullGroups = getVisibleMenuGroups('full');
+    const readonlyGroups = getVisibleMenuGroups('readonly');
+
+    expect(platformAdminGroups.some((group) => group.label === 'Administration')).toBe(true);
+    expect(fullGroups.some((group) => group.label === 'Administration')).toBe(false);
+    expect(readonlyGroups.some((group) => group.label === 'Administration')).toBe(false);
   });
 });

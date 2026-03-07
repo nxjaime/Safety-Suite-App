@@ -1,4 +1,4 @@
-import type { ProfileRole } from './profileService';
+import { canManageHypercare, type ProfileRole } from './authorizationService';
 
 const HYPERCARE_REVIEWS_KEY = 'hypercare_daily_reviews_v1';
 const HYPERCARE_REVIEW_AUDIT_KEY = 'hypercare_daily_review_audit_v1';
@@ -60,7 +60,7 @@ const writeAuditEntries = (entries: HypercareReviewAuditEntry[]) => {
 const nextId = (prefix: string): string => `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
 
 const ensureCanMutate = (role: ProfileRole) => {
-  if (role === 'viewer') {
+  if (!canManageHypercare(role)) {
     throw new Error('Insufficient permissions for this action');
   }
 };

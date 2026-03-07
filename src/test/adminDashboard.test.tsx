@@ -2,6 +2,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 
+vi.mock('../contexts/AuthContext', () => ({
+    useAuth: () => ({ role: 'platform_admin' }),
+}));
+
 // mock services before importing component
 vi.mock('../services/adminService', () => {
     return {

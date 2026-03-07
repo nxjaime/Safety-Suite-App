@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
+import { canManageHypercare } from '../services/authorizationService';
 import {
   hypercareReviewService,
   type HypercareCohortDecision,
@@ -21,8 +22,8 @@ const healthClassNames = {
 } as const;
 
 const HypercareDailyReviewsPanel: React.FC = () => {
-  const { role } = useAuth();
-  const canManage = role !== 'viewer';
+  const { capabilities, role } = useAuth();
+  const canManage = capabilities?.canManageHypercare ?? canManageHypercare(role);
   const [reviews, setReviews] = useState<HypercareReview[]>([]);
   const [reviewDate, setReviewDate] = useState('');
   const [reviewWindow, setReviewWindow] = useState<HypercareReviewWindow>('AM');
@@ -206,7 +207,7 @@ const HypercareDailyReviewsPanel: React.FC = () => {
           </div>
         </div>
       ) : (
-        <p className="mt-4 text-sm text-slate-500">Viewer role has read-only access to daily reviews.</p>
+        <p className="mt-4 text-sm text-slate-500">Readonly role has read-only access to daily reviews.</p>
       )}
 
       {latestPublishedReview ? (

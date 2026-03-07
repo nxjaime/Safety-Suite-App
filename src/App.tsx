@@ -2,6 +2,7 @@ import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout/Layout';
+import { canAccessPlatformAdmin } from './services/authorizationService';
 
 // Lazy load pages
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -51,7 +52,7 @@ const ProtectedRoute = () => {
 };
 
 const AdminRoute = () => {
-  const { loading, isAdmin } = useAuth();
+  const { loading, role, capabilities } = useAuth();
 
   if (loading) {
     return (
@@ -62,7 +63,9 @@ const AdminRoute = () => {
   }
 
   const isE2EAuthBypass = import.meta.env.VITE_E2E_AUTH_BYPASS === 'true';
-  if (!isAdmin && !isE2EAuthBypass) {
+  const hasPlatformAdminAccess = capabilities?.canAccessPlatformAdmin ?? canAccessPlatformAdmin(role);
+
+  if (!hasPlatformAdminAccess && !isE2EAuthBypass) {
     return <Navigate to="/" replace />;
   }
 

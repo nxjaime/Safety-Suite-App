@@ -1,6 +1,5 @@
 import { supabase } from '../lib/supabase';
-
-export type ProfileRole = 'admin' | 'manager' | 'viewer';
+import { normalizeRole, type ProfileRole } from './authorizationService';
 
 export interface ProfileSummary {
   role: ProfileRole;
@@ -37,13 +36,13 @@ export const profileService = {
     if (error) {
       // Allow fallback for first-login state
       return {
-        role: this.isEmailAdmin(user.email || '') ? 'admin' : 'viewer',
+        role: this.isEmailAdmin(user.email || '') ? 'platform_admin' : 'readonly',
         organizationId: null,
         fullName: user.user_metadata?.full_name || null
       };
     }
 
-    const role = (data.role || 'viewer') as ProfileRole;
+    const role = normalizeRole((data.role || 'viewer') as ProfileRole);
     return {
       role,
       organizationId: data.organization_id || null,

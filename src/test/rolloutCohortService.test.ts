@@ -41,7 +41,7 @@ describe('rolloutCohortService', () => {
       targetOrgCount: 3,
       owner: 'Ops Lead',
       notes: '',
-      role: 'viewer'
+      role: 'readonly'
     })).toThrow('Insufficient permissions for this action');
   });
 
@@ -66,5 +66,22 @@ describe('rolloutCohortService', () => {
     const audit = rolloutCohortService.listAuditEntries();
     expect(audit.some((entry) => entry.action === 'cohort_created')).toBe(true);
     expect(audit.some((entry) => entry.action === 'cohort_status_updated' && entry.targetName === 'Wave 1 - West')).toBe(true);
+  });
+
+  it('allows maintenance users to manage rollout cohorts', async () => {
+    const { rolloutCohortService } = await import('../services/rolloutCohortService');
+
+    const cohort = rolloutCohortService.createCohort({
+      name: 'Wave 3 - Maintenance Pilot',
+      targetDate: '2026-04-30',
+      targetOrgCount: 2,
+      owner: 'Fleet Ops',
+      notes: 'Maintenance-led launch validation',
+      role: 'maintenance'
+    });
+
+    rolloutCohortService.updateStatus(cohort.id, 'maintenance', 'Active');
+
+    expect(rolloutCohortService.listCohorts()[0].status).toBe('Active');
   });
 });

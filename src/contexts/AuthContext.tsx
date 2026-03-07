@@ -1,12 +1,21 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { profileService, type ProfileRole } from '../services/profileService';
+import {
+    canAccessPlatformAdmin,
+    getRoleCapabilities,
+    normalizeRole,
+    type ProfileRole,
+    type RoleCapabilities
+} from '../services/authorizationService';
+import { profileService } from '../services/profileService';
 
 interface AuthContextType {
     session: Session | null;
     user: User | null;
+    organizationId: string | null;
     role: ProfileRole;
+    capabilities: RoleCapabilities;
     isAdmin: boolean;
     loading: boolean;
     signOut: () => Promise<void>;
@@ -18,7 +27,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [session, setSession] = useState<Session | null>(null);
     const [user, setUser] = useState<User | null>(null);
-    const [role, setRole] = useState<ProfileRole>('viewer');
+    const [organizationId, setOrganizationId] = useState<string | null>(null);
+    const [role, setRole] = useState<ProfileRole>('readonly');
     const [loading, setLoading] = useState(true);
     const isE2EAuthBypass = import.meta.env.VITE_E2E_AUTH_BYPASS === 'true';
 
@@ -32,7 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 user_metadata: {
                     full_name: 'E2E User',
                     title: 'QA Automation',
-                    role: 'admin'
+                    role: 'platform_admin'
                 },
                 created_at: new Date().toISOString()
             } as User;
@@ -48,27 +58,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             setSession(mockSession);
             setUser(mockUser);
-            setRole('admin');
+            setOrganizationId('e2e-org');
+            setRole('platform_admin');
             setLoading(false);
             return;
         }
 
         const resolveRole = async (nextUser: User | null) => {
             if (!nextUser) {
-                setRole('viewer');
+                setOrganizationId(null);
+                setRole('readonly');
                 return;
             }
 
-            const metadataRole = String(nextUser.user_metadata?.role || '').toLowerCase();
+            const metadataRole = normalizeRole(String(nextUser.user_metadata?.role || '').toLowerCase() as ProfileRole);
             const summary = await profileService.getCurrentProfileSummary();
             const isEmailAdmin = profileService.isEmailAdmin(nextUser.email || '');
 
-            if (metadataRole === 'admin' || isEmailAdmin) {
-                setRole('admin');
+            if (metadataRole === 'platform_admin' || isEmailAdmin) {
+                setOrganizationId(summary?.organizationId || null);
+                setRole('platform_admin');
                 return;
             }
 
-            setRole(summary?.role || 'viewer');
+            setOrganizationId(summary?.organizationId || null);
+            setRole(summary?.role || 'readonly');
         };
 
         // Get initial session
@@ -105,10 +119,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error };
     };
 
-    const isAdmin = role === 'admin' || profileService.isEmailAdmin(user?.email || '');
+    const capabilities = getRoleCapabilities(role);
+    const isAdmin = canAccessPlatformAdmin(role) || profileService.isEmailAdmin(user?.email || '');
 
     return (
-        <AuthContext.Provider value={{ session, user, role, isAdmin, loading, signOut, signUp }}>
+        <AuthContext.Provider value={{ session, user, organizationId, role, capabilities, isAdmin, loading, signOut, signUp }}>
             {children}
         </AuthContext.Provider>
     );

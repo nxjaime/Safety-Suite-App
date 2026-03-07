@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 
 const authState = vi.hoisted(() => ({
-  role: 'manager'
+  role: 'coaching'
 }));
 
 vi.mock('../contexts/AuthContext', () => ({
@@ -15,10 +15,10 @@ import HypercareDailyReviewsPanel from '../components/HypercareDailyReviewsPanel
 describe('HypercareDailyReviewsPanel', () => {
   beforeEach(() => {
     localStorage.clear();
-    authState.role = 'manager';
+    authState.role = 'coaching';
   });
 
-  it('renders the latest published review summary and manager controls', async () => {
+  it('renders the latest published review summary and hypercare controls', async () => {
     const { hypercareReviewService } = await import('../services/hypercareReviewService');
 
     const review = hypercareReviewService.createReview({
@@ -30,10 +30,10 @@ describe('HypercareDailyReviewsPanel', () => {
       topRisks: 'Training lag in Wave 1',
       mitigationActions: 'Customer success owner assigned follow-up outreach',
       cohortDecision: 'Hold',
-      role: 'manager'
+      role: 'coaching'
     });
 
-    hypercareReviewService.publishReview(review.id, 'manager');
+    hypercareReviewService.publishReview(review.id, 'coaching');
 
     render(<HypercareDailyReviewsPanel />);
 
@@ -43,7 +43,7 @@ describe('HypercareDailyReviewsPanel', () => {
     expect(screen.getByText(/No P0 incidents; one auth regression under watch/i)).toBeInTheDocument();
   });
 
-  it('allows manager users to add a draft review', async () => {
+  it('allows hypercare-capable users to add a draft review', async () => {
     render(<HypercareDailyReviewsPanel />);
 
     fireEvent.change(screen.getByLabelText(/Review Date/i), { target: { value: '2026-03-07' } });
@@ -66,7 +66,7 @@ describe('HypercareDailyReviewsPanel', () => {
     expect(screen.getByText(/Draft/i)).toBeInTheDocument();
   });
 
-  it('renders viewer role as read-only', async () => {
+  it('renders readonly role as read-only', async () => {
     const { hypercareReviewService } = await import('../services/hypercareReviewService');
 
     const review = hypercareReviewService.createReview({
@@ -82,11 +82,11 @@ describe('HypercareDailyReviewsPanel', () => {
     });
 
     hypercareReviewService.publishReview(review.id, 'admin');
-    authState.role = 'viewer';
+    authState.role = 'readonly';
 
     render(<HypercareDailyReviewsPanel />);
 
-    expect(screen.getByText(/Viewer role has read-only access to daily reviews/i)).toBeInTheDocument();
+    expect(screen.getByText(/Readonly role has read-only access to daily reviews/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Log Review/i })).not.toBeInTheDocument();
     expect(await screen.findByText(/No launch blockers open/i)).toBeInTheDocument();
   });
