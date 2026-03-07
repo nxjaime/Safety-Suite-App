@@ -6,8 +6,11 @@ import Modal from '../components/UI/Modal';
 import toast from 'react-hot-toast';
 import { driverService } from '../services/driverService';
 import { fetchInterventionQueue, type InterventionQueueItem } from '../services/interventionQueueService';
+import { useAuth } from '../contexts/AuthContext';
+import { canManageSafety } from '../services/authorizationService';
 
 const Safety: React.FC = () => {
+    const { role, capabilities } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [stats, setStats] = useState({
         riskScore: 0,
@@ -29,6 +32,7 @@ const Safety: React.FC = () => {
         type: '',
         notes: ''
     });
+    const canManageSafetyEvents = capabilities?.canManageSafety ?? canManageSafety(role);
 
 
 
@@ -100,7 +104,7 @@ const Safety: React.FC = () => {
                 type: newCoaching.type,
                 points,
                 notes: newCoaching.notes
-            });
+            }, role);
 
             // Refetch to ensure consistency
             await loadData();
@@ -166,13 +170,15 @@ const Safety: React.FC = () => {
                         <p className="mt-1 text-sm text-slate-500">Monitor fleet risk exposure, incident pressure, and coaching demand.</p>
                     </div>
                     <div className="flex space-x-2">
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="px-4 py-2 bg-emerald-600 text-white border border-emerald-600 rounded-xl text-sm font-medium hover:bg-emerald-700 flex items-center shadow-sm"
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Log Event
-                    </button>
+                    {canManageSafetyEvents && (
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="px-4 py-2 bg-emerald-600 text-white border border-emerald-600 rounded-xl text-sm font-medium hover:bg-emerald-700 flex items-center shadow-sm"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Log Event
+                        </button>
+                    )}
                     <button
                         onClick={handleExportReport}
                         className="px-4 py-2 bg-white text-slate-700 border border-slate-300 rounded-xl text-sm font-medium hover:bg-slate-50 flex items-center"
@@ -183,6 +189,12 @@ const Safety: React.FC = () => {
                 </div>
                 </div>
             </section>
+
+            {!canManageSafetyEvents && (
+                <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500 shadow-sm">
+                    Readonly role has read-only access to safety event logging.
+                </div>
+            )}
 
             {error && (
                 <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

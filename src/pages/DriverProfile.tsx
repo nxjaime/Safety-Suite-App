@@ -16,8 +16,11 @@ import { motiveService } from '../services/motiveService'; // Import Service
 import toast from 'react-hot-toast';
 import DriverSafetyTab from '../components/drivers/DriverSafetyTab';
 import DriverDocumentsTab from '../components/drivers/DriverDocumentsTab';
+import { useAuth } from '../contexts/AuthContext';
+import { canManageCoaching, canManageSafety } from '../services/authorizationService';
 
 const DriverProfile: React.FC = () => {
+    const { role, capabilities } = useAuth();
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const location = useLocation();
@@ -100,6 +103,8 @@ const DriverProfile: React.FC = () => {
     const [loadingMotiveEvents, setLoadingMotiveEvents] = useState(false);
     const [riskHistory, setRiskHistory] = useState<any[]>([]);
     const [riskEvents, setRiskEvents] = useState<any[]>([]);
+    const canManageDriverCoaching = capabilities?.canManageCoaching ?? canManageCoaching(role);
+    const canManageDriverSafety = capabilities?.canManageSafety ?? canManageSafety(role);
 
     useEffect(() => {
         if (driver) {
@@ -249,7 +254,7 @@ const DriverProfile: React.FC = () => {
         };
 
         try {
-            await driverService.addCoachingPlan(driver.id, driver.name, planData);
+            await driverService.addCoachingPlan(driver.id, driver.name, planData, role);
 
             // Refresh driver to get new plan with ID
             const updatedDriver = await driverService.getDriverById(driver.id);
@@ -315,7 +320,7 @@ const DriverProfile: React.FC = () => {
                 weeklyCheckIns: updatedCheckIns, // Service maps this to weekly_check_ins
                 status: newStatus,
                 outcome: computedOutcome
-            });
+            }, role);
 
             // If a check-in was marked complete, also update the corresponding task
             if (field === 'status' && value === 'Complete') {
@@ -340,7 +345,7 @@ const DriverProfile: React.FC = () => {
         // Wait for animation
         setTimeout(async () => {
             try {
-                await driverService.deleteCoachingPlan(planId);
+                await driverService.deleteCoachingPlan(planId, role);
                 toast.success('Coaching plan deleted');
                 if (driver) {
                     setDriver(prev => prev ? {
@@ -482,7 +487,7 @@ const DriverProfile: React.FC = () => {
         };
 
         try {
-            await driverService.addRiskEvent(driver.id, event);
+            await driverService.addRiskEvent(driver.id, event, role);
 
             const updatedDriver = await driverService.getDriverById(driver.id);
             setDriver(updatedDriver || undefined);
@@ -505,7 +510,7 @@ const DriverProfile: React.FC = () => {
     const handleRecalculateScore = async () => {
         if (!driver) return;
         try {
-            await driverService.refreshRiskScore(driver.id, '90d');
+            await driverService.refreshRiskScore(driver.id, '90d', role);
             const [updatedDriver, historyRows] = await Promise.all([
                 driverService.getDriverById(driver.id),
                 driverService.getDriverRiskScoreHistory(driver.id, 12)
@@ -708,20 +713,24 @@ const DriverProfile: React.FC = () => {
                         <div className="lg:col-span-2 space-y-6">
                             {/* Quick Actions */}
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                                <button
-                                    onClick={handleCreateCoachingPlan}
-                                    className="py-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-center text-green-800 font-medium hover:bg-green-100"
-                                >
-                                    <UserPlus className="w-5 h-5 mr-2" />
-                                    Coaching Plan
-                                </button>
-                                <button
-                                    onClick={() => setIsRiskModalOpen(true)}
-                                    className="py-3 bg-red-50 border border-red-200 rounded-lg flex items-center justify-center text-red-800 font-medium hover:bg-red-100"
-                                >
-                                    <AlertTriangle className="w-5 h-5 mr-2" />
-                                    Log Risk Event
-                                </button>
+                                {canManageDriverCoaching && (
+                                    <button
+                                        onClick={handleCreateCoachingPlan}
+                                        className="py-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-center text-green-800 font-medium hover:bg-green-100"
+                                    >
+                                        <UserPlus className="w-5 h-5 mr-2" />
+                                        Coaching Plan
+                                    </button>
+                                )}
+                                {canManageDriverSafety && (
+                                    <button
+                                        onClick={() => setIsRiskModalOpen(true)}
+                                        className="py-3 bg-red-50 border border-red-200 rounded-lg flex items-center justify-center text-red-800 font-medium hover:bg-red-100"
+                                    >
+                                        <AlertTriangle className="w-5 h-5 mr-2" />
+                                        Log Risk Event
+                                    </button>
+                                )}
                                 <button
                                     onClick={handleSendEmailNotification}
                                     disabled={!driver.email}
@@ -773,13 +782,15 @@ const DriverProfile: React.FC = () => {
                                                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${plan.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
                                                         {plan.status}
                                                     </span>
-                                                    <button
-                                                        onClick={(e) => handleDeletePlan(plan.id, e)}
-                                                        className="p-1 text-gray-400 hover:text-red-600"
-                                                        title="Delete Plan"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
+                                                    {canManageDriverCoaching && (
+                                                        <button
+                                                            onClick={(e) => handleDeletePlan(plan.id, e)}
+                                                            className="p-1 text-gray-400 hover:text-red-600"
+                                                            title="Delete Plan"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
 
@@ -794,7 +805,8 @@ const DriverProfile: React.FC = () => {
                                                                         <select
                                                                             value={checkIn.status}
                                                                             onChange={(e) => handleUpdateCheckIn(plan.id, checkIn.week, 'status', e.target.value)}
-                                                                            className="rounded border-gray-300 px-2 py-1 text-xs focus:border-green-500 focus:ring-green-500"
+                                                                            disabled={!canManageDriverCoaching}
+                                                                            className="rounded border-gray-300 px-2 py-1 text-xs focus:border-green-500 focus:ring-green-500 disabled:bg-slate-100 disabled:text-slate-500"
                                                                         >
                                                                             <option value="Pending">Pending</option>
                                                                             <option value="In Progress">In Progress</option>
@@ -811,7 +823,8 @@ const DriverProfile: React.FC = () => {
                                                                             placeholder="Add note..."
                                                                             value={checkIn.notes || ''}
                                                                             onChange={(e) => handleUpdateCheckIn(plan.id, checkIn.week, 'notes', e.target.value)}
-                                                                            className="text-xs border-gray-200 rounded py-1 px-2 w-48 focus:ring-green-500 focus:border-green-500"
+                                                                            disabled={!canManageDriverCoaching}
+                                                                            className="text-xs border-gray-200 rounded py-1 px-2 w-48 focus:ring-green-500 focus:border-green-500 disabled:bg-slate-100 disabled:text-slate-500"
                                                                         />
                                                                     </div>
                                                                 </div>

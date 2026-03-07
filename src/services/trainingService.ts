@@ -1,11 +1,18 @@
 import { supabase, getCurrentOrganization } from '../lib/supabase';
 import type { TrainingAssignment, TrainingTemplate } from '../types';
+import { canManageTraining, type ProfileRole } from './authorizationService';
 
 async function applyOrg(payload: Record<string, unknown>) {
   if ('organization_id' in payload) return payload;
   const orgId = await getCurrentOrganization();
   return { ...payload, organization_id: orgId };
 }
+
+const ensureCanMutate = (role?: ProfileRole) => {
+  if (role && !canManageTraining(role)) {
+    throw new Error('Insufficient permissions for this action');
+  }
+};
 
 export const trainingService = {
   async listAssignments(): Promise<TrainingAssignment[]> {
@@ -21,7 +28,8 @@ export const trainingService = {
     return (data || []) as TrainingAssignment[];
   },
 
-  async insertAssignment(payload: Partial<TrainingAssignment>) {
+  async insertAssignment(payload: Partial<TrainingAssignment>, role?: ProfileRole) {
+    ensureCanMutate(role);
     const final = await applyOrg(payload as Record<string, unknown>);
     const { data, error } = await supabase
       .from('training_assignments')
@@ -41,7 +49,8 @@ export const trainingService = {
     return result as TrainingAssignment;
   },
 
-  async updateAssignment(id: string, updates: Partial<TrainingAssignment>) {
+  async updateAssignment(id: string, updates: Partial<TrainingAssignment>, role?: ProfileRole) {
+    ensureCanMutate(role);
     const orgId = await getCurrentOrganization();
     let query = supabase
       .from('training_assignments')
@@ -55,7 +64,8 @@ export const trainingService = {
     return data as TrainingAssignment;
   },
 
-  async deleteAssignment(id: string) {
+  async deleteAssignment(id: string, role?: ProfileRole) {
+    ensureCanMutate(role);
     const orgId = await getCurrentOrganization();
     let query = supabase
       .from('training_assignments')
@@ -82,7 +92,8 @@ export const trainingService = {
     return (data || []) as TrainingTemplate[];
   },
 
-  async insertTemplate(payload: Partial<TrainingTemplate>) {
+  async insertTemplate(payload: Partial<TrainingTemplate>, role?: ProfileRole) {
+    ensureCanMutate(role);
     const final = await applyOrg(payload as Record<string, unknown>);
     const { data, error } = await supabase
       .from('training_templates')
@@ -103,7 +114,8 @@ export const trainingService = {
     return result as TrainingTemplate;
   },
 
-  async updateTemplate(id: string, updates: Partial<TrainingTemplate>) {
+  async updateTemplate(id: string, updates: Partial<TrainingTemplate>, role?: ProfileRole) {
+    ensureCanMutate(role);
     const orgId = await getCurrentOrganization();
     let query = supabase
       .from('training_templates')
@@ -117,7 +129,8 @@ export const trainingService = {
     return data as TrainingTemplate;
   },
 
-  async deleteTemplate(id: string) {
+  async deleteTemplate(id: string, role?: ProfileRole) {
+    ensureCanMutate(role);
     const orgId = await getCurrentOrganization();
     let query = supabase
       .from('training_templates')

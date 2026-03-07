@@ -3,7 +3,27 @@ import { driverService } from '../services/driverService';
 import * as supa from '../lib/supabase';
 
 describe('driverService', () => {
+  describe('risk event permissions', () => {
+    it('blocks readonly users from adding risk events', async () => {
+      await expect(
+        driverService.addRiskEvent('driver-1', { type: 'Speeding', date: '2026-03-07' } as any, 'readonly')
+      ).rejects.toThrow('Insufficient permissions for this action');
+    });
+
+    it('blocks coaching-only users from refreshing risk scores', async () => {
+      await expect(
+        driverService.refreshRiskScore('driver-1', '90d', 'coaching')
+      ).rejects.toThrow('Insufficient permissions for this action');
+    });
+  });
+
   describe('updateCoachingPlan', () => {
+    it('blocks readonly users from updating coaching plans', async () => {
+      await expect(
+        driverService.updateCoachingPlan('plan-1', { status: 'Completed' }, 'readonly')
+      ).rejects.toThrow('Insufficient permissions for this action');
+    });
+
     it('maps camelCase to snake_case and includes weekly_check_ins and filters by org', async () => {
       const orgId = 'org-xyz';
       vi.spyOn(driverService as any, '_getOrgId').mockResolvedValue(orgId);
@@ -17,7 +37,7 @@ describe('driverService', () => {
       (supa.supabase as any).from = vi.fn().mockReturnValue({ update: updateSpy });
 
       const updates = { status: 'Completed', weeklyCheckIns: [{ week: 1, status: 'Complete' }] };
-      await driverService.updateCoachingPlan('plan-1', updates);
+      await driverService.updateCoachingPlan('plan-1', updates, 'coaching');
 
       expect(updateSpy).toHaveBeenCalledWith({ status: 'Completed', weekly_check_ins: updates.weeklyCheckIns });
       // should have applied org filter before final id filter
@@ -35,7 +55,7 @@ describe('driverService', () => {
       const updateSpy = vi.fn().mockReturnValue(chain);
       (supa.supabase as any).from = vi.fn().mockReturnValue({ update: updateSpy });
 
-      await driverService.updateCoachingPlan('plan-1', { status: 'Active', weeklyCheckIns: [] });
+      await driverService.updateCoachingPlan('plan-1', { status: 'Active', weeklyCheckIns: [] }, 'coaching');
       expect(updateSpy).toHaveBeenCalled();
     });
 
@@ -51,7 +71,7 @@ describe('driverService', () => {
       await driverService.updateCoachingPlan('plan-9', {
         status: 'Completed',
         outcome: '12 points improved'
-      });
+      }, 'coaching');
 
       expect(updateSpy).toHaveBeenCalledWith({
         status: 'Completed',
@@ -61,6 +81,12 @@ describe('driverService', () => {
   });
 
   describe('addCoachingPlan', () => {
+    it('blocks readonly users from creating coaching plans', async () => {
+      await expect(
+        driverService.addCoachingPlan('driver-1', 'Alice', { type: 'Speeding', weeklyCheckIns: [] }, 'readonly')
+      ).rejects.toThrow('Insufficient permissions for this action');
+    });
+
     it('includes organization_id on insert', async () => {
       const orgId = 'org-123';
       // stub _getOrgId
@@ -85,7 +111,7 @@ describe('driverService', () => {
         weeklyCheckIns: [{ week: 1, date: '2023-01-08' }]
       };
 
-      await driverService.addCoachingPlan('driver-1', 'Alice', plan);
+      await driverService.addCoachingPlan('driver-1', 'Alice', plan, 'coaching');
 
       expect(insertSpy).toHaveBeenCalled();
       const firstArg = insertSpy.mock.calls[0][0][0];
@@ -103,8 +129,16 @@ describe('driverService', () => {
       });
 
       const plan = { type: 'Braking', startDate: '2023-02-01', durationWeeks: 2, status: 'Active', weeklyCheckIns: [] };
-      await expect(driverService.addCoachingPlan('driver-2', 'Bob', plan)).resolves.not.toThrow();
+      await expect(driverService.addCoachingPlan('driver-2', 'Bob', plan, 'coaching')).resolves.not.toThrow();
       expect(taskInsertSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteCoachingPlan', () => {
+    it('blocks readonly users from deleting coaching plans', async () => {
+      await expect(
+        driverService.deleteCoachingPlan('plan-1', 'readonly')
+      ).rejects.toThrow('Insufficient permissions for this action');
     });
   });
 });

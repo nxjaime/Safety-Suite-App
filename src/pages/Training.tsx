@@ -5,6 +5,7 @@ import Modal from '../components/UI/Modal';
 import { driverService } from '../services/driverService';
 import { trainingService } from '../services/trainingService';
 import { useAuth } from '../contexts/AuthContext';
+import { canManageTraining } from '../services/authorizationService';
 import type { Driver, TrainingAssignment, TrainingTemplate } from '../types';
 import toast from 'react-hot-toast';
 
@@ -18,7 +19,7 @@ function getDisplayStatus(a: TrainingAssignment): DisplayStatus {
 }
 
 const Training: React.FC = () => {
-    const { user } = useAuth();
+    const { user, role, capabilities } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [drivers, setDrivers] = useState<Driver[]>([]);
     const [newAssignment, setNewAssignment] = useState({
@@ -41,6 +42,7 @@ const Training: React.FC = () => {
     const [completionNotes, setCompletionNotes] = useState('');
     const [showCompleteForm, setShowCompleteForm] = useState(false);
     const [completingId, setCompletingId] = useState<string | null>(null);
+    const canManage = capabilities?.canManageTraining ?? canManageTraining(role);
 
     useEffect(() => {
         const loadDrivers = async () => {
@@ -83,7 +85,7 @@ const Training: React.FC = () => {
                 due_date: newAssignment.dueDate,
                 status: 'Active',
                 progress: 0
-            });
+            }, role);
             setAssignments((prev) => [created, ...prev]);
             toast.success('Assignment created');
         } catch (err) {
@@ -119,7 +121,7 @@ const Training: React.FC = () => {
                 completed_at: new Date().toISOString(),
                 completed_by: user?.id ?? undefined,
                 completion_notes: completionNotes || undefined
-            });
+            }, role);
             setAssignments(prev => prev.map(a => a.id === updated.id ? updated : a));
             setSelectedAssignment(updated);
             setCompletionNotes('');
@@ -139,7 +141,7 @@ const Training: React.FC = () => {
             const updated = await trainingService.updateAssignment(selectedAssignment.id, {
                 reviewed_at: new Date().toISOString(),
                 reviewed_by: user?.id ?? undefined
-            });
+            }, role);
             setAssignments(prev => prev.map(a => a.id === updated.id ? updated : a));
             setSelectedAssignment(updated);
             toast.success('Marked as reviewed');
@@ -160,14 +162,22 @@ const Training: React.FC = () => {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-slate-800">Training & Development</h2>
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="px-4 py-2 bg-green-100 text-green-800 border border-green-200 rounded-md text-sm font-medium hover:bg-green-200 flex items-center"
-                >
-                    <GraduationCap className="w-4 h-4 mr-2" />
-                    Assign Training
-                </button>
+                {canManage && (
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="px-4 py-2 bg-green-100 text-green-800 border border-green-200 rounded-md text-sm font-medium hover:bg-green-200 flex items-center"
+                    >
+                        <GraduationCap className="w-4 h-4 mr-2" />
+                        Assign Training
+                    </button>
+                )}
             </div>
+
+            {!canManage && (
+                <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500 shadow-sm">
+                    Readonly role has read-only access to training assignments and templates.
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div
@@ -339,11 +349,13 @@ const Training: React.FC = () => {
                                 <option key={t.id} value={t.id}>{t.name}</option>
                             ))}
                         </select>
-                        <div className="mt-1 text-xs text-slate-500">
-                            <button type="button" className="underline" onClick={() => setIsTemplateModalOpen(true)}>
-                                Manage templates
-                            </button>
-                        </div>
+                        {canManage && (
+                            <div className="mt-1 text-xs text-slate-500">
+                                <button type="button" className="underline" onClick={() => setIsTemplateModalOpen(true)}>
+                                    Manage templates
+                                </button>
+                            </div>
+                        )}
                     </div>
                     <div>
                         <label htmlFor="assign-assignee" className="block text-sm font-medium text-slate-700 mb-1">Assignee</label>
@@ -410,7 +422,7 @@ const Training: React.FC = () => {
                                     name: newTemplate.name,
                                     talking_points: newTemplate.talkingPoints,
                                     driver_actions: newTemplate.driverActions,
-                                });
+                                }, role);
                                 setTemplates((prev) => prev.map(t => t.id === updated.id ? updated : t));
                                 toast.success('Template updated');
                             } else {
@@ -418,7 +430,7 @@ const Training: React.FC = () => {
                                     name: newTemplate.name,
                                     talking_points: newTemplate.talkingPoints,
                                     driver_actions: newTemplate.driverActions,
-                                });
+                                }, role);
                                 setTemplates((prev) => [...prev, created]);
                                 toast.success('Template added');
                             }
@@ -457,7 +469,7 @@ const Training: React.FC = () => {
                                             type="button"
                                             className="text-red-600 underline text-sm"
                                             onClick={async () => {
-                                                await trainingService.deleteTemplate(t.id);
+                                                await trainingService.deleteTemplate(t.id, role);
                                                 setTemplates(templates.filter((x) => x.id !== t.id));
                                             }}
                                         >
@@ -586,7 +598,7 @@ const Training: React.FC = () => {
                             </div>
                         )}
                         <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-200">
-                            {selectedAssignment.status !== 'Completed' && (
+                            {canManage && selectedAssignment.status !== 'Completed' && (
                                 <>
                                     {!showCompleteForm ? (
                                         <button
@@ -630,7 +642,7 @@ const Training: React.FC = () => {
                                     )}
                                 </>
                             )}
-                            {!selectedAssignment.reviewed_at && (
+                            {canManage && !selectedAssignment.reviewed_at && (
                                 <button
                                     type="button"
                                     onClick={() => handleMarkReviewed()}

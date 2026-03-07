@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import type { Driver, RiskEvent } from '../types';
 import { encryptData, decryptData } from '../utils/crypto';
 import { riskService } from './riskService';
+import { canManageCoaching, canManageSafety, type ProfileRole } from './authorizationService';
 
 const DRIVER_DOCUMENT_BUCKET = 'driver-documents';
 
@@ -64,6 +65,18 @@ const mapDriverData = (data: any): Driver => {
 };
 
 const sanitizeFileName = (name: string): string => name.replace(/[^a-zA-Z0-9_.-]/g, '-');
+
+const ensureCanManageCoaching = (role?: ProfileRole) => {
+    if (role && !canManageCoaching(role)) {
+        throw new Error('Insufficient permissions for this action');
+    }
+};
+
+const ensureCanManageSafety = (role?: ProfileRole) => {
+    if (role && !canManageSafety(role)) {
+        throw new Error('Insufficient permissions for this action');
+    }
+};
 
 export const driverService = {
     async fetchDrivers(): Promise<Driver[]> {
@@ -310,7 +323,8 @@ export const driverService = {
         if (error) throw error;
     },
 
-    async addRiskEvent(driverId: string, event: Omit<RiskEvent, 'id'>) {
+    async addRiskEvent(driverId: string, event: Omit<RiskEvent, 'id'>, role?: ProfileRole) {
+        ensureCanManageSafety(role);
         const severity = event.severity ?? Math.max(1, Math.min(5, Math.round((event.points || 5) / 5)));
         const occurredAt = event.occurredAt || event.date || new Date().toISOString().split('T')[0];
 
@@ -328,7 +342,8 @@ export const driverService = {
         return data;
     },
 
-    async refreshRiskScore(driverId: string, window = '90d') {
+    async refreshRiskScore(driverId: string, window = '90d', role?: ProfileRole) {
+        ensureCanManageSafety(role);
         return riskService.calculateScore(driverId, window);
     },
 
@@ -358,7 +373,8 @@ export const driverService = {
         }));
     },
 
-    async addCoachingPlan(driverId: string, driverName: string, plan: any) {
+    async addCoachingPlan(driverId: string, driverName: string, plan: any, role?: ProfileRole) {
+        ensureCanManageCoaching(role);
         // make sure we annotate the plan with the current organization so that
         // RLS policies will allow future updates/deletes.  previously we were
         // omitting org_id which meant the row got inserted with null and then
@@ -413,7 +429,8 @@ export const driverService = {
         return planData;
     },
 
-    async deleteCoachingPlan(planId: string) {
+    async deleteCoachingPlan(planId: string, role?: ProfileRole) {
+        ensureCanManageCoaching(role);
         // First, delete all related tasks (coaching check-ins linked to this plan)
         const { error: tasksError } = await supabase
             .from('tasks')
@@ -539,7 +556,8 @@ export const driverService = {
         }
     },
 
-    async updateCoachingPlan(planId: string, updates: any) {
+    async updateCoachingPlan(planId: string, updates: any, role?: ProfileRole) {
+        ensureCanManageCoaching(role);
         const dbUpdates: any = {};
         if (updates.status) dbUpdates.status = updates.status;
         // Explicitly map camelCase to snake_case for DB

@@ -1,11 +1,21 @@
 import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { trainingService } from '../services/trainingService';
 
+const authState = vi.hoisted(() => ({
+    role: 'coaching' as 'coaching' | 'readonly',
+}));
+
 // mocks
 vi.mock('../contexts/AuthContext', () => ({
-    useAuth: () => ({ user: { id: 'test-user-id' } }),
+    useAuth: () => ({
+        user: { id: 'test-user-id' },
+        role: authState.role,
+        capabilities: {
+            canManageTraining: authState.role === 'coaching',
+        },
+    }),
 }));
 vi.mock('../services/driverService', () => ({
     driverService: {
@@ -26,6 +36,10 @@ vi.mock('../services/trainingService', () => ({
 import Training from '../pages/Training';
 
 describe('Training page', () => {
+    beforeEach(() => {
+        authState.role = 'coaching';
+    });
+
     it('renders and opens assign modal and template modal', async () => {
         render(<Training />);
         expect(screen.getByRole('heading', { name: /Training & Development/i })).toBeInTheDocument();
@@ -60,7 +74,7 @@ describe('Training page', () => {
                 name: 'New Template',
                 talking_points: 'point',
                 driver_actions: '',
-            });
+            }, 'coaching');
         });
     });
 
@@ -89,7 +103,7 @@ describe('Training page', () => {
                 name: 'Updated',
                 talking_points: '',
                 driver_actions: '',
-            });
+            }, 'coaching');
         });
     });
 
@@ -143,7 +157,31 @@ describe('Training page', () => {
                 due_date: '2024-01-01',
                 status: 'Active',
                 progress: 0,
-            });
+            }, 'coaching');
         });
+    });
+
+    it('renders readonly users as read-only for training mutations', async () => {
+        authState.role = 'readonly';
+        (trainingService.listAssignments as unknown as vi.Mock).mockResolvedValue([
+            {
+                id: 'a1',
+                module_name: 'Refresher',
+                assignee_id: 'd1',
+                due_date: '2026-03-20',
+                status: 'Active',
+                progress: 10,
+            },
+        ]);
+        render(<Training />);
+
+        expect(await screen.findByRole('heading', { name: /Training & Development/i })).toBeInTheDocument();
+        expect(screen.getByText(/Readonly role has read-only access to training assignments and templates/i)).toBeInTheDocument();
+        expect(screen.queryByText(/Assign Training/i)).not.toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: /View assignment details/i }));
+        expect(await screen.findByText(/Assignment Details/i)).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /Mark complete/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /Mark reviewed/i })).not.toBeInTheDocument();
     });
 });

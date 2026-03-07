@@ -147,4 +147,49 @@ describe('trainingService', () => {
     expect(updated.status).toBe('Completed');
     expect(updated.completion_notes).toBe('Attestation note');
   });
+
+  it('blocks readonly mutations across training assignments and templates', async () => {
+    await expect(
+      trainingService.insertAssignment({ module_name: 'Blocked' }, 'readonly')
+    ).rejects.toThrow('Insufficient permissions for this action');
+
+    await expect(
+      trainingService.updateAssignment('a1', { status: 'Completed' }, 'readonly')
+    ).rejects.toThrow('Insufficient permissions for this action');
+
+    await expect(
+      trainingService.deleteAssignment('a1', 'readonly')
+    ).rejects.toThrow('Insufficient permissions for this action');
+
+    await expect(
+      trainingService.insertTemplate({ name: 'Blocked template' }, 'readonly')
+    ).rejects.toThrow('Insufficient permissions for this action');
+
+    await expect(
+      trainingService.updateTemplate('t1', { name: 'Blocked template' }, 'readonly')
+    ).rejects.toThrow('Insufficient permissions for this action');
+
+    await expect(
+      trainingService.deleteTemplate('t1', 'readonly')
+    ).rejects.toThrow('Insufficient permissions for this action');
+  });
+
+  it('allows coaching users to manage training mutations', async () => {
+    const orgId = 'org-xyz';
+    vi.spyOn(supa, 'getCurrentOrganization').mockResolvedValue(orgId);
+
+    const insertSpy = vi.fn().mockReturnThis();
+    const selectSpy = vi.fn().mockReturnThis();
+    const singleSpy = vi.fn().mockReturnThis();
+    const chain: any = { insert: insertSpy, select: selectSpy, single: singleSpy };
+    singleSpy.mockReturnValue({ data: { id: 'new' }, error: null });
+
+    vi.spyOn(supa, 'supabase', 'get').mockReturnValue({
+      from: vi.fn().mockReturnValue(chain)
+    } as any);
+
+    await expect(
+      trainingService.insertAssignment({ module_name: 'Allowed' }, 'coaching')
+    ).resolves.toEqual({ id: 'new' });
+  });
 });
