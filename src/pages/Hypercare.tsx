@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import RolloutCohortsPanel from '../components/RolloutCohortsPanel';
 import { hypercareService, type HypercareSnapshot } from '../services/hypercareService';
 
 const metricCardClassName = 'rounded-xl border border-slate-200 bg-white p-5 shadow-sm';
@@ -205,6 +206,8 @@ const Hypercare: React.FC = () => {
               </div>
             </article>
           </section>
+
+          <RolloutCohortsPanel />
         </>
       ) : null}
     </div>

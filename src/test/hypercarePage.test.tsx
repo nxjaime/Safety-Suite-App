@@ -13,6 +13,10 @@ vi.mock('../services/hypercareService', () => ({
   }
 }));
 
+vi.mock('../contexts/AuthContext', () => ({
+  useAuth: () => ({ role: 'manager' })
+}));
+
 import Hypercare from '../pages/Hypercare';
 
 describe('Hypercare page', () => {
@@ -91,6 +95,7 @@ describe('Hypercare page', () => {
     );
 
     expect(await screen.findByRole('heading', { name: /Hypercare Command Center/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Rollout Cohorts/i })).toBeInTheDocument();
     expect(screen.getByText(/Escalate/i)).toBeInTheDocument();
     expect(screen.getByText(/Open feedback items/i)).toBeInTheDocument();
     expect(screen.getByText(/Compliance pressure requires escalation/i)).toBeInTheDocument();
@@ -166,5 +171,6 @@ describe('Hypercare page', () => {
     );
 
     expect(await screen.findByText(/No active escalation triggers/i)).toBeInTheDocument();
+    expect(screen.getByText(/No rollout cohorts configured yet/i)).toBeInTheDocument();
   });
 });

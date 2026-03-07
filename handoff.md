@@ -790,3 +790,18 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
   - `src/test/hypercareService.test.ts`
   - `src/test/hypercarePage.test.tsx`
   - `src/test/navigation.test.tsx`
+
+#### Sprint 20 Rollout Cohort Progress Update (`2026-03-07`)
+- Added phased rollout cohort tracking inside Hypercare:
+  - New role-aware local service: `src/services/rolloutCohortService.ts`
+  - New UI section/component: `src/components/RolloutCohortsPanel.tsx`
+  - Admin/manager users can add cohorts and update rollout state (`Planned`, `Active`, `Paused`, `Completed`)
+  - Viewer users have read-only access
+- Hypercare now exposes:
+  - next cohort summary for go/no-go discussion
+  - cohort list with target dates, org counts, owners, and notes
+  - local mutation audit trail via the service layer
+- Added focused coverage:
+  - `src/test/rolloutCohortService.test.ts`
+  - `src/test/rolloutCohortsPanel.test.tsx`
+  - updated `src/test/hypercarePage.test.tsx`
