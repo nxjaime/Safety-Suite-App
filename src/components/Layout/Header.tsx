@@ -41,6 +41,7 @@ const Header: React.FC = () => {
         if (path.startsWith('/equipment')) return { title: 'Equipment', path: 'Operations > Fleet > Equipment' };
         if (path.startsWith('/maintenance')) return { title: 'Maintenance', path: 'Operations > Fleet > Maintenance' };
         if (path.startsWith('/work-orders')) return { title: 'Work Orders', path: 'Operations > Fleet > Work Orders' };
+        if (path.startsWith('/reporting/hypercare')) return { title: 'Hypercare', path: 'Reporting > Hypercare' };
         if (path.startsWith('/reporting')) return { title: 'Reporting', path: 'Reporting > Analytics' };
         if (path.startsWith('/help')) return { title: 'Help & Feedback', path: 'Reporting > Help & Feedback' };
         if (path.startsWith('/admin')) return { title: 'Admin Dashboard', path: 'Administration > Data Console' };

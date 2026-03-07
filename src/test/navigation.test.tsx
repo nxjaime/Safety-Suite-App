@@ -37,6 +37,13 @@ describe('Navigation IA', () => {
     expect(hasAnalytics).toBe(true);
   });
 
+  it('includes Hypercare under Reporting', () => {
+    const reporting = navSections.find(section => section.label === 'Reporting');
+    expect(reporting).toBeTruthy();
+    const hasHypercare = reporting?.items.some(item => item.type === 'link' && item.name === 'Hypercare');
+    expect(hasHypercare).toBe(true);
+  });
+
   it('includes Maintenance and Work Orders under Fleet', () => {
     const operations = navSections.find(section => section.label === 'Operations');
     expect(operations).toBeTruthy();

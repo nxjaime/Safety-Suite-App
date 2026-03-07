@@ -776,3 +776,17 @@ Reminder: Commit locally and push to GitHub once all checks/tests pass.
   - Documents command-center cadence, KPI review inputs, escalation triggers, and hypercare exit criteria.
 - Added sprint artifact:
   - `docs/sprint-20/README.md`
+
+#### Sprint 20 Additional Progress Update (`2026-03-07`)
+- Added in-app Hypercare Command Center slice for launch monitoring:
+  - New orchestration service: `src/services/hypercareService.ts`
+  - New route/page: `src/pages/Hypercare.tsx` at `/reporting/hypercare`
+  - Added Reporting navigation + breadcrumb support for Hypercare access
+- Hypercare snapshot combines:
+  - existing Reporting KPI snapshot
+  - Help & Feedback backlog counts
+  - runbook-aligned escalation trigger evaluation for compliance pressure, high-priority feedback, overdue training, and high-risk drivers
+- Added focused coverage:
+  - `src/test/hypercareService.test.ts`
+  - `src/test/hypercarePage.test.tsx`
+  - `src/test/navigation.test.tsx`

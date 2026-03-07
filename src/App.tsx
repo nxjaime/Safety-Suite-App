@@ -16,6 +16,7 @@ const Equipment = lazy(() => import('./pages/Equipment'));
 const Maintenance = lazy(() => import('./pages/Maintenance'));
 const WorkOrders = lazy(() => import('./pages/WorkOrders'));
 const Reporting = lazy(() => import('./pages/Reporting'));
+const Hypercare = lazy(() => import('./pages/Hypercare'));
 const CSAPredictor = lazy(() => import('./pages/CSAPredictor'));
 const Documents = lazy(() => import('./pages/Documents'));
 const FMCSA = lazy(() => import('./pages/FMCSA'));
@@ -91,6 +92,7 @@ function App() {
             <Route path="maintenance" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Maintenance /></Suspense>} />
             <Route path="work-orders" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><WorkOrders /></Suspense>} />
             <Route path="reporting" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Reporting /></Suspense>} />
+            <Route path="reporting/hypercare" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Hypercare /></Suspense>} />
             <Route path="reporting/csa-predictor" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><CSAPredictor /></Suspense>} />
             <Route path="documents" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Documents /></Suspense>} />
             <Route path="fmcsa" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><FMCSA /></Suspense>} />

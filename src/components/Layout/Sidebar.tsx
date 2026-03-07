@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
+    AlertTriangle,
     BarChart2,
     BookOpen,
     CheckSquare,
@@ -70,6 +71,7 @@ export const navSections: Array<{ label: string; items: LegacyNavItem[] }> = [
         label: 'Reporting',
         items: [
             { type: 'link', name: 'Analytics', path: '/reporting', icon: BarChart2 },
+            { type: 'link', name: 'Hypercare', path: '/reporting/hypercare', icon: AlertTriangle },
             { type: 'link', name: 'CSA Predictor', path: '/reporting/csa-predictor', icon: BarChart2 }
         ]
     }
@@ -117,6 +119,7 @@ const menuGroups: MenuGroup[] = [
         label: 'Reporting',
         items: [
             { name: 'Analytics', path: '/reporting', icon: BarChart2 },
+            { name: 'Hypercare', path: '/reporting/hypercare', icon: AlertTriangle },
             { name: 'CSA Predictor', path: '/reporting/csa-predictor', icon: BarChart2 }
         ]
     }
