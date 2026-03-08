@@ -8,6 +8,7 @@ describe('equipment profile tabs', () => {
             'Inspections',
             'Maintenance',
             'Work Orders',
+            'Documents',
         ]);
     });
 });

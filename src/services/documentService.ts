@@ -14,6 +14,7 @@ export interface AppDocument {
   uploadedAt: string;
   uploadedBy?: string;
   linkedDriverId?: string;
+  linkedEquipmentId?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -23,6 +24,7 @@ interface UploadDocumentInput {
   category: string;
   docType?: string;
   linkedDriverId?: string;
+  linkedEquipmentId?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -72,6 +74,7 @@ const mapDocument = (row: any): AppDocument => {
     uploadedAt: row.uploaded_at,
     uploadedBy: row.uploaded_by,
     linkedDriverId: row.linked_driver_id,
+    linkedEquipmentId: row.linked_equipment_id,
     metadata: row.metadata || {}
   };
 };
@@ -138,6 +141,7 @@ export const documentService = {
           storage_path: storagePath,
           uploaded_by: userData.user?.id || null,
           linked_driver_id: input.linkedDriverId || null,
+          linked_equipment_id: input.linkedEquipmentId || null,
           metadata: input.metadata || {}
         }])
         .select()

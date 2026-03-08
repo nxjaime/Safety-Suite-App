@@ -200,13 +200,13 @@ export interface Driver {
 
 export type EquipmentType = 'truck' | 'trailer' | 'forklift' | 'pallet_jack' | 'sales_vehicle';
 export type OwnershipType = 'owned' | 'leased' | 'rented';
-export type EquipmentStatus = 'active' | 'inactive' | 'out_of_service';
+export type EquipmentStatus = 'active' | 'inactive' | 'out_of_service' | 'maintenance' | 'archived' | 'retired';
 
 export interface Equipment {
     id: string;
     organizationId?: string;
     assetTag: string;
-    type: EquipmentType;
+    type: string;
     ownershipType: OwnershipType;
     status: EquipmentStatus;
     make?: string;
@@ -216,6 +216,19 @@ export interface Equipment {
     usageHours?: number;
     attachments?: string[];
     forkliftAttachments?: string[];
+    nextServiceDate?: string;
+    archivedAt?: string;
+    retiredAt?: string;
+}
+
+export interface EquipmentStatusHistoryEntry {
+    id: string;
+    equipmentId: string;
+    organizationId?: string;
+    previousStatus: string | null;
+    newStatus: string;
+    changedAt: string;
+    notes?: string;
 }
 
 export interface MaintenanceTemplate {

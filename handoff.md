@@ -194,7 +194,7 @@ Closeout note:
 - Any remaining schema-policy refinements or lower-risk cleanup should roll into subsequent platform hardening work rather than blocking Sprint 22.
 
 ### Sprint 22: Fleet Asset System Completion
-Status: Planned
+Status: Complete
 Reminder: Commit & push after checks/tests pass.
 
 User stories:
