@@ -192,4 +192,52 @@ describe('trainingService', () => {
       trainingService.insertAssignment({ module_name: 'Allowed' }, 'coaching')
     ).resolves.toEqual({ id: 'new' });
   });
+
+  it('getOverdueAssignments filters by neq Completed and lt due_date', async () => {
+    vi.spyOn(supa, 'getCurrentOrganization').mockResolvedValue('org-1');
+    const chain: any = {
+      select: vi.fn().mockReturnThis(),
+      neq: vi.fn().mockReturnThis(),
+      lt: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({ data: [{ id: 'od-1' }], error: null }),
+    };
+    vi.spyOn(supa, 'supabase', 'get').mockReturnValue({ from: vi.fn().mockReturnValue(chain) } as any);
+    const result = await trainingService.getOverdueAssignments('2026-03-07');
+    expect(chain.neq).toHaveBeenCalledWith('status', 'Completed');
+    expect(chain.lt).toHaveBeenCalledWith('due_date', '2026-03-07');
+    expect(result).toHaveLength(1);
+  });
+
+  it('getUnreviewedCompletions filters completed with null reviewed_at', async () => {
+    vi.spyOn(supa, 'getCurrentOrganization').mockResolvedValue('org-1');
+    const chain: any = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({ data: [{ id: 'ur-1', status: 'Completed' }], error: null }),
+    };
+    vi.spyOn(supa, 'supabase', 'get').mockReturnValue({ from: vi.fn().mockReturnValue(chain) } as any);
+    const result = await trainingService.getUnreviewedCompletions();
+    expect(chain.eq).toHaveBeenCalledWith('status', 'Completed');
+    expect(chain.is).toHaveBeenCalledWith('reviewed_at', null);
+    expect(result[0].id).toBe('ur-1');
+  });
+
+  it('assignCorrectiveTraining sets trigger_type from riskEventId', async () => {
+    vi.spyOn(supa, 'getCurrentOrganization').mockResolvedValue('org-1');
+    const chain: any = {
+      insert: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: { id: 'ct-1', trigger_type: 'risk_event' }, error: null }),
+    };
+    vi.spyOn(supa, 'supabase', 'get').mockReturnValue({ from: vi.fn().mockReturnValue(chain) } as any);
+    const result = await trainingService.assignCorrectiveTraining('driver-1', 'tmpl-1', {
+      moduleName: 'Defensive Driving',
+      dueDate: '2026-04-01',
+      riskEventId: 'evt-1',
+      role: 'full',
+    });
+    expect(result.trigger_type).toBe('risk_event');
+  });
 });

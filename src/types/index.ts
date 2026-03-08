@@ -49,6 +49,8 @@ export interface TrainingAssignment {
     reviewed_by?: string | null;
     risk_event_id?: string | null;
     coaching_plan_id?: string | null;
+    trigger_type?: 'manual' | 'risk_event' | 'coaching_plan' | 'policy' | null;
+    escalated_at?: string | null;
     organizationId?: string;
     created_at?: string;
     updated_at?: string;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GraduationCap, CheckCircle, AlertCircle, User, Calendar, Eye, ClipboardCheck, CheckSquare } from 'lucide-react';
+import { GraduationCap, CheckCircle, AlertCircle, User, Calendar, Eye, ClipboardCheck, CheckSquare, ShieldAlert } from 'lucide-react';
 import clsx from 'clsx';
 import Modal from '../components/UI/Modal';
 import { driverService } from '../services/driverService';
@@ -44,6 +44,12 @@ const Training: React.FC = () => {
     const [completingId, setCompletingId] = useState<string | null>(null);
     const canManage = capabilities?.canManageTraining ?? canManageTraining(role);
 
+    // Manager review queue state
+    const [overdueQueue, setOverdueQueue] = useState<TrainingAssignment[]>([]);
+    const [unreviewedQueue, setUnreviewedQueue] = useState<TrainingAssignment[]>([]);
+    const [correctiveModalDriver, setCorrectiveModalDriver] = useState<{ driverId: string; driverName: string } | null>(null);
+    const [correctiveForm, setCorrectiveForm] = useState({ templateId: '', dueDate: '', triggerType: 'manual' as TrainingAssignment['trigger_type'] });
+
     useEffect(() => {
         const loadDrivers = async () => {
             try {
@@ -73,6 +79,10 @@ const Training: React.FC = () => {
         };
         loadAssignments();
         loadTemplates();
+        if (canManage) {
+            trainingService.getOverdueAssignments().then(setOverdueQueue).catch(() => {});
+            trainingService.getUnreviewedCompletions().then(setUnreviewedQueue).catch(() => {});
+        }
     }, []);
 
     const handleAssignTraining = async (e: React.FormEvent) => {
@@ -148,6 +158,42 @@ const Training: React.FC = () => {
         } catch (err) {
             console.error('failed to mark reviewed', err);
             toast.error('Failed to mark reviewed');
+        }
+    };
+
+    const handleEscalateOverdue = async () => {
+        try {
+            const count = await trainingService.escalateOverdueAssignments();
+            toast.success(`${count} overdue assignment${count !== 1 ? 's' : ''} escalated`);
+            trainingService.getOverdueAssignments().then(setOverdueQueue).catch(() => {});
+        } catch (err) {
+            console.error('Escalate overdue', err);
+            toast.error('Failed to escalate');
+        }
+    };
+
+    const handleCorrectiveTraining = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!correctiveModalDriver || !correctiveForm.templateId) return;
+        const tmpl = templates.find(t => t.id === correctiveForm.templateId);
+        try {
+            await trainingService.assignCorrectiveTraining(
+                correctiveModalDriver.driverId,
+                correctiveForm.templateId,
+                {
+                    moduleName: tmpl?.name || 'Corrective Training',
+                    dueDate: correctiveForm.dueDate,
+                    triggerType: correctiveForm.triggerType,
+                    role,
+                }
+            );
+            toast.success(`Corrective training assigned to ${correctiveModalDriver.driverName}`);
+            setCorrectiveModalDriver(null);
+            const updated = await trainingService.listAssignments();
+            setAssignments(updated);
+        } catch (err) {
+            console.error('Corrective training', err);
+            toast.error('Failed to assign corrective training');
         }
     };
 
@@ -273,6 +319,11 @@ const Training: React.FC = () => {
                                 <tr key={module.id} className="hover:bg-slate-50">
                                     <td className="px-6 py-4 whitespace-nowrap font-medium text-slate-900">
                                         {module.module_name}
+                                        {module.trigger_type && module.trigger_type !== 'manual' && (
+                                            <span className="ml-2 px-1.5 py-0.5 text-xs rounded bg-amber-100 text-amber-700 font-normal">
+                                                {module.trigger_type === 'risk_event' ? 'corrective' : module.trigger_type}
+                                            </span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                                         {assigneeName}
@@ -322,6 +373,148 @@ const Training: React.FC = () => {
                     </tbody>
                 </table>
             </div>
+
+            {/* Manager Review Queue */}
+            {canManage && (
+                <div className="space-y-4">
+                    {overdueQueue.length > 0 && (
+                        <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+                            <div className="flex items-center space-x-2">
+                                <ShieldAlert className="w-5 h-5 text-amber-600" />
+                                <span className="text-sm font-medium text-amber-800">
+                                    {overdueQueue.length} overdue assignment{overdueQueue.length !== 1 ? 's' : ''} need escalation
+                                </span>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleEscalateOverdue}
+                                className="px-3 py-1.5 text-xs font-medium bg-amber-600 text-white rounded-md hover:bg-amber-700"
+                            >
+                                Escalate All
+                            </button>
+                        </div>
+                    )}
+
+                    {unreviewedQueue.length > 0 && (
+                        <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                                <h3 className="text-base font-bold text-slate-800 flex items-center">
+                                    <ClipboardCheck className="w-4 h-4 mr-2 text-blue-600" />
+                                    Pending Manager Review ({unreviewedQueue.length})
+                                </h3>
+                            </div>
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-slate-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Module</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Completed</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Notes</th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {unreviewedQueue.map(a => (
+                                        <tr key={a.id} className="hover:bg-slate-50">
+                                            <td className="px-6 py-4 text-sm font-medium text-slate-900">{a.module_name}</td>
+                                            <td className="px-6 py-4 text-sm text-slate-500">{a.completed_at ? new Date(a.completed_at).toLocaleDateString() : '—'}</td>
+                                            <td className="px-6 py-4 text-sm text-slate-500 max-w-xs truncate">{a.completion_notes || '—'}</td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openDetail(a)}
+                                                    className="text-sm text-blue-600 hover:text-blue-900 font-medium"
+                                                >
+                                                    Review
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    {/* Corrective Training assign by driver */}
+                    {drivers.length > 0 && templates.length > 0 && (
+                        <div className="bg-white rounded-lg shadow-sm border border-slate-200 px-6 py-4">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-base font-bold text-slate-800">Assign Corrective Training</h3>
+                                <p className="text-xs text-slate-500">Link to a risk event or coaching plan trigger</p>
+                            </div>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                                {drivers.slice(0, 12).map(d => (
+                                    <button
+                                        key={d.id}
+                                        type="button"
+                                        onClick={() => {
+                                            setCorrectiveForm({ templateId: '', dueDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0], triggerType: 'manual' });
+                                            setCorrectiveModalDriver({ driverId: d.id, driverName: d.name });
+                                        }}
+                                        className="px-3 py-1.5 text-xs border border-slate-300 rounded-full text-slate-700 hover:bg-slate-50"
+                                    >
+                                        {d.name}
+                                    </button>
+                                ))}
+                                {drivers.length > 12 && (
+                                    <span className="px-3 py-1.5 text-xs text-slate-400">+{drivers.length - 12} more — use Assign Training button</span>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Corrective Training Modal */}
+            <Modal
+                isOpen={!!correctiveModalDriver}
+                onClose={() => setCorrectiveModalDriver(null)}
+                title={`Assign Corrective Training — ${correctiveModalDriver?.driverName || ''}`}
+            >
+                <form onSubmit={handleCorrectiveTraining} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700">Training Module <span className="text-red-500">*</span></label>
+                        <select
+                            required
+                            className="mt-1 block w-full rounded-md border-slate-300 border p-2 text-sm"
+                            value={correctiveForm.templateId}
+                            onChange={e => setCorrectiveForm(f => ({ ...f, templateId: e.target.value }))}
+                        >
+                            <option value="">Select template</option>
+                            {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700">Due Date</label>
+                        <input
+                            type="date"
+                            className="mt-1 block w-full rounded-md border-slate-300 border p-2 text-sm"
+                            value={correctiveForm.dueDate}
+                            onChange={e => setCorrectiveForm(f => ({ ...f, dueDate: e.target.value }))}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700">Trigger Type</label>
+                        <select
+                            className="mt-1 block w-full rounded-md border-slate-300 border p-2 text-sm"
+                            value={correctiveForm.triggerType || 'manual'}
+                            onChange={e => setCorrectiveForm(f => ({ ...f, triggerType: e.target.value as TrainingAssignment['trigger_type'] }))}
+                        >
+                            <option value="manual">Manual</option>
+                            <option value="risk_event">Risk Event</option>
+                            <option value="coaching_plan">Coaching Plan</option>
+                            <option value="policy">Policy Requirement</option>
+                        </select>
+                    </div>
+                    <div className="flex justify-end space-x-2 pt-2">
+                        <button type="button" onClick={() => setCorrectiveModalDriver(null)} className="px-4 py-2 text-sm border border-slate-300 rounded-md text-slate-700 hover:bg-slate-50">
+                            Cancel
+                        </button>
+                        <button type="submit" className="px-4 py-2 text-sm bg-amber-600 text-white rounded-md hover:bg-amber-700">
+                            Assign Corrective Training
+                        </button>
+                    </div>
+                </form>
+            </Modal>
 
             <Modal
                 isOpen={isModalOpen}

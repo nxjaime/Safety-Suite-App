@@ -141,5 +141,86 @@ export const trainingService = {
     }
     const { error } = await query;
     if (error) throw error;
-  }
+  },
+
+  /** All assignments that are past due and not yet completed */
+  async getOverdueAssignments(todayISO = new Date().toISOString().split('T')[0]): Promise<TrainingAssignment[]> {
+    const orgId = await getCurrentOrganization();
+    let query = supabase
+      .from('training_assignments')
+      .select('*')
+      .neq('status', 'Completed')
+      .lt('due_date', todayISO);
+    if (orgId) query = query.eq('organization_id', orgId);
+    const { data, error } = await query.order('due_date', { ascending: true });
+    if (error) throw error;
+    return (data || []) as TrainingAssignment[];
+  },
+
+  /** Completed assignments awaiting manager review (completed_at set, reviewed_at null) */
+  async getUnreviewedCompletions(): Promise<TrainingAssignment[]> {
+    const orgId = await getCurrentOrganization();
+    let query = supabase
+      .from('training_assignments')
+      .select('*')
+      .eq('status', 'Completed')
+      .is('reviewed_at', null);
+    if (orgId) query = query.eq('organization_id', orgId);
+    const { data, error } = await query.order('completed_at', { ascending: false });
+    if (error) throw error;
+    return (data || []) as TrainingAssignment[];
+  },
+
+  /** Mark overdue assignments as escalated (sets escalated_at); returns count */
+  async escalateOverdueAssignments(
+    todayISO = new Date().toISOString().split('T')[0]
+  ): Promise<number> {
+    const orgId = await getCurrentOrganization();
+    let query = supabase
+      .from('training_assignments')
+      .update({ escalated_at: new Date().toISOString() })
+      .neq('status', 'Completed')
+      .lt('due_date', todayISO)
+      .is('escalated_at', null);
+    if (orgId) query = (query as any).eq('organization_id', orgId);
+    const { data, error } = await (query as any).select('id');
+    if (error) throw error;
+    return (data || []).length;
+  },
+
+  /** Create a corrective training assignment linked to a risk event or coaching plan */
+  async assignCorrectiveTraining(
+    driverId: string,
+    templateId: string,
+    opts: {
+      moduleName: string;
+      dueDate: string;
+      riskEventId?: string;
+      coachingPlanId?: string;
+      triggerType?: TrainingAssignment['trigger_type'];
+      role?: ProfileRole;
+    }
+  ): Promise<TrainingAssignment> {
+    ensureCanMutate(opts.role);
+    const orgId = await getCurrentOrganization();
+    const payload: Record<string, unknown> = {
+      organization_id: orgId,
+      template_id: templateId,
+      assignee_id: driverId,
+      module_name: opts.moduleName,
+      due_date: opts.dueDate,
+      status: 'Active',
+      progress: 0,
+      trigger_type: opts.triggerType || (opts.riskEventId ? 'risk_event' : opts.coachingPlanId ? 'coaching_plan' : 'manual'),
+      risk_event_id: opts.riskEventId || null,
+      coaching_plan_id: opts.coachingPlanId || null,
+    };
+    const { data, error } = await supabase
+      .from('training_assignments')
+      .insert([payload])
+      .select()
+      .single();
+    if (error) throw error;
+    return data as TrainingAssignment;
+  },
 };

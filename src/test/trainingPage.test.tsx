@@ -30,6 +30,10 @@ vi.mock('../services/trainingService', () => ({
         updateTemplate: vi.fn().mockResolvedValue({ id: 't1', name: 'Updated' }),
         updateAssignment: vi.fn().mockResolvedValue({ id: 'a1', status: 'Completed', progress: 100, completed_at: '2024-01-01T00:00:00Z', completed_by: 'test-user-id', completion_notes: 'Done' }),
         listTemplates: vi.fn().mockResolvedValue([]),
+        getOverdueAssignments: vi.fn().mockResolvedValue([]),
+        getUnreviewedCompletions: vi.fn().mockResolvedValue([]),
+        escalateOverdueAssignments: vi.fn().mockResolvedValue(0),
+        assignCorrectiveTraining: vi.fn().mockResolvedValue({ id: 'ct-1' }),
     }
 }));
 

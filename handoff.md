@@ -317,7 +317,7 @@ Exit criteria:
 - Driver profile supports meaningful operational decision-making
 
 ### Sprint 26: Training and Corrective Action System Completion
-Status: Planned
+Status: Complete
 Reminder: Commit & push after checks/tests pass.
 
 User stories:
@@ -334,6 +334,12 @@ Scope:
 - Add manager review queues and escalation behavior for overdue assignments
 - Improve training reporting and driver-level completion history
 - Remove residual shallow flows in `Training`
+
+Progress update (`2026-03-07`):
+- Added `trigger_type` (manual/risk_event/coaching_plan/policy) and `escalated_at` to training_assignments
+- `trainingService` extended with `getOverdueAssignments`, `getUnreviewedCompletions`, `escalateOverdueAssignments`, `assignCorrectiveTraining`
+- `Training.tsx` updated: corrective badge on rows, overdue escalation banner, pending manager review panel, corrective training quick-assign section with trigger type
+- 309 tests pass; zero TS errors
 
 Exit criteria:
 - Training can be assigned, completed, reviewed, and audited end-to-end
