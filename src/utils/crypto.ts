@@ -1,7 +1,14 @@
 /**
- * Simple AES-GCM encryption using Web Crypto API
- * NOTE: In production, the key should be derived from a secure source or user password,
- * and not hardcoded in the frontend bundle. For this implementation phase, we use an env var.
+ * AES-GCM encryption using Web Crypto API.
+ * 
+ * ⚠️ PRODUCTION SECURITY WARNING ⚠️
+ * Client-side crypto using environment variables is inherently exposed to users 
+ * holding the source payload. For true data-at-rest security against compromised clients:
+ * 1. Sensitive data encryption/decryption keys must eventually move to Supabase Edge Functions.
+ * 2. VITE_API_SECRET_KEY serves only as a temporary symmetric key for obfuscation at this phase.
+ * 
+ * For RC1/Launch: This is considered an acceptable "known risk" provided PII is minimized
+ * and strict Role-Level Security (RLS) is maintained as the primary access barrier.
  */
 
 const getKey = async () => {
