@@ -1,40 +1,54 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, MoreHorizontal, User, Mail, Shield, Lock, Database, Trash2, Truck, Building } from 'lucide-react';
+import { Plus, User, Database, Trash2, Truck, Building, RefreshCw, Settings2, UserCheck, UserMinus, UserPlus } from 'lucide-react';
 import Modal from '../components/UI/Modal';
 import clsx from 'clsx';
-
-interface AppUser {
-    id: string;
-    name: string;
-    email: string;
-    role: 'Admin' | 'Manager' | 'Viewer';
-    status: 'Active' | 'Inactive';
-    lastLogin: string;
-}
-
-const initialUsers: AppUser[] = [
-    { id: '1', name: 'Sarah Connor', email: 'sarah.connor@safetyhub.com', role: 'Admin', status: 'Active', lastLogin: '2023-10-24 09:15 AM' },
-    { id: '2', name: 'John Smith', email: 'john.smith@safetyhub.com', role: 'Manager', status: 'Active', lastLogin: '2023-10-23 04:30 PM' },
-    { id: '3', name: 'Emily Chen', email: 'emily.chen@safetyhub.com', role: 'Viewer', status: 'Inactive', lastLogin: '2023-09-15 11:00 AM' },
-];
-
+import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
+import { orgManagementService, type OrgUser } from '../services/orgManagementService';
 import { settingsService } from '../services/settingsService';
 import type { SystemOption } from '../services/settingsService';
 import { carrierService, type CarrierSettings } from '../services/carrierService';
-import toast from 'react-hot-toast';
+import type { ProfileRole } from '../services/authorizationService';
+import { canAccessPlatformAdmin, getRoleCapabilities } from '../services/authorizationService';
+
+const ROLE_LABELS: Record<string, string> = {
+    platform_admin: 'Platform Admin',
+    full: 'Full Access',
+    safety: 'Safety Manager',
+    coaching: 'Coaching Manager',
+    maintenance: 'Maintenance Manager',
+    readonly: 'Read Only',
+};
+
+const ASSIGNABLE_ROLES: ProfileRole[] = [
+    'full',
+    'safety',
+    'coaching',
+    'maintenance',
+    'readonly',
+];
+
+const formatDate = (iso: string | null) => {
+    if (!iso) return 'Never';
+    return new Date(iso).toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+    });
+};
 
 const Settings: React.FC = () => {
+    const { role } = useAuth();
+    const isAdmin = canAccessPlatformAdmin(role) || getRoleCapabilities(role).canManageOrgSettings;
     const [activeTab, setActiveTab] = useState<'users' | 'system' | 'carrier'>('users');
 
-    // User Management State
-    const [users, setUsers] = useState<AppUser[]>(initialUsers);
-    const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-    const [newUser, setNewUser] = useState({
-        name: '',
-        email: '',
-        role: 'Viewer' as 'Admin' | 'Manager' | 'Viewer',
-        password: ''
-    });
+    // User Management State — from Supabase via orgManagementService
+    const [users, setUsers] = useState<OrgUser[]>([]);
+    const [usersLoading, setUsersLoading] = useState(false);
+    const [roleChangeTarget, setRoleChangeTarget] = useState<OrgUser | null>(null);
+    const [selectedNewRole, setSelectedNewRole] = useState<ProfileRole>('readonly');
 
     // System Data State
     const [systemDataType, setSystemDataType] = useState<'vehicle_type' | 'training_module' | 'risk_type'>('vehicle_type');
@@ -51,8 +65,25 @@ const Settings: React.FC = () => {
     });
     const [savingCarrier, setSavingCarrier] = useState(false);
 
+    // Load users from Supabase
+    const loadUsers = async () => {
+        setUsersLoading(true);
+        try {
+            const data = await orgManagementService.listUsers(role);
+            setUsers(data);
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to load users');
+        } finally {
+            setUsersLoading(false);
+        }
+    };
+
     // Fetch Options
     useEffect(() => {
+        if (activeTab === 'users' && isAdmin) {
+            loadUsers();
+        }
         if (activeTab === 'system') {
             fetchOptions();
         }
@@ -85,20 +116,33 @@ const Settings: React.FC = () => {
     };
 
     // User Handlers
-    const handleAddUser = (e: React.FormEvent) => {
-        e.preventDefault();
-        const user: AppUser = {
-            id: (users.length + 1).toString(),
-            name: newUser.name,
-            email: newUser.email,
-            role: newUser.role,
-            status: 'Active',
-            lastLogin: 'Never'
-        };
-        setUsers([...users, user]);
-        setIsUserModalOpen(false);
-        setNewUser({ name: '', email: '', role: 'Viewer', password: '' });
-        toast.success(`User ${user.name} added successfully!`);
+    const handleRoleChange = async () => {
+        if (!roleChangeTarget) return;
+        try {
+            await orgManagementService.updateUserRole(role, roleChangeTarget.id, selectedNewRole, roleChangeTarget.email);
+            toast.success(`Role updated to ${ROLE_LABELS[selectedNewRole]}`);
+            setRoleChangeTarget(null);
+            loadUsers();
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to update role');
+        }
+    };
+
+    const handleToggleStatus = async (user: OrgUser) => {
+        try {
+            if (user.status === 'active') {
+                await orgManagementService.deactivateUser(role, user.id, user.email);
+                toast.success(`${user.fullName || user.email} deactivated`);
+            } else {
+                await orgManagementService.reactivateUser(role, user.id, user.email);
+                toast.success(`${user.fullName || user.email} reactivated`);
+            }
+            loadUsers();
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to update user status');
+        }
     };
 
     // System Data Handlers
@@ -205,13 +249,14 @@ const Settings: React.FC = () => {
             {/* User Management Tab */}
             {activeTab === 'users' && (
                 <div className="space-y-6">
-                    <div className="flex justify-end">
+                    <div className="flex items-center justify-between">
+                        <p className="text-sm text-slate-500">{users.length} user{users.length !== 1 ? 's' : ''} in organization</p>
                         <button
-                            onClick={() => setIsUserModalOpen(true)}
-                            className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 flex items-center shadow-sm"
+                            onClick={loadUsers}
+                            className="px-4 py-2 border border-slate-300 text-slate-700 rounded-md text-sm font-medium hover:bg-slate-50 flex items-center shadow-sm"
                         >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Add User
+                            <RefreshCw className="w-4 h-4 mr-2" />
+                            Refresh
                         </button>
                     </div>
 
@@ -222,48 +267,81 @@ const Settings: React.FC = () => {
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">User</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Role</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Last Login</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Last Sign-in</th>
                                     <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {users.map((user) => (
+                                {usersLoading && (
+                                    <tr>
+                                        <td colSpan={5} className="px-6 py-8 text-center text-sm text-slate-500">Loading users...</td>
+                                    </tr>
+                                )}
+                                {!usersLoading && users.length === 0 && (
+                                    <tr>
+                                        <td colSpan={5} className="px-6 py-8 text-center text-sm text-slate-500">No users found.</td>
+                                    </tr>
+                                )}
+                                {!usersLoading && users.map((user) => (
                                     <tr key={user.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
                                                 <div className="flex-shrink-0 h-10 w-10 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-bold">
-                                                    {user.name.charAt(0)}
+                                                    {(user.fullName || user.email || '?').charAt(0).toUpperCase()}
                                                 </div>
                                                 <div className="ml-4">
-                                                    <div className="text-sm font-medium text-slate-900">{user.name}</div>
+                                                    <div className="text-sm font-medium text-slate-900">{user.fullName || 'Unnamed'}</div>
                                                     <div className="text-sm text-slate-500">{user.email}</div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={clsx(
-                                                "px-2 inline-flex text-xs leading-5 font-semibold rounded-full",
-                                                user.role === 'Admin' ? "bg-purple-100 text-purple-800" :
-                                                    user.role === 'Manager' ? "bg-blue-100 text-blue-800" : "bg-slate-100 text-slate-800"
-                                            )}>
-                                                {user.role}
+                                            <span className="px-2.5 py-0.5 inline-flex text-xs font-semibold rounded-full bg-indigo-50 text-indigo-700">
+                                                {ROLE_LABELS[user.role] || user.role}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={clsx(
-                                                "px-2 inline-flex text-xs leading-5 font-semibold rounded-full",
-                                                user.status === 'Active' ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                                                "px-2.5 py-0.5 inline-flex items-center text-xs font-semibold rounded-full",
+                                                user.status === 'active' ? "bg-green-100 text-green-800" :
+                                                user.status === 'invited' ? "bg-blue-100 text-blue-800" :
+                                                "bg-slate-100 text-slate-600"
                                             )}>
+                                                {user.status === 'active' && <UserCheck className="mr-1 h-3 w-3" />}
+                                                {user.status === 'deactivated' && <UserMinus className="mr-1 h-3 w-3" />}
                                                 {user.status}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                                            {user.lastLogin}
+                                            {formatDate(user.lastSignIn)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <button className="text-slate-400 hover:text-slate-600">
-                                                <MoreHorizontal className="w-5 h-5" />
-                                            </button>
+                                            {isAdmin && (
+                                                <div className="flex justify-end gap-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            setRoleChangeTarget(user);
+                                                            setSelectedNewRole(user.role as ProfileRole);
+                                                        }}
+                                                        className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                                                        title="Change role"
+                                                    >
+                                                        <Settings2 className="h-3.5 w-3.5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleToggleStatus(user)}
+                                                        className={clsx(
+                                                            'rounded-lg border px-3 py-1.5 text-xs font-medium',
+                                                            user.status === 'active'
+                                                                ? 'border-rose-200 text-rose-600 hover:bg-rose-50'
+                                                                : 'border-emerald-200 text-emerald-600 hover:bg-emerald-50',
+                                                        )}
+                                                        title={user.status === 'active' ? 'Deactivate' : 'Reactivate'}
+                                                    >
+                                                        {user.status === 'active' ? <UserMinus className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
+                                                    </button>
+                                                </div>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
@@ -425,86 +503,35 @@ const Settings: React.FC = () => {
                 </div>
             )}
 
-            {/* Add User Modal */}
+            {/* Role Change Modal */}
             <Modal
-                isOpen={isUserModalOpen}
-                onClose={() => setIsUserModalOpen(false)}
-                title="Add New User"
+                isOpen={!!roleChangeTarget}
+                onClose={() => setRoleChangeTarget(null)}
+                title="Change User Role"
             >
-                <form onSubmit={handleAddUser} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
-                        <div className="relative">
-                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-                            <input
-                                type="text"
-                                required
-                                className="pl-9 w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                                placeholder="Jane Doe"
-                                value={newUser.name}
-                                onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                            />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
-                        <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-                            <input
-                                type="email"
-                                required
-                                className="pl-9 w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                                placeholder="jane@company.com"
-                                value={newUser.email}
-                                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                            />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
-                        <div className="relative">
-                            <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                {roleChangeTarget && (
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-600">
+                            Updating role for <span className="font-semibold">{roleChangeTarget.fullName || roleChangeTarget.email}</span>
+                        </p>
+                        <div>
+                            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">New Role</label>
                             <select
-                                className="pl-9 w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                                value={newUser.role}
-                                onChange={(e) => setNewUser({ ...newUser, role: e.target.value as any })}
+                                value={selectedNewRole}
+                                onChange={(e) => setSelectedNewRole(e.target.value as ProfileRole)}
+                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                             >
-                                <option value="Viewer">Viewer (Read Only)</option>
-                                <option value="Manager">Manager (Edit Access)</option>
-                                <option value="Admin">Admin (Full Access)</option>
+                                {ASSIGNABLE_ROLES.map((r) => (
+                                    <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                                ))}
                             </select>
                         </div>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Temporary Password</label>
-                        <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-                            <input
-                                type="password"
-                                required
-                                className="pl-9 w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                                placeholder="••••••••"
-                                value={newUser.password}
-                                onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                            />
+                        <div className="flex justify-end gap-3">
+                            <button onClick={() => setRoleChangeTarget(null)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</button>
+                            <button onClick={handleRoleChange} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">Update Role</button>
                         </div>
                     </div>
-                    <div className="flex justify-end space-x-3 mt-6">
-                        <button
-                            type="button"
-                            onClick={() => setIsUserModalOpen(false)}
-                            className="px-4 py-2 border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700"
-                        >
-                            Create User
-                        </button>
-                    </div>
-                </form>
+                )}
             </Modal>
 
             {/* Add System Data Modal */}

@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { BookOpen, Download, FileText, LifeBuoy, MessageSquare, Trash2 } from 'lucide-react';
+import { ArrowUpRight, BookOpen, Download, FileText, LifeBuoy, MessageSquare, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { feedbackService, type FeedbackEntry } from '../services/feedbackService';
+import { supportTicketService } from '../services/supportTicketService';
+import { useAuth } from '../contexts/AuthContext';
+import { canAccessPlatformAdmin, getRoleCapabilities } from '../services/authorizationService';
 
 const docs = [
   {
@@ -22,8 +25,11 @@ const docs = [
 ];
 
 const HelpFeedback: React.FC = () => {
+  const { role } = useAuth();
+  const canEscalate = canAccessPlatformAdmin(role) || getRoleCapabilities(role).canManageOrgSettings;
   const [entries, setEntries] = useState<FeedbackEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [escalatingId, setEscalatingId] = useState<string | null>(null);
   const [form, setForm] = useState({
     category: 'General',
     priority: 'Medium' as 'Low' | 'Medium' | 'High',
@@ -89,6 +95,26 @@ const HelpFeedback: React.FC = () => {
     } catch (error) {
       console.error(error);
       toast.error('Failed to delete feedback');
+    }
+  };
+
+  const escalateToSupport = async (entry: FeedbackEntry) => {
+    if (!window.confirm(`Escalate "${entry.category}" feedback to a support ticket?`)) return;
+    setEscalatingId(entry.id);
+    try {
+      const ticket = await supportTicketService.escalateFeedback(
+        role,
+        entry.id,
+        entry.message,
+        entry.category,
+        entry.priority,
+      );
+      toast.success(`Escalated to ticket ${ticket.id.slice(0, 8)}`);
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to escalate feedback');
+    } finally {
+      setEscalatingId(null);
     }
   };
 
@@ -172,7 +198,7 @@ const HelpFeedback: React.FC = () => {
                       <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Category</th>
                       <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Priority</th>
                       <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Message</th>
-                      <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Action</th>
+                      <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
@@ -182,9 +208,22 @@ const HelpFeedback: React.FC = () => {
                         <td className="px-3 py-3 text-sm text-slate-700">{entry.priority}</td>
                         <td className="px-3 py-3 text-sm text-slate-700">{entry.message}</td>
                         <td className="px-3 py-3 text-right">
-                          <button onClick={() => deleteFeedback(entry.id)} className="inline-flex items-center text-rose-600 hover:text-rose-700" title="Delete feedback">
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            {canEscalate && (
+                              <button
+                                onClick={() => escalateToSupport(entry)}
+                                disabled={escalatingId === entry.id}
+                                className="inline-flex items-center rounded-md border border-amber-200 px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50"
+                                title="Escalate to support ticket"
+                              >
+                                <ArrowUpRight className="mr-1 h-3 w-3" />
+                                Escalate
+                              </button>
+                            )}
+                            <button onClick={() => deleteFeedback(entry.id)} className="inline-flex items-center text-rose-600 hover:text-rose-700" title="Delete feedback">
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

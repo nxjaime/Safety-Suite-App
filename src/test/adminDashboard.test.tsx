@@ -1,66 +1,96 @@
 // React import no longer needed because JSX runtime handles it automatically
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 
 vi.mock('../contexts/AuthContext', () => ({
-    useAuth: () => ({ role: 'platform_admin' }),
+    useAuth: () => ({ role: 'platform_admin', session: { user: { id: 'admin-1' } } }),
 }));
 
-// mock services before importing component
-vi.mock('../services/adminService', () => {
-    return {
-        adminService: {
-            listRows: vi.fn().mockResolvedValue([]),
-            insertRow: vi.fn().mockResolvedValue({}),
-            deleteRow: vi.fn().mockResolvedValue(undefined),
-        },
-        adminTables: [
-            { name: 'drivers', label: 'Drivers', requiresOrg: true },
-        ],
-    };
-});
+// Mock the services used by the new AdminDashboard
+vi.mock('../services/orgManagementService', () => ({
+    orgManagementService: {
+        listUsers: vi.fn().mockResolvedValue([]),
+        getOrgConfig: vi.fn().mockResolvedValue({ orgName: 'Test Org', timezone: 'UTC', modules: [], require2fa: false }),
+        updateOrgConfig: vi.fn().mockResolvedValue({}),
+        saveOrgConfig: vi.fn().mockResolvedValue({}),
+        updateUserRole: vi.fn().mockResolvedValue({}),
+        deactivateUser: vi.fn().mockResolvedValue({}),
+        reactivateUser: vi.fn().mockResolvedValue({}),
+    },
+}));
 
-vi.mock('../services/dataQualityService', () => {
-    return {
-        dataQualityService: {
-            getSummary: vi.fn().mockResolvedValue({}),
-        },
-    };
-});
+vi.mock('../services/auditLogService', () => ({
+    auditLogService: {
+        listLogs: vi.fn().mockResolvedValue([]),
+        logAction: vi.fn().mockResolvedValue({}),
+    },
+}));
+
+vi.mock('../services/supportTicketService', () => ({
+    supportTicketService: {
+        listTickets: vi.fn().mockResolvedValue([]),
+        createTicket: vi.fn().mockResolvedValue({ id: 'ticket-1' }),
+    },
+}));
+
+vi.mock('../services/retentionPolicyService', () => ({
+    retentionPolicyService: {
+        getRetentionSnapshot: vi.fn().mockResolvedValue({
+            retainableCount: 0,
+            candidates: [],
+        }),
+    },
+}));
+
+vi.mock('../services/authorizationService', () => ({
+    canAccessPlatformAdmin: vi.fn().mockReturnValue(true),
+    getRoleCapabilities: vi.fn().mockReturnValue({
+        canManageOrgSettings: true,
+        canAccessPlatformAdmin: true,
+    }),
+}));
 
 import AdminDashboard from '../pages/AdminDashboard';
 
-
-describe('AdminDashboard', () => {
-    // previous resetAllMocks was clearing the mockResolvedValue implementation and
-    // causing listRows to return undefined, which crashed the component. we don't
-    // need to reset here since the top-level vi.mock already provides stable
-    // implementations for our tiny test suite.
-
-    it('renders and allows adding a field in form', async () => {
+describe('AdminDashboard — Enterprise Controls Hub', () => {
+    it('renders the 5-tab navigation with Users tab active by default', () => {
         render(<AdminDashboard />);
 
-        // table selector is present
-        expect(screen.getByLabelText(/Table/i)).toBeInTheDocument();
+        // The page title
+        expect(screen.getByText(/Enterprise Controls/i)).toBeInTheDocument();
 
-        // the table label can appear in multiple places (select option, heading)
-        // so use findAllByText and just ensure at least one match is present
-        const matches = await screen.findAllByText(/Drivers/i);
-        expect(matches.length).toBeGreaterThan(0);
+        // Scope to the navigation to avoid collisions with subtitle text
+        const nav = screen.getByRole('navigation');
+        const tabButtons = within(nav).getAllByRole('button');
+        const tabLabels = tabButtons.map(btn => btn.textContent?.trim());
 
-        // form label exists
-        expect(screen.getByText(/Insert Record/i)).toBeInTheDocument();
+        expect(tabLabels).toContain('User Management');
+        expect(tabLabels).toContain('Organization');
+        expect(tabLabels).toContain('Audit Log');
+        expect(tabLabels).toContain('Support Tickets');
+        expect(tabLabels).toContain('Data Retention');
+        expect(tabButtons).toHaveLength(5);
+    });
 
-        // initially form has no fields (empty state)
-        expect(screen.queryByPlaceholderText(/field/i)).not.toBeInTheDocument();
+    it('can switch to the Support Tickets tab', () => {
+        render(<AdminDashboard />);
 
-        // stub prompt to supply field name
-        const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue('foo');
-        // add a field via button
-        fireEvent.click(screen.getByText('+ add field'));
-        expect(promptSpy).toHaveBeenCalled();
-        // after adding, an input with value foo should appear
-        expect(screen.getByDisplayValue('foo')).toBeInTheDocument();
-        promptSpy.mockRestore();
+        const nav = screen.getByRole('navigation');
+        const ticketsTab = within(nav).getByText('Support Tickets');
+        fireEvent.click(ticketsTab);
+
+        // Should show a "New Ticket" button on the support tickets tab
+        expect(screen.getByText(/New Ticket/i)).toBeInTheDocument();
+    });
+
+    it('can switch to the Organization tab', () => {
+        render(<AdminDashboard />);
+
+        const nav = screen.getByRole('navigation');
+        const orgTab = within(nav).getByText('Organization');
+        fireEvent.click(orgTab);
+
+        // Company Name field should be present in the org form
+        expect(screen.getByText(/Company Name/i)).toBeInTheDocument();
     });
 });
