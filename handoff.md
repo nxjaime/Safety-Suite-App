@@ -253,7 +253,7 @@ Exit criteria:
 - Repeat service and defect visibility is available in reporting
 
 ### Sprint 24: Inspection and Compliance Operations Completion
-Status: Planned
+Status: Complete
 Reminder: Commit & push after checks/tests pass.
 
 User stories:
@@ -270,6 +270,14 @@ Scope:
 - Finish compliance task workflows tied to documents, credentials, and inspection failures
 - Add OOS blocking/visibility across linked asset workflows
 - Expand compliance reporting and overdue escalation behavior
+
+Progress update (`2026-03-07`):
+- Added `remediation_owner`, `remediation_closed_by`, `remediation_closed_at`, `remediation_evidence` to inspections
+- Added `escalated_at` to tasks for overdue compliance tracking
+- `inspectionService` extended with `updateRemediation`, `closeRemediation`, `getOpenRemediations`, `getOOSInspections`
+- `complianceService` extended with `getOverdueComplianceTasks`, `escalateOverdueComplianceTasks`
+- `Compliance.tsx` updated: OOS badge on inspection rows, Update/Close remediation buttons, closeout modal with sign-off evidence, overdue task escalation banner
+- 304 tests pass; zero TS errors
 
 Exit criteria:
 - Inspection defects can be tracked from discovery through verified remediation

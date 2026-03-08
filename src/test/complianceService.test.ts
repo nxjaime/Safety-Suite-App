@@ -75,7 +75,12 @@ vi.mock('../services/documentService', () => ({
   }
 }));
 
-import { getComplianceSnapshot } from '../services/complianceService';
+vi.mock('../lib/supabase', () => ({
+  supabase: { from: vi.fn() },
+  getCurrentOrganization: vi.fn().mockResolvedValue('org-1'),
+}));
+
+import { getComplianceSnapshot, getOverdueComplianceTasks } from '../services/complianceService';
 
 describe('complianceService', () => {
   it('builds action queue and expiration summary from live data', async () => {
@@ -88,5 +93,12 @@ describe('complianceService', () => {
     expect(snapshot.requiredDocumentGaps.some((gap) => gap.requirement === 'Registration')).toBe(true);
     expect(snapshot.requiredDocumentGaps.some((gap) => gap.driverName === 'Driver Two' && gap.requirement === 'CDL')).toBe(true);
     expect(snapshot.actionQueue.length).toBe(5);
+  });
+
+  it('getOverdueComplianceTasks returns only overdue open compliance tasks', async () => {
+    // taskService mock returns t1 (Compliance/Pending/2026-02-20) and t2 (Compliance/Completed)
+    const overdue = await getOverdueComplianceTasks('2026-03-07');
+    expect(overdue).toHaveLength(1);
+    expect(overdue[0].id).toBe('t1');
   });
 });

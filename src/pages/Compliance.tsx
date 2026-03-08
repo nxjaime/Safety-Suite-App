@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, CheckCircle, Clock, FileText, Plus, User, Calendar, Trash2, AlertTriangle, Truck, ClipboardList } from 'lucide-react';
+import { AlertCircle, CheckCircle, Clock, FileText, Plus, User, Calendar, Trash2, AlertTriangle, Truck, ClipboardList, ShieldAlert } from 'lucide-react';
 import Modal from '../components/UI/Modal';
 import { inspectionService, shouldCreateWorkOrderFromInspection } from '../services/inspectionService';
-import type { Inspection, ViolationItem } from '../services/inspectionService';
+import type { Inspection, ViolationItem, RemediationStatus } from '../services/inspectionService';
 import { driverService } from '../services/driverService';
 import type { Driver } from '../types';
 import { workOrderService } from '../services/workOrderService';
-import { getComplianceSnapshot, type ComplianceSnapshot } from '../services/complianceService';
+import { getComplianceSnapshot, getOverdueComplianceTasks, escalateOverdueComplianceTasks, type ComplianceSnapshot } from '../services/complianceService';
 import toast from 'react-hot-toast';
 
 function CreateWorkOrderFromInspectionButton({ inspection, onCreated }: { inspection: Inspection; onCreated?: () => void }) {
@@ -63,6 +63,18 @@ const Compliance: React.FC = () => {
     const [isInspectionModalOpen, setIsInspectionModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'admin' | 'carrier' | 'vehicle' | 'violations'>('admin');
 
+    // Remediation workflow state
+    const [remediationModalInspection, setRemediationModalInspection] = useState<Inspection | null>(null);
+    const [closeoutModalInspection, setCloseoutModalInspection] = useState<Inspection | null>(null);
+    const [remediationForm, setRemediationForm] = useState<{
+        remediation_status: RemediationStatus;
+        remediation_owner: string;
+        remediation_due_date: string;
+        remediation_notes: string;
+    }>({ remediation_status: 'Open', remediation_owner: '', remediation_due_date: '', remediation_notes: '' });
+    const [closeoutForm, setCloseoutForm] = useState({ closedBy: '', evidenceNotes: '' });
+    const [overdueTaskCount, setOverdueTaskCount] = useState(0);
+
     // Initial Form State
     const initialInspectionState: Partial<Inspection> = {
         date: new Date().toISOString().split('T')[0],
@@ -110,6 +122,7 @@ const Compliance: React.FC = () => {
     useEffect(() => {
         loadInspections();
         loadComplianceSnapshot();
+        getOverdueComplianceTasks().then((tasks) => setOverdueTaskCount(tasks.length)).catch(() => {});
     }, []);
     useEffect(() => {
         if (view === 'inspections') {
@@ -251,6 +264,66 @@ const Compliance: React.FC = () => {
         console.log('New DQ File:', newDQFile);
         setIsModalOpen(false);
         setNewDQFile({ driverName: '', documentType: '', expirationDate: '' });
+    };
+
+    const openRemediationModal = (inspection: Inspection) => {
+        setRemediationForm({
+            remediation_status: (inspection.remediation_status as RemediationStatus) || 'Open',
+            remediation_owner: inspection.remediation_owner || '',
+            remediation_due_date: inspection.remediation_due_date || '',
+            remediation_notes: inspection.remediation_notes || '',
+        });
+        setRemediationModalInspection(inspection);
+    };
+
+    const handleUpdateRemediation = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!remediationModalInspection) return;
+        try {
+            await inspectionService.updateRemediation(remediationModalInspection.id, remediationForm);
+            toast.success('Remediation updated');
+            setRemediationModalInspection(null);
+            loadInspections();
+        } catch (err) {
+            console.error('Update remediation', err);
+            toast.error('Failed to update remediation');
+        }
+    };
+
+    const openCloseoutModal = (inspection: Inspection) => {
+        setCloseoutForm({ closedBy: '', evidenceNotes: '' });
+        setCloseoutModalInspection(inspection);
+    };
+
+    const handleCloseRemediation = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!closeoutModalInspection) return;
+        if (!closeoutForm.closedBy.trim()) { toast.error('Closed by is required'); return; }
+        try {
+            await inspectionService.closeRemediation(
+                closeoutModalInspection.id,
+                closeoutForm.closedBy,
+                closeoutForm.evidenceNotes
+            );
+            toast.success('Remediation closed');
+            setCloseoutModalInspection(null);
+            loadInspections();
+            loadComplianceSnapshot();
+        } catch (err) {
+            console.error('Close remediation', err);
+            toast.error('Failed to close remediation');
+        }
+    };
+
+    const handleEscalateOverdue = async () => {
+        try {
+            const count = await escalateOverdueComplianceTasks();
+            toast.success(`${count} overdue task${count !== 1 ? 's' : ''} escalated`);
+            setOverdueTaskCount(0);
+        } catch (err) {
+            console.error('Escalate', err);
+            toast.error('Failed to escalate tasks');
+        }
     };
 
     const hosViolations = [
@@ -568,7 +641,12 @@ const Compliance: React.FC = () => {
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{item.date}</td>
                                                     <td className="px-6 py-4 whitespace-nowrap font-medium text-slate-900">{item.report_number}</td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{item.driver_name || 'Unknown'}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{item.vehicle_name || 'Unknown'}</td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                                        <span>{item.vehicle_name || 'Unknown'}</span>
+                                                        {item.out_of_service && (
+                                                            <span className="ml-2 px-1.5 py-0.5 text-xs font-bold rounded bg-red-600 text-white">OOS</span>
+                                                        )}
+                                                    </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-center">
                                                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${(item.violations_count || 0) > 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
                                                             }`}>
@@ -596,7 +674,23 @@ const Compliance: React.FC = () => {
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                                                         {(item.remediation_status === 'Open' || item.remediation_status === 'In Progress') && (
-                                                            <CreateWorkOrderFromInspectionButton inspection={item} onCreated={loadInspections} />
+                                                            <>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => openRemediationModal(item)}
+                                                                    className="text-amber-600 hover:text-amber-900 inline-flex items-center"
+                                                                >
+                                                                    Update
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => openCloseoutModal(item)}
+                                                                    className="text-emerald-600 hover:text-emerald-900 inline-flex items-center"
+                                                                >
+                                                                    Close
+                                                                </button>
+                                                                <CreateWorkOrderFromInspectionButton inspection={item} onCreated={loadInspections} />
+                                                            </>
                                                         )}
                                                         <button className="text-blue-600 hover:text-blue-900 inline-flex items-center">
                                                             <FileText className="w-4 h-4 mr-1" /> PDF
@@ -610,6 +704,125 @@ const Compliance: React.FC = () => {
                             </table>
                         )}
                     </div>
+
+                    {/* Overdue compliance task escalation banner */}
+                    {overdueTaskCount > 0 && (
+                        <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+                            <div className="flex items-center space-x-2">
+                                <ShieldAlert className="w-5 h-5 text-amber-600" />
+                                <span className="text-sm font-medium text-amber-800">
+                                    {overdueTaskCount} overdue compliance task{overdueTaskCount !== 1 ? 's' : ''} need escalation
+                                </span>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleEscalateOverdue}
+                                className="px-3 py-1.5 text-xs font-medium bg-amber-600 text-white rounded-md hover:bg-amber-700"
+                            >
+                                Escalate All
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Remediation Update Modal */}
+                    <Modal
+                        isOpen={!!remediationModalInspection}
+                        onClose={() => setRemediationModalInspection(null)}
+                        title={`Update Remediation — ${remediationModalInspection?.report_number || ''}`}
+                    >
+                        <form onSubmit={handleUpdateRemediation} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700">Status</label>
+                                <select
+                                    className="mt-1 block w-full rounded-md border-slate-300 border p-2 text-sm"
+                                    value={remediationForm.remediation_status}
+                                    onChange={e => setRemediationForm(f => ({ ...f, remediation_status: e.target.value as RemediationStatus }))}
+                                >
+                                    <option value="Open">Open</option>
+                                    <option value="In Progress">In Progress</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700">Owner</label>
+                                <input
+                                    type="text"
+                                    className="mt-1 block w-full rounded-md border-slate-300 border p-2 text-sm"
+                                    placeholder="Assigned to"
+                                    value={remediationForm.remediation_owner}
+                                    onChange={e => setRemediationForm(f => ({ ...f, remediation_owner: e.target.value }))}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700">Due Date</label>
+                                <input
+                                    type="date"
+                                    className="mt-1 block w-full rounded-md border-slate-300 border p-2 text-sm"
+                                    value={remediationForm.remediation_due_date}
+                                    onChange={e => setRemediationForm(f => ({ ...f, remediation_due_date: e.target.value }))}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700">Notes</label>
+                                <textarea
+                                    rows={3}
+                                    className="mt-1 block w-full rounded-md border-slate-300 border p-2 text-sm"
+                                    placeholder="Progress notes..."
+                                    value={remediationForm.remediation_notes}
+                                    onChange={e => setRemediationForm(f => ({ ...f, remediation_notes: e.target.value }))}
+                                />
+                            </div>
+                            <div className="flex justify-end space-x-2 pt-2">
+                                <button type="button" onClick={() => setRemediationModalInspection(null)} className="px-4 py-2 text-sm border border-slate-300 rounded-md text-slate-700 hover:bg-slate-50">
+                                    Cancel
+                                </button>
+                                <button type="submit" className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                    Save
+                                </button>
+                            </div>
+                        </form>
+                    </Modal>
+
+                    {/* Remediation Closeout Modal */}
+                    <Modal
+                        isOpen={!!closeoutModalInspection}
+                        onClose={() => setCloseoutModalInspection(null)}
+                        title={`Close Remediation — ${closeoutModalInspection?.report_number || ''}`}
+                    >
+                        <form onSubmit={handleCloseRemediation} className="space-y-4">
+                            <div className="bg-amber-50 border border-amber-200 rounded-md px-4 py-3 text-sm text-amber-800">
+                                Closing this remediation marks the inspection as resolved. Provide sign-off details below.
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700">Closed By <span className="text-red-500">*</span></label>
+                                <input
+                                    type="text"
+                                    required
+                                    className="mt-1 block w-full rounded-md border-slate-300 border p-2 text-sm"
+                                    placeholder="Your name or ID"
+                                    value={closeoutForm.closedBy}
+                                    onChange={e => setCloseoutForm(f => ({ ...f, closedBy: e.target.value }))}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700">Evidence / Notes</label>
+                                <textarea
+                                    rows={4}
+                                    className="mt-1 block w-full rounded-md border-slate-300 border p-2 text-sm"
+                                    placeholder="Describe corrective action taken, attach reference numbers, repair orders, etc."
+                                    value={closeoutForm.evidenceNotes}
+                                    onChange={e => setCloseoutForm(f => ({ ...f, evidenceNotes: e.target.value }))}
+                                />
+                            </div>
+                            <div className="flex justify-end space-x-2 pt-2">
+                                <button type="button" onClick={() => setCloseoutModalInspection(null)} className="px-4 py-2 text-sm border border-slate-300 rounded-md text-slate-700 hover:bg-slate-50">
+                                    Cancel
+                                </button>
+                                <button type="submit" className="px-4 py-2 text-sm bg-emerald-600 text-white rounded-md hover:bg-emerald-700">
+                                    Close Remediation
+                                </button>
+                            </div>
+                        </form>
+                    </Modal>
 
                     {/* Add Inspection Modal */}
                     <Modal

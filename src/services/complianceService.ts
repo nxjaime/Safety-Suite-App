@@ -1,3 +1,4 @@
+import { supabase, getCurrentOrganization } from '../lib/supabase';
 import { driverService } from './driverService';
 import { documentService } from './documentService';
 import { inspectionService } from './inspectionService';
@@ -188,4 +189,30 @@ export async function getComplianceSnapshot(todayISO = new Date().toISOString().
     requiredDocumentGaps,
     actionQueue
   };
+}
+
+/** Return all compliance-type tasks that are overdue and not completed */
+export async function getOverdueComplianceTasks(todayISO = new Date().toISOString().split('T')[0]) {
+  const tasks = await taskService.fetchTasks();
+  return tasks.filter(
+    (t) => t.type === 'Compliance' && t.status !== 'Completed' && t.dueDate && t.dueDate < todayISO
+  );
+}
+
+/** Mark all overdue compliance tasks as escalated (sets escalated_at) */
+export async function escalateOverdueComplianceTasks(
+  todayISO = new Date().toISOString().split('T')[0]
+): Promise<number> {
+  const orgId = await getCurrentOrganization();
+  let query = supabase
+    .from('tasks')
+    .update({ escalated_at: new Date().toISOString() })
+    .eq('type', 'Compliance')
+    .neq('status', 'Completed')
+    .lt('due_date', todayISO)
+    .is('escalated_at', null);
+  if (orgId) query = (query as any).eq('organization_id', orgId);
+  const { data, error } = await (query as any).select('id');
+  if (error) throw error;
+  return (data || []).length;
 }

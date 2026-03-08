@@ -46,7 +46,13 @@ export interface Inspection {
     remediation_status?: 'Open' | 'In Progress' | 'Closed';
     remediation_due_date?: string;
     remediation_notes?: string;
+    remediation_owner?: string;
+    remediation_closed_by?: string;
+    remediation_closed_at?: string;
+    remediation_evidence?: string;
 }
+
+export type RemediationStatus = 'Open' | 'In Progress' | 'Closed';
 
 interface ComplianceTaskPayload {
     title: string;
@@ -224,5 +230,73 @@ export const inspectionService = {
         }
 
         return data;
-    }
+    },
+
+    /** Update remediation status, owner, due date, or notes without closing */
+    async updateRemediation(
+        id: string,
+        updates: {
+            remediation_status?: RemediationStatus;
+            remediation_owner?: string;
+            remediation_due_date?: string;
+            remediation_notes?: string;
+        }
+    ): Promise<Inspection> {
+        const { data, error } = await supabase
+            .from('inspections')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+        if (error) throw error;
+        return data as Inspection;
+    },
+
+    /** Close a remediation with sign-off evidence */
+    async closeRemediation(
+        id: string,
+        closedBy: string,
+        evidenceNotes: string
+    ): Promise<Inspection> {
+        const { data, error } = await supabase
+            .from('inspections')
+            .update({
+                remediation_status: 'Closed',
+                remediation_closed_by: closedBy,
+                remediation_closed_at: new Date().toISOString(),
+                remediation_evidence: evidenceNotes,
+            })
+            .eq('id', id)
+            .select()
+            .single();
+        if (error) throw error;
+        return data as Inspection;
+    },
+
+    /** All inspections with open or in-progress remediation, ordered by due date */
+    async getOpenRemediations(): Promise<Inspection[]> {
+        const orgId = await getCurrentOrganization();
+        let query = supabase
+            .from('inspections')
+            .select('*')
+            .in('remediation_status', ['Open', 'In Progress']);
+        if (orgId) query = query.eq('organization_id', orgId);
+        const { data, error } = await query.order('remediation_due_date', { ascending: true, nullsFirst: false });
+        if (error) throw error;
+        return (data || []) as Inspection[];
+    },
+
+    /** Inspections where out_of_service = true and remediation not yet closed */
+    async getOOSInspections(): Promise<Inspection[]> {
+        const orgId = await getCurrentOrganization();
+        let query = supabase
+            .from('inspections')
+            .select('*')
+            .eq('out_of_service', true)
+            .neq('remediation_status', 'Closed');
+        if (orgId) query = query.eq('organization_id', orgId);
+        const { data, error } = await query.order('date', { ascending: false });
+        if (error) throw error;
+        return (data || []) as Inspection[];
+    },
 };
