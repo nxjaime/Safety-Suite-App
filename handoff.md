@@ -218,7 +218,7 @@ Exit criteria:
 - No hardcoded fleet inventory remains in the primary equipment workflow
 
 ### Sprint 23: Maintenance, PM, Parts, and Work Order Completion
-Status: Planned
+Status: Complete
 Reminder: Commit & push after checks/tests pass.
 
 User stories:
@@ -235,6 +235,17 @@ Scope:
 - Introduce parts/inventory foundations required for service execution
 - Strengthen inspection-to-remediation-to-work-order linkage
 - Add maintenance SLA, downtime, and backlog reporting support
+
+Progress update (`2026-03-07`):
+- Added `maintenance_history` and `parts` tables with org-scoped RLS
+- Added `created_from_template_id`, `repeat_of_work_order_id`, `closeout_notes`, `closed_by` to `work_orders`
+- Added `labor_hours`, `technician` to `work_order_line_items`
+- Implemented `maintenanceService.generatePMDues()` using real equipment type, PM templates, and service history
+- Implemented `maintenanceService.getMaintenanceHistory()` and `recordServiceCompletion()`
+- Extended `workOrderService` with `createWorkOrderFromTemplate`, `createWorkOrderFromInspection`, `closeOut`, `getSLACompliance`, `getRepeatServiceCount`, `getBacklogCount`, `getOverdueCount`, `getMTTRDays`
+- Rewrote `Maintenance.tsx`: equipment selector, live PM due badges, due reminders with "Generate WO", real service history table
+- Rewrote `WorkOrders.tsx`: equipment linkage, SLA metric card, repeat/PM badges, closeout modal
+- All 298 unit tests pass; zero TypeScript errors
 
 Exit criteria:
 - PM due logic works against real asset usage/state

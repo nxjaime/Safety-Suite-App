@@ -1,8 +1,9 @@
 import React from 'react';
-import { ClipboardList, CheckCircle2, Clock, AlertCircle, TrendingDown } from 'lucide-react';
+import { ClipboardList, CheckCircle2, Clock, AlertCircle, TrendingDown, Percent } from 'lucide-react';
 import Modal from '../components/UI/Modal';
 import { workOrderService, canTransitionStatus, getNextStatuses, type WorkOrderStatus } from '../services/workOrderService';
-import type { WorkOrder } from '../types';
+import { equipmentService } from '../services/equipmentService';
+import type { WorkOrder, Equipment } from '../types';
 import toast from 'react-hot-toast';
 
 export const workOrderStatusPipeline = ['Draft', 'Approved', 'In Progress', 'Completed', 'Closed', 'Cancelled'] as const;
@@ -17,13 +18,17 @@ const statusTransitionLabel: Record<string, string> = {
 
 const WorkOrders: React.FC = () => {
   const [workOrders, setWorkOrders] = React.useState<WorkOrder[]>([]);
+  const [equipment, setEquipment] = React.useState<Equipment[]>([]);
   const [isNewModalOpen, setIsNewModalOpen] = React.useState(false);
+  const [closeoutModal, setCloseoutModal] = React.useState<{ orderId: string; title: string } | null>(null);
+  const [closeoutNotes, setCloseoutNotes] = React.useState('');
   const [newOrder, setNewOrder] = React.useState<{
     title: string;
     description?: string;
     priority?: string;
     assignedTo?: string;
     dueDate?: string;
+    equipmentId?: string;
   }>({ title: '' });
   const [transitioningId, setTransitioningId] = React.useState<string | null>(null);
 
@@ -37,16 +42,36 @@ const WorkOrders: React.FC = () => {
     }
   };
 
+  const loadEquipment = async () => {
+    try {
+      const data = await equipmentService.getEquipment({ status: 'active' });
+      setEquipment(data);
+    } catch (e) {
+      console.error('Failed to load equipment for selector', e);
+    }
+  };
+
   React.useEffect(() => {
     loadWorkOrders();
+    loadEquipment();
   }, []);
 
   const backlogCount = workOrderService.getBacklogCount(workOrders);
   const overdueCount = workOrderService.getOverdueCount(workOrders);
   const mttrDays = workOrderService.getMTTRDays(workOrders);
+  const slaCompliance = workOrderService.getSLACompliance(workOrders);
+  const repeatCount = workOrderService.getRepeatServiceCount(workOrders);
 
   const handleStatusTransition = async (order: WorkOrder, nextStatus: WorkOrderStatus) => {
     if (!canTransitionStatus(order.status, nextStatus)) return;
+
+    // For Closed transition, open the closeout modal instead of transitioning immediately
+    if (nextStatus === 'Closed') {
+      setCloseoutModal({ orderId: order.id, title: order.title });
+      setCloseoutNotes('');
+      return;
+    }
+
     setTransitioningId(order.id);
     try {
       const updates: Partial<WorkOrder> = { status: nextStatus };
@@ -63,6 +88,25 @@ const WorkOrders: React.FC = () => {
     } catch (err) {
       console.error('Failed to update status', err);
       toast.error('Failed to update status');
+    } finally {
+      setTransitioningId(null);
+    }
+  };
+
+  const handleCloseOut = async () => {
+    if (!closeoutModal) return;
+    setTransitioningId(closeoutModal.orderId);
+    try {
+      const updated = await workOrderService.closeOut(
+        closeoutModal.orderId,
+        closeoutNotes,
+        'Current User'
+      );
+      setWorkOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
+      toast.success('Work order closed');
+      setCloseoutModal(null);
+    } catch (err) {
+      toast.error('Failed to close work order');
     } finally {
       setTransitioningId(null);
     }
@@ -86,11 +130,11 @@ const WorkOrders: React.FC = () => {
         </div>
       </section>
 
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-5">
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-2">
             <ClipboardList className="w-5 h-5 text-slate-500" />
-            <h3 className="text-lg font-semibold text-slate-900">Backlog</h3>
+            <h3 className="text-base font-semibold text-slate-900">Backlog</h3>
           </div>
           <p className="text-3xl font-semibold text-slate-900 mt-2">{backlogCount}</p>
           <p className="text-sm text-slate-500">Open work orders</p>
@@ -98,7 +142,7 @@ const WorkOrders: React.FC = () => {
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-amber-500" />
-            <h3 className="text-lg font-semibold text-slate-900">Overdue</h3>
+            <h3 className="text-base font-semibold text-slate-900">Overdue</h3>
           </div>
           <p className="text-3xl font-semibold text-slate-900 mt-2">{overdueCount}</p>
           <p className="text-sm text-slate-500">Past due date</p>
@@ -106,12 +150,22 @@ const WorkOrders: React.FC = () => {
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-2">
             <TrendingDown className="w-5 h-5 text-slate-500" />
-            <h3 className="text-lg font-semibold text-slate-900">MTTR</h3>
+            <h3 className="text-base font-semibold text-slate-900">MTTR</h3>
           </div>
           <p className="text-3xl font-semibold text-slate-900 mt-2">
-            {mttrDays != null ? `${mttrDays} days` : '—'}
+            {mttrDays != null ? `${mttrDays}d` : '—'}
           </p>
           <p className="text-sm text-slate-500">Mean time to repair</p>
+        </article>
+        <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <Percent className="w-5 h-5 text-slate-500" />
+            <h3 className="text-base font-semibold text-slate-900">SLA</h3>
+          </div>
+          <p className="text-3xl font-semibold text-slate-900 mt-2">
+            {slaCompliance != null ? `${slaCompliance}%` : '—'}
+          </p>
+          <p className="text-sm text-slate-500">Closed on time · {repeatCount} repeat</p>
         </article>
       </section>
 
@@ -126,17 +180,13 @@ const WorkOrders: React.FC = () => {
       <section className="rounded-2xl shadow-sm border border-slate-200 overflow-hidden bg-white">
         <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
           <h3 className="text-lg font-semibold text-slate-900">Work Orders</h3>
-          <button
-            onClick={() => setIsNewModalOpen(true)}
-            className="px-3 py-1 bg-emerald-600 text-white rounded-md text-sm"
-          >
-            New Order
-          </button>
+          <button onClick={() => setIsNewModalOpen(true)} className="px-3 py-1 bg-emerald-600 text-white rounded-md text-sm">New Order</button>
         </div>
         <table className="min-w-full divide-y divide-slate-200">
           <thead className="bg-slate-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Title</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Asset</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Assignee</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Due</th>
@@ -144,21 +194,33 @@ const WorkOrders: React.FC = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-slate-100">
-            {workOrders.map((order) => {
+            {workOrders.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-8 text-sm text-slate-500 text-center">No work orders yet.</td>
+              </tr>
+            ) : workOrders.map((order) => {
               const allowedNext = getNextStatuses(order.status);
+              const linkedAsset = equipment.find(e => e.id === order.equipmentId);
               return (
                 <tr key={order.id} className="hover:bg-slate-50">
-                  <td className="px-6 py-4 whitespace-nowrap font-medium text-slate-900">{order.title}</td>
+                  <td className="px-6 py-4 whitespace-nowrap font-medium text-slate-900">
+                    {order.title}
+                    {order.repeatOfWorkOrderId && (
+                      <span className="ml-2 px-1.5 py-0.5 text-xs bg-amber-100 text-amber-800 rounded font-normal">repeat</span>
+                    )}
+                    {order.createdFromTemplateId && (
+                      <span className="ml-2 px-1.5 py-0.5 text-xs bg-sky-100 text-sky-800 rounded font-normal">PM</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                    {linkedAsset ? linkedAsset.assetTag : (order.equipmentId ? '…' : '—')}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${
-                        order.status === 'Cancelled'
-                          ? 'bg-slate-200 text-slate-600'
-                          : order.status === 'Completed' || order.status === 'Closed'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-sky-100 text-sky-800'
-                      }`}
-                    >
+                    <span className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${
+                      order.status === 'Cancelled' ? 'bg-slate-200 text-slate-600'
+                        : order.status === 'Completed' || order.status === 'Closed' ? 'bg-green-100 text-green-800'
+                          : 'bg-sky-100 text-sky-800'
+                    }`}>
                       {order.status}
                     </span>
                   </td>
@@ -207,6 +269,7 @@ const WorkOrders: React.FC = () => {
         </article>
       </section>
 
+      {/* New Work Order Modal */}
       {isNewModalOpen && (
         <Modal isOpen={isNewModalOpen} title="New Work Order" onClose={() => setIsNewModalOpen(false)}>
           <form
@@ -221,6 +284,7 @@ const WorkOrders: React.FC = () => {
                   status: 'Draft',
                   assignedTo: newOrder.assignedTo || undefined,
                   dueDate: newOrder.dueDate || undefined,
+                  equipmentId: newOrder.equipmentId || undefined,
                 });
                 setWorkOrders((prev) => [created, ...prev]);
                 setIsNewModalOpen(false);
@@ -234,66 +298,78 @@ const WorkOrders: React.FC = () => {
           >
             <div>
               <label className="block text-sm font-medium text-slate-700">Title</label>
-              <input
-                type="text"
-                required
-                value={newOrder.title}
-                onChange={(e) => setNewOrder((o) => ({ ...o, title: e.target.value }))}
+              <input type="text" required value={newOrder.title} onChange={(e) => setNewOrder((o) => ({ ...o, title: e.target.value }))} className="mt-1 block w-full border border-slate-300 rounded-md p-2" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700">Asset (optional)</label>
+              <select
+                value={newOrder.equipmentId || ''}
+                onChange={(e) => setNewOrder((o) => ({ ...o, equipmentId: e.target.value || undefined }))}
                 className="mt-1 block w-full border border-slate-300 rounded-md p-2"
-              />
+              >
+                <option value="">— No asset linked —</option>
+                {equipment.map(asset => (
+                  <option key={asset.id} value={asset.id}>{asset.assetTag} — {asset.type}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700">Description</label>
-              <textarea
-                value={newOrder.description || ''}
-                onChange={(e) => setNewOrder((o) => ({ ...o, description: e.target.value }))}
-                className="mt-1 block w-full border border-slate-300 rounded-md p-2"
-              />
+              <textarea value={newOrder.description || ''} onChange={(e) => setNewOrder((o) => ({ ...o, description: e.target.value }))} className="mt-1 block w-full border border-slate-300 rounded-md p-2" />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Assignee</label>
-              <input
-                type="text"
-                value={newOrder.assignedTo || ''}
-                onChange={(e) => setNewOrder((o) => ({ ...o, assignedTo: e.target.value }))}
-                placeholder="Name or ID"
-                className="mt-1 block w-full border border-slate-300 rounded-md p-2"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Due date</label>
-              <input
-                type="date"
-                value={newOrder.dueDate || ''}
-                onChange={(e) => setNewOrder((o) => ({ ...o, dueDate: e.target.value }))}
-                className="mt-1 block w-full border border-slate-300 rounded-md p-2"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Assignee</label>
+                <input type="text" value={newOrder.assignedTo || ''} onChange={(e) => setNewOrder((o) => ({ ...o, assignedTo: e.target.value }))} placeholder="Name or ID" className="mt-1 block w-full border border-slate-300 rounded-md p-2" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Due date</label>
+                <input type="date" value={newOrder.dueDate || ''} onChange={(e) => setNewOrder((o) => ({ ...o, dueDate: e.target.value }))} className="mt-1 block w-full border border-slate-300 rounded-md p-2" />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700">Priority</label>
-              <select
-                value={newOrder.priority || 'Medium'}
-                onChange={(e) => setNewOrder((o) => ({ ...o, priority: e.target.value }))}
-                className="mt-1 block w-full border border-slate-300 rounded-md p-2"
-              >
+              <select value={newOrder.priority || 'Medium'} onChange={(e) => setNewOrder((o) => ({ ...o, priority: e.target.value }))} className="mt-1 block w-full border border-slate-300 rounded-md p-2">
                 <option value="Low">Low</option>
                 <option value="Medium">Medium</option>
                 <option value="High">High</option>
               </select>
             </div>
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => setIsNewModalOpen(false)}
-                className="mr-2 px-4 py-2 bg-slate-200 rounded-md"
-              >
-                Cancel
-              </button>
-              <button type="submit" className="px-4 py-2 bg-emerald-600 text-white rounded-md">
-                Create
-              </button>
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setIsNewModalOpen(false)} className="px-4 py-2 bg-slate-200 rounded-md text-sm">Cancel</button>
+              <button type="submit" className="px-4 py-2 bg-emerald-600 text-white rounded-md text-sm">Create</button>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {/* Closeout Modal */}
+      {closeoutModal && (
+        <Modal isOpen={true} title="Close Out Work Order" onClose={() => setCloseoutModal(null)}>
+          <div className="space-y-4 p-4">
+            <p className="text-sm text-slate-600">Closing: <span className="font-medium">{closeoutModal.title}</span></p>
+            <div>
+              <label className="block text-sm font-medium text-slate-700">Closeout Notes</label>
+              <textarea
+                value={closeoutNotes}
+                onChange={(e) => setCloseoutNotes(e.target.value)}
+                rows={4}
+                placeholder="Describe work performed, parts used, and verification steps…"
+                className="mt-1 block w-full border border-slate-300 rounded-md p-2"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setCloseoutModal(null)} className="px-4 py-2 bg-slate-200 rounded-md text-sm">Cancel</button>
+              <button
+                type="button"
+                onClick={handleCloseOut}
+                disabled={!!transitioningId}
+                className="px-4 py-2 bg-emerald-600 text-white rounded-md text-sm disabled:opacity-50"
+              >
+                Confirm Close
+              </button>
+            </div>
+          </div>
         </Modal>
       )}
     </div>

@@ -235,10 +235,44 @@ export interface MaintenanceTemplate {
     id: string;
     organizationId?: string;
     name: string;
-    appliesToType?: EquipmentType;
+    appliesToType?: string;
     intervalDays?: number;
     intervalMiles?: number;
     intervalHours?: number;
+}
+
+export interface MaintenanceHistoryEntry {
+    id: string;
+    equipmentId: string;
+    templateId?: string;
+    organizationId?: string;
+    workOrderId?: string;
+    serviceDate: string;
+    serviceMiles?: number;
+    serviceHours?: number;
+    notes?: string;
+    performedBy?: string;
+    createdAt?: string;
+}
+
+export interface PMDueItem {
+    templateId: string;
+    templateName: string;
+    reason: string;
+    lastServiceDate?: string;
+    lastServiceMiles?: number;
+    lastServiceHours?: number;
+}
+
+export interface Part {
+    id: string;
+    organizationId?: string;
+    sku: string;
+    name: string;
+    category?: string;
+    unitCost: number;
+    quantityOnHand: number;
+    createdAt?: string;
 }
 
 export type WorkOrderStatus = 'Draft' | 'Approved' | 'In Progress' | 'Completed' | 'Closed' | 'Cancelled';
@@ -252,6 +286,8 @@ export interface WorkOrderLineItem {
     quantity: number;
     unitCost: number;
     totalCost: number;
+    laborHours?: number;
+    technician?: string;
 }
 
 export interface WorkOrder {
@@ -259,6 +295,8 @@ export interface WorkOrder {
     organizationId?: string;
     equipmentId?: string;
     inspectionId?: string;
+    createdFromTemplateId?: string;
+    repeatOfWorkOrderId?: string;
     title: string;
     description?: string;
     status: WorkOrderStatus;
@@ -272,5 +310,7 @@ export interface WorkOrder {
     totalPartsCost?: number;
     totalLaborCost?: number;
     totalCost?: number;
+    closeoutNotes?: string;
+    closedBy?: string;
     lineItems?: WorkOrderLineItem[];
 }

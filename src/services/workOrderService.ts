@@ -37,6 +37,8 @@ const mapWorkOrder = (data: any): WorkOrder => ({
     equipmentId: data.equipment_id,
     organizationId: data.organization_id,
     inspectionId: data.inspection_id,
+    createdFromTemplateId: data.created_from_template_id,
+    repeatOfWorkOrderId: data.repeat_of_work_order_id,
     approvedBy: data.approved_by,
     approvedAt: data.approved_at,
     assignedTo: data.assigned_to,
@@ -46,11 +48,15 @@ const mapWorkOrder = (data: any): WorkOrder => ({
     totalPartsCost: data.total_parts_cost,
     totalLaborCost: data.total_labor_cost,
     totalCost: data.total_cost,
+    closeoutNotes: data.closeout_notes,
+    closedBy: data.closed_by,
     lineItems: data.line_items?.map((item: any) => ({
         ...item,
         workOrderId: item.work_order_id,
         unitCost: item.unit_cost,
         totalCost: item.total_cost,
+        laborHours: item.labor_hours,
+        technician: item.technician,
     })) ?? [],
 });
 
@@ -69,7 +75,7 @@ export const workOrderService = {
         return (data || []).map(mapWorkOrder);
     },
 
-    async createWorkOrder(order: Omit<WorkOrder, 'id'>, lineItems: Omit<WorkOrderLineItem, 'id' | 'workOrderId'>[] = []) {
+    async createWorkOrder(order: Omit<WorkOrder, 'id'>, lineItems: Omit<WorkOrderLineItem, 'id' | 'workOrderId'>[] = [], _role?: WorkOrderRole) {
         const orgId = await getCurrentOrganization();
         const { data, error } = await supabase
             .from('work_orders')
@@ -78,6 +84,8 @@ export const workOrderService = {
                     organization_id: order.organizationId || orgId,
                     equipment_id: order.equipmentId || null,
                     inspection_id: order.inspectionId || null,
+                    created_from_template_id: order.createdFromTemplateId || null,
+                    repeat_of_work_order_id: order.repeatOfWorkOrderId || null,
                     title: order.title,
                     description: order.description,
                     status: order.status,
@@ -144,6 +152,87 @@ export const workOrderService = {
 
         if (error) throw error;
         return mapWorkOrder(data);
+    },
+
+    /** Create a work order directly from an inspection defect */
+    async createWorkOrderFromInspection(
+        inspectionId: string,
+        details: { equipmentId?: string; title: string; description?: string; priority?: WorkOrder['priority'] },
+        role?: WorkOrderRole
+    ): Promise<WorkOrder> {
+        return this.createWorkOrder({
+            inspectionId,
+            equipmentId: details.equipmentId,
+            title: details.title,
+            description: details.description || '',
+            priority: details.priority || 'High',
+            status: 'Draft',
+        }, [], role);
+    },
+
+    /** Create a work order from a PM template (records template linkage) */
+    async createWorkOrderFromTemplate(
+        templateId: string,
+        details: { equipmentId?: string; title: string; description?: string; dueDate?: string },
+        _role?: WorkOrderRole
+    ): Promise<WorkOrder> {
+        const orgId = await getCurrentOrganization();
+        const { data, error } = await supabase
+            .from('work_orders')
+            .insert([{
+                organization_id: orgId,
+                equipment_id: details.equipmentId || null,
+                created_from_template_id: templateId,
+                title: details.title,
+                description: details.description || '',
+                status: 'Draft',
+                priority: 'Medium',
+                due_date: details.dueDate || null,
+                total_parts_cost: 0,
+                total_labor_cost: 0,
+                total_cost: 0,
+            }])
+            .select()
+            .single();
+        if (error) throw error;
+        return mapWorkOrder({ ...data, line_items: [] });
+    },
+
+    /** Close out a completed work order with sign-off notes */
+    async closeOut(
+        id: string,
+        closeoutNotes: string,
+        closedBy: string,
+        _role?: WorkOrderRole
+    ): Promise<WorkOrder> {
+        const { data, error } = await supabase
+            .from('work_orders')
+            .update({
+                status: 'Closed',
+                closeout_notes: closeoutNotes,
+                closed_by: closedBy,
+                updated_at: new Date().toISOString(),
+            })
+            .eq('id', id)
+            .select()
+            .single();
+        if (error) throw error;
+        return mapWorkOrder(data);
+    },
+
+    /** SLA compliance: % of closed/completed orders that were finished on or before due date */
+    getSLACompliance(orders: WorkOrder[]): number | null {
+        const withDue = orders.filter(o =>
+            (o.status === 'Completed' || o.status === 'Closed') && o.completedAt && o.dueDate
+        );
+        if (withDue.length === 0) return null;
+        const onTime = withDue.filter(o => o.completedAt! <= o.dueDate!).length;
+        return Math.round((onTime / withDue.length) * 100);
+    },
+
+    /** Repeat service count: work orders that reference a prior work order */
+    getRepeatServiceCount(orders: WorkOrder[]): number {
+        return orders.filter(o => o.repeatOfWorkOrderId).length;
     },
 
     /** Backlog = not Completed/Closed/Cancelled */
