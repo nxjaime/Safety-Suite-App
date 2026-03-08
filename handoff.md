@@ -359,7 +359,7 @@ Completed:
 Exit criteria met: 312 tests pass, zero TypeScript errors
 
 ### Sprint 28: Reporting, Dashboards, and Executive Operations Layer
-Status: Planned
+Status: Complete
 Reminder: Commit & push after checks/tests pass.
 
 User stories:
@@ -377,10 +377,20 @@ Scope:
 - Add backlog prioritization workflow as the remaining Sprint 20/launch follow-up item
 - Improve hypercare-to-steady-state transition reporting
 
-Exit criteria:
-- Dashboard is live-data-driven and operationally useful
-- Reporting supports real management reviews and exports
-- Post-launch backlog prioritization exists as an explicit workflow
+Completed:
+- Rebuilt Dashboard.tsx on live data from reportingService + equipmentService (replaced all static hardcoded data)
+- New dashboardService.ts: DI-based service producing structured KPI cards (fleet completion, avg risk, compliance, training) with good/warn/critical status thresholds, fleet composition breakdown, safety trend data, and recent activity feed
+- KPI cards with dynamic status indicators and color-coded severity
+- Fleet composition donut chart from real equipment data
+- Work order & training completion bar chart from reporting trends
+- Driver risk trend line chart
+- Window selector (30d / 90d / 365d) for all dashboard views
+- New backlogPrioritizationService.ts: consumes reporting snapshot → ranked, scored action items across fleet, safety, compliance, and training domains with weighted scoring, severity classification, and suggested actions
+- Backlog prioritization UI section in Dashboard with domain icons, severity badges, and suggested actions
+- Recent activity feed derived from snapshot anomalies
+- 13 new unit tests (dashboardService: 6, backlogPrioritization: 7)
+
+Exit criteria met: 325 tests pass, zero TypeScript errors
 
 ### Sprint 29: Admin, Customer Operations, and Enterprise Controls
 Status: Planned
@@ -448,4 +458,4 @@ Exit criteria:
 - Sensitive-data handling and operational recovery
 
 ## Immediate Next Step
-Execute Sprint 21 first. The rest of the roadmap assumes tenant isolation, enforceable roles, and trustworthy access boundaries.
+Execute Sprint 29: Admin, Customer Operations, and Enterprise Controls.
