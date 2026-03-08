@@ -279,5 +279,39 @@ export const documentService = {
     }
 
     return { updated, failedIds };
-  }
+  },
+
+  /** Documents expiring within `daysOut` days (have expirationDate in metadata) */
+  getExpiringDocuments(docs: AppDocument[], daysOut = 30, todayISO = new Date().toISOString().split('T')[0]): AppDocument[] {
+    const cutoff = new Date(todayISO);
+    cutoff.setDate(cutoff.getDate() + daysOut);
+    const cutoffISO = cutoff.toISOString().split('T')[0];
+    return docs.filter(doc => {
+      const exp = String((doc.metadata || {}).expirationDate || '');
+      return exp && exp >= todayISO && exp <= cutoffISO;
+    });
+  },
+
+  /** Documents already past their expiration date */
+  getExpiredDocuments(docs: AppDocument[], todayISO = new Date().toISOString().split('T')[0]): AppDocument[] {
+    return docs.filter(doc => {
+      const exp = String((doc.metadata || {}).expirationDate || '');
+      return exp && exp < todayISO;
+    });
+  },
+
+  /** Documents marked as required (metadata.required === true) that are expired or missing */
+  getDocumentDeficiencies(
+    docs: AppDocument[],
+    todayISO = new Date().toISOString().split('T')[0]
+  ): { doc: AppDocument; reason: 'expired' | 'missing_expiry' }[] {
+    const result: { doc: AppDocument; reason: 'expired' | 'missing_expiry' }[] = [];
+    for (const doc of docs) {
+      if ((doc.metadata || {}).required !== true) continue;
+      const exp = String((doc.metadata || {}).expirationDate || '');
+      if (!exp) { result.push({ doc, reason: 'missing_expiry' }); }
+      else if (exp < todayISO) { result.push({ doc, reason: 'expired' }); }
+    }
+    return result;
+  },
 };

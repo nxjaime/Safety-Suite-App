@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Search, BookOpen, ChevronDown, ChevronRight, ExternalLink } from 'lucide-react';
+import { Search, BookOpen, ChevronDown, ChevronRight, ExternalLink, Truck, AlertTriangle } from 'lucide-react';
+import { carrierService, type CarrierHealth } from '../services/carrierService';
+import toast from 'react-hot-toast';
 
 
 interface RegulationPart {
@@ -65,6 +67,34 @@ const FMCSA: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [expandedPartId, setExpandedPartId] = useState<string | null>('395');
 
+    // Carrier health lookup state
+    const [dotInput, setDotInput] = useState('');
+    const [carrierHealth, setCarrierHealth] = useState<CarrierHealth | null>(null);
+    const [carrierLoading, setCarrierLoading] = useState(false);
+    const [carrierError, setCarrierError] = useState<string | null>(null);
+
+    const handleCarrierLookup = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!dotInput.trim()) return;
+        setCarrierLoading(true);
+        setCarrierError(null);
+        setCarrierHealth(null);
+        try {
+            const result = await carrierService.fetchCarrierHealth(dotInput.trim());
+            if (result) {
+                setCarrierHealth(result);
+            } else {
+                setCarrierError('No carrier data found for this DOT number. Data may not be cached yet.');
+            }
+        } catch (err) {
+            console.error('Carrier lookup', err);
+            setCarrierError('Carrier health lookup failed. Verify the DOT number and try again.');
+            toast.error('Carrier lookup failed');
+        } finally {
+            setCarrierLoading(false);
+        }
+    };
+
     const filteredRegulations = regulations.filter(reg =>
         reg.part.toLowerCase().includes(searchTerm.toLowerCase()) ||
         reg.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -86,6 +116,73 @@ const FMCSA: React.FC = () => {
                     <ExternalLink className="w-4 h-4 mr-2" />
                     Visit FMCSA.dot.gov
                 </button>
+            </div>
+
+            {/* Carrier Health Lookup */}
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-5">
+                <div className="flex items-center mb-3">
+                    <Truck className="w-4 h-4 text-slate-600 mr-2" />
+                    <h3 className="text-sm font-semibold text-slate-700">Carrier Health Lookup (DOT Number)</h3>
+                </div>
+                <form onSubmit={handleCarrierLookup} className="flex gap-2 mb-3">
+                    <input
+                        type="text"
+                        placeholder="Enter USDOT number..."
+                        className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={dotInput}
+                        onChange={e => setDotInput(e.target.value)}
+                    />
+                    <button
+                        type="submit"
+                        disabled={carrierLoading}
+                        className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                    >
+                        {carrierLoading ? 'Looking up...' : 'Look Up'}
+                    </button>
+                </form>
+                {carrierError && (
+                    <div className="flex items-center text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                        <AlertTriangle className="w-4 h-4 mr-2 flex-shrink-0" />
+                        {carrierError}
+                    </div>
+                )}
+                {carrierHealth && (
+                    <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="bg-slate-50 rounded-md p-3">
+                            <p className="text-xs text-slate-500">Legal Name</p>
+                            <p className="text-sm font-semibold text-slate-900">{carrierHealth.legalName}</p>
+                        </div>
+                        <div className="bg-slate-50 rounded-md p-3">
+                            <p className="text-xs text-slate-500">Operating Status</p>
+                            <p className={`text-sm font-semibold ${carrierHealth.operatingStatus === 'AUTHORIZED' ? 'text-green-700' : 'text-red-700'}`}>
+                                {carrierHealth.operatingStatus}
+                            </p>
+                        </div>
+                        <div className="bg-slate-50 rounded-md p-3">
+                            <p className="text-xs text-slate-500">Safety Rating</p>
+                            <p className="text-sm font-semibold text-slate-900">{carrierHealth.saferRating || 'N/A'}</p>
+                        </div>
+                        <div className="bg-slate-50 rounded-md p-3">
+                            <p className="text-xs text-slate-500">Power Units / Drivers</p>
+                            <p className="text-sm font-semibold text-slate-900">{carrierHealth.powerUnits} / {carrierHealth.drivers}</p>
+                        </div>
+                        {carrierHealth.csaScores && Object.keys(carrierHealth.csaScores).length > 0 && (
+                            <div className="col-span-2 md:col-span-4 bg-slate-50 rounded-md p-3">
+                                <p className="text-xs text-slate-500 mb-2">CSA Scores</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {Object.entries(carrierHealth.csaScores).map(([key, val]) => val !== undefined && (
+                                        <span key={key} className="px-2 py-1 text-xs rounded bg-white border border-slate-200 text-slate-700">
+                                            {key}: {val}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        <div className="col-span-2 md:col-span-4 text-xs text-slate-400">
+                            Last updated: {new Date(carrierHealth.lastUpdated).toLocaleDateString()} — Data sourced from FMCSA SAFER (cached)
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">

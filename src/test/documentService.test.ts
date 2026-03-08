@@ -174,4 +174,38 @@ describe('documentService', () => {
     expect(result.updated).toBe(1);
     expect(result.failedIds).toEqual(['doc-2']);
   });
+
+  it('getExpiringDocuments returns only docs expiring within window', () => {
+    const docs: any[] = [
+      { id: 'd1', name: 'A', category: 'c', storagePath: 's', uploadedAt: '2026-01-01', metadata: { expirationDate: '2026-03-20' } },
+      { id: 'd2', name: 'B', category: 'c', storagePath: 's', uploadedAt: '2026-01-01', metadata: { expirationDate: '2026-05-01' } },
+      { id: 'd3', name: 'C', category: 'c', storagePath: 's', uploadedAt: '2026-01-01', metadata: { expirationDate: '2025-12-01' } },
+    ];
+    const result = documentService.getExpiringDocuments(docs, 30, '2026-03-07');
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('d1');
+  });
+
+  it('getExpiredDocuments returns only docs past expiration', () => {
+    const docs: any[] = [
+      { id: 'd1', name: 'A', category: 'c', storagePath: 's', uploadedAt: '2026-01-01', metadata: { expirationDate: '2025-12-01' } },
+      { id: 'd2', name: 'B', category: 'c', storagePath: 's', uploadedAt: '2026-01-01', metadata: { expirationDate: '2026-04-01' } },
+    ];
+    const result = documentService.getExpiredDocuments(docs, '2026-03-07');
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('d1');
+  });
+
+  it('getDocumentDeficiencies returns required docs with expired or missing expiry', () => {
+    const docs: any[] = [
+      { id: 'd1', name: 'A', category: 'c', storagePath: 's', uploadedAt: '2026-01-01', metadata: { required: true, expirationDate: '2025-06-01' } },
+      { id: 'd2', name: 'B', category: 'c', storagePath: 's', uploadedAt: '2026-01-01', metadata: { required: true } },
+      { id: 'd3', name: 'C', category: 'c', storagePath: 's', uploadedAt: '2026-01-01', metadata: { required: false, expirationDate: '2025-01-01' } },
+      { id: 'd4', name: 'D', category: 'c', storagePath: 's', uploadedAt: '2026-01-01', metadata: { required: true, expirationDate: '2026-12-01' } },
+    ];
+    const result = documentService.getDocumentDeficiencies(docs, '2026-03-07');
+    expect(result).toHaveLength(2);
+    expect(result.find(r => r.doc.id === 'd1')?.reason).toBe('expired');
+    expect(result.find(r => r.doc.id === 'd2')?.reason).toBe('missing_expiry');
+  });
 });

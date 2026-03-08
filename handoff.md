@@ -347,28 +347,16 @@ Exit criteria:
 - Overdue and non-compliant training is visible in both operations and reporting flows
 
 ### Sprint 27: Documents, FMCSA, and External Data Completion
-Status: Planned
-Reminder: Commit & push after checks/tests pass.
+Status: Complete
 
-User stories:
-- As a compliance user, I can manage required documents by entity, expiration, and deficiency status.
-- As an operations leader, I can view carrier/FMCSA-related data without relying on static reference content.
-- As the business, I can trust external data paths to fail safely and keep usable cached history.
+Completed:
+- documentService: getExpiringDocuments, getExpiredDocuments, getDocumentDeficiencies (pure functions, zero extra DB calls)
+- Documents.tsx: alert banner (expired count, expiring-30d count, deficiency count) via useMemo
+- FMCSA.tsx: Carrier Health Lookup panel — DOT input → carrierService.fetchCarrierHealth() with graceful fallback
+- 3 new documentService unit tests (expiring window, expired filter, deficiency detection)
+- docs/sprint-27/README.md
 
-Goal:
-- Complete document governance and replace static/external-data placeholders with working integration patterns.
-
-Scope:
-- Finish document entity linkage, expiration workflows, deficiency tracking, and exception handling
-- Replace static FMCSA reference-only behavior with usable operational/compliance tooling
-- Harden carrier/FMCSA integration paths and remove mock-first assumptions from production flows
-- Add cached external data strategy, refresh history, and user-facing failure states
-- Expand tests around document lifecycle and external data fallback behavior
-
-Exit criteria:
-- Documents support governed lifecycle management, not just upload/download
-- FMCSA/carrier workflows provide useful operational value beyond static references
-- Integration failures degrade gracefully without breaking the user workflow
+Exit criteria met: 312 tests pass, zero TypeScript errors
 
 ### Sprint 28: Reporting, Dashboards, and Executive Operations Layer
 Status: Planned

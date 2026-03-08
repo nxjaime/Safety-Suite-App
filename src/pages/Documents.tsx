@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Download, FileText, Filter, Search, Trash2, Upload } from 'lucide-react';
+import { Download, FileText, Filter, Search, Trash2, Upload, AlertTriangle } from 'lucide-react';
 import Modal from '../components/UI/Modal';
 import toast from 'react-hot-toast';
 import { documentService, type AppDocument } from '../services/documentService';
@@ -58,6 +58,10 @@ const Documents: React.FC = () => {
         const values = new Set(documents.map((doc) => doc.category));
         return ['All', ...Array.from(values)];
     }, [documents]);
+
+    const expiringDocs = useMemo(() => documentService.getExpiringDocuments(documents, 30), [documents]);
+    const expiredDocs = useMemo(() => documentService.getExpiredDocuments(documents), [documents]);
+    const deficiencies = useMemo(() => documentService.getDocumentDeficiencies(documents), [documents]);
 
     const filteredDocuments = useMemo(() => {
         return documents.filter((doc) => {
@@ -231,6 +235,32 @@ const Documents: React.FC = () => {
 
     return (
         <div className="space-y-6">
+            {(expiredDocs.length > 0 || expiringDocs.length > 0 || deficiencies.length > 0) && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 flex flex-wrap items-center gap-4">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                    <div className="flex flex-wrap gap-4 text-sm">
+                        {expiredDocs.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => setSelectedCategory('All')}
+                                className="font-medium text-red-700 hover:underline"
+                            >
+                                {expiredDocs.length} expired document{expiredDocs.length !== 1 ? 's' : ''}
+                            </button>
+                        )}
+                        {expiringDocs.length > 0 && (
+                            <span className="text-amber-800">
+                                {expiringDocs.length} expiring within 30 days
+                            </span>
+                        )}
+                        {deficiencies.length > 0 && (
+                            <span className="text-amber-800">
+                                {deficiencies.length} required document deficiencie{deficiencies.length !== 1 ? 's' : 'y'}
+                            </span>
+                        )}
+                    </div>
+                </div>
+            )}
             <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
