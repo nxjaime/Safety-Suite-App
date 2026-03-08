@@ -1,6 +1,6 @@
 # Sprint 21: Tenant Isolation and Production Access Model
 
-Status: In progress
+Status: Complete
 
 ## Objective
 - Replace the legacy `admin/manager/viewer` convention with a canonical role and capability model that can support the remaining roadmap safely.
@@ -18,6 +18,19 @@ Status: In progress
   - `rolloutCohortService`
   - `hypercareReviewService`
 - Updated Reporting and Hypercare UI surfaces to use capability-based permissions
+- Hardened training, coaching, and safety mutation flows:
+  - training assignment/template changes now require training capability
+  - coaching plan create/update/delete now require coaching capability
+  - risk event logging and manual risk refresh now require safety capability
+- Tightened explicit org scoping for driver-facing reads that previously relied on implied RLS behavior:
+  - driver lists
+  - detailed driver queries
+  - driver-by-id fetches
+  - driver risk events
+  - driver documents
+- Tightened explicit org scoping for document mutation paths:
+  - document archive
+  - bulk document updates
 - Added regression coverage for:
   - role normalization and capability mapping
   - platform-admin-only admin access
@@ -27,16 +40,18 @@ Status: In progress
   - rollout cohort permissions
   - hypercare review permissions
   - reporting page readonly vs safety behavior
+  - training readonly vs coaching behavior
+  - safety readonly vs safety behavior
+  - driver service org scoping and safety/coaching mutation boundaries
 
 ## Verification
 - `npm run test:unit`
 - `npm run build`
 - `git diff --check`
 
-## Remaining Sprint 21 focus
-- Continue replacing residual legacy role assumptions in lower-risk areas and static copy
-- Harden role-aware behavior deeper in driver safety, coaching, and training workflows where mutation boundaries are still broad
-- Align database policy and org-scoping review with the canonical capability model
+## Completion Notes
+- Sprint 21 is complete at the application-layer access-control scope defined for this phase.
+- Remaining schema/policy refinements should be handled as follow-on hardening inside later platform sprints rather than keeping Sprint 21 open indefinitely.
 
 ## Notes
 - Legacy role names remain accepted through normalization for compatibility, but new enforcement is now based on canonical roles/capabilities.

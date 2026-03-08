@@ -80,15 +80,16 @@ const ensureCanManageSafety = (role?: ProfileRole) => {
 
 export const driverService = {
     async fetchDrivers(): Promise<Driver[]> {
-        // Enforce org isolation logic if not already applied by RLS (but RLS handles it now)
-        // Ideally we should also filter by org_id in query for performance, but let's rely on RLS for now 
-        // or add .eq('organization_id', orgId) if available.
-        // Since this method doesn't call _getOrgId, we rely on RLS.
-
-        const { data, error } = await supabase
+        const orgId = await this._getOrgId();
+        let query = supabase
             .from('drivers')
-            .select('*')
-            .order('name');
+            .select('*');
+
+        if (orgId) {
+            query = query.eq('organization_id', orgId);
+        }
+
+        const { data, error } = await query.order('name');
 
         if (error) throw error;
 
@@ -97,14 +98,20 @@ export const driverService = {
     },
 
     async fetchDriversDetailed(): Promise<Driver[]> {
-        const { data, error } = await supabase
+        const orgId = await this._getOrgId();
+        let query = supabase
             .from('drivers')
             .select(`
                 *,
                 risk_events (*),
                 coaching_plans (*)
-            `)
-            .order('name');
+            `);
+
+        if (orgId) {
+            query = query.eq('organization_id', orgId);
+        }
+
+        const { data, error } = await query.order('name');
 
         if (error) throw error;
         const decrypted = await Promise.all(data.map(d => processDriverFromStorage(d)));
@@ -113,24 +120,35 @@ export const driverService = {
 
     async getDriverById(id: string): Promise<Driver | null> {
         try {
-            const { data, error } = await supabase
+            const orgId = await this._getOrgId();
+            let query = supabase
                 .from('drivers')
                 .select(`
                     *,
                     risk_events (*),
                     coaching_plans (*)
                 `)
-                .eq('id', id)
-                .single();
+                .eq('id', id);
+
+            if (orgId) {
+                query = query.eq('organization_id', orgId);
+            }
+
+            const { data, error } = await query.single();
 
             if (error) {
                 console.error('Error fetching driver by ID:', error);
                 // Try without the joins if there's an error
-                const { data: simpleData, error: simpleError } = await supabase
+                let simpleQuery = supabase
                     .from('drivers')
                     .select('*')
-                    .eq('id', id)
-                    .single();
+                    .eq('id', id);
+
+                if (orgId) {
+                    simpleQuery = simpleQuery.eq('organization_id', orgId);
+                }
+
+                const { data: simpleData, error: simpleError } = await simpleQuery.single();
 
                 if (simpleError) {
                     console.error('Error fetching driver (simple):', simpleError);
@@ -352,11 +370,18 @@ export const driverService = {
     },
 
     async getDriverRiskEvents(driverId: string, days = 90) {
+        const orgId = await this._getOrgId();
         const cutoff = new Date(Date.now() - (days * 24 * 60 * 60 * 1000)).toISOString();
-        const { data, error } = await supabase
+        let query = supabase
             .from('risk_events')
             .select('*')
-            .eq('driver_id', driverId)
+            .eq('driver_id', driverId);
+
+        if (orgId) {
+            query = query.eq('organization_id', orgId);
+        }
+
+        const { data, error } = await query
             .gte('occurred_at', cutoff)
             .order('occurred_at', { ascending: false });
 
@@ -456,11 +481,17 @@ export const driverService = {
     },
 
     async getDriverDocuments(driverId: string): Promise<any[]> {
-        const { data, error } = await supabase
+        const orgId = await this._getOrgId();
+        let query = supabase
             .from('driver_documents')
             .select('*')
-            .eq('driver_id', driverId)
-            .order('created_at', { ascending: false });
+            .eq('driver_id', driverId);
+
+        if (orgId) {
+            query = query.eq('organization_id', orgId);
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false });
 
         if (error) throw error;
         return (data || []).map((d: any) => ({

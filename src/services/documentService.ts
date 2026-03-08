@@ -168,11 +168,18 @@ export const documentService = {
   },
 
   async deleteDocument(document: AppDocument): Promise<void> {
+    const orgId = await getCurrentOrganization();
     const { error: dbError } = await withRetry(async () => {
-      return supabase
+      let query = supabase
         .from('documents')
         .update({ status: 'archived' })
         .eq('id', document.id);
+
+      if (orgId) {
+        query = query.eq('organization_id', orgId);
+      }
+
+      return query;
     });
 
     if (dbError) {
@@ -232,6 +239,7 @@ export const documentService = {
   },
 
   async bulkUpdateDocuments(input: BulkUpdateInput): Promise<BulkUpdateResult> {
+    const orgId = await getCurrentOrganization();
     const updatePayload: Record<string, unknown> = {};
     if (input.category !== undefined) updatePayload.category = input.category;
     if (input.docType !== undefined) updatePayload.doc_type = input.docType;
@@ -246,10 +254,16 @@ export const documentService = {
 
     for (const documentId of input.documentIds) {
       const { error } = await withRetry(async () => {
-        return supabase
+        let query = supabase
           .from('documents')
           .update(updatePayload)
           .eq('id', documentId);
+
+        if (orgId) {
+          query = query.eq('organization_id', orgId);
+        }
+
+        return query;
       });
 
       if (error) {

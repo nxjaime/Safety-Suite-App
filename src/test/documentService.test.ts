@@ -91,6 +91,36 @@ describe('documentService', () => {
     expect(result.failedIds).toEqual(['doc-2']);
   });
 
+  it('scopes document archive writes by organization', async () => {
+    vi.spyOn(supa, 'getCurrentOrganization').mockResolvedValue('org-1');
+    const eqSpy = vi.fn().mockReturnThis();
+    const updateSpy = vi.fn().mockReturnThis();
+    const removeSpy = vi.fn().mockResolvedValue({ error: null });
+
+    vi.spyOn(supa, 'supabase', 'get').mockReturnValue({
+      from: vi.fn((table: string) => {
+        if (table === 'documents') {
+          return { update: updateSpy, eq: eqSpy };
+        }
+        return {};
+      }),
+      storage: {
+        from: vi.fn().mockReturnValue({ remove: removeSpy })
+      }
+    } as any);
+
+    await documentService.deleteDocument({
+      id: 'doc-1',
+      name: 'Doc 1',
+      category: 'Compliance',
+      storagePath: 'org-1/doc-1.pdf',
+      uploadedAt: '2026-01-01T00:00:00.000Z'
+    });
+
+    expect(eqSpy).toHaveBeenCalledWith('id', 'doc-1');
+    expect(eqSpy).toHaveBeenCalledWith('organization_id', 'org-1');
+  });
+
   it('uploadDocumentsBulk returns uploaded docs and failed file names', async () => {
     const files = [
       new File(['a'], 'first.pdf', { type: 'application/pdf' }),
@@ -119,11 +149,15 @@ describe('documentService', () => {
   });
 
   it('bulkUpdateDocuments updates selected docs and tracks failures', async () => {
+    vi.spyOn(supa, 'getCurrentOrganization').mockResolvedValue('org-1');
     const updateSpy = vi.fn().mockReturnThis();
-    const eqSpy = vi.fn()
-      .mockResolvedValueOnce({ error: null })
-      .mockResolvedValueOnce({ error: new Error('boom') });
+    const eqSpy = vi.fn();
     const chain: any = { update: updateSpy, eq: eqSpy };
+    eqSpy
+      .mockReturnValueOnce(chain)
+      .mockResolvedValueOnce({ error: null })
+      .mockReturnValueOnce(chain)
+      .mockResolvedValueOnce({ error: new Error('boom') });
 
     vi.spyOn(supa, 'supabase', 'get').mockReturnValue({
       from: vi.fn().mockReturnValue(chain)
@@ -136,6 +170,7 @@ describe('documentService', () => {
     });
 
     expect(updateSpy).toHaveBeenCalledTimes(2);
+    expect(eqSpy).toHaveBeenCalledWith('organization_id', 'org-1');
     expect(result.updated).toBe(1);
     expect(result.failedIds).toEqual(['doc-2']);
   });

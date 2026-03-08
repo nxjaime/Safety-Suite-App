@@ -17,6 +17,72 @@ describe('driverService', () => {
     });
   });
 
+  describe('organization scoping', () => {
+    it('applies organization filter when fetching drivers', async () => {
+      vi.spyOn(driverService as any, '_getOrgId').mockResolvedValue('org-xyz');
+      const eqSpy = vi.fn().mockReturnThis();
+      const orderSpy = vi.fn().mockReturnValue({ data: [], error: null });
+      const selectSpy = vi.fn().mockReturnThis();
+      (supa.supabase as any).from = vi.fn().mockReturnValue({ select: selectSpy, eq: eqSpy, order: orderSpy });
+
+      await driverService.fetchDrivers();
+
+      expect(eqSpy).toHaveBeenCalledWith('organization_id', 'org-xyz');
+    });
+
+    it('applies organization filter when fetching detailed drivers', async () => {
+      vi.spyOn(driverService as any, '_getOrgId').mockResolvedValue('org-xyz');
+      const eqSpy = vi.fn().mockReturnThis();
+      const orderSpy = vi.fn().mockReturnValue({ data: [], error: null });
+      const selectSpy = vi.fn().mockReturnThis();
+      (supa.supabase as any).from = vi.fn().mockReturnValue({ select: selectSpy, eq: eqSpy, order: orderSpy });
+
+      await driverService.fetchDriversDetailed();
+
+      expect(eqSpy).toHaveBeenCalledWith('organization_id', 'org-xyz');
+    });
+
+    it('applies organization filter when fetching a driver by id', async () => {
+      vi.spyOn(driverService as any, '_getOrgId').mockResolvedValue('org-xyz');
+      const eqSpy = vi.fn().mockReturnThis();
+      const singleSpy = vi.fn().mockReturnValue({ data: null, error: { message: 'not found' } });
+      const selectSpy = vi.fn().mockReturnThis();
+      (supa.supabase as any).from = vi.fn().mockReturnValue({ select: selectSpy, eq: eqSpy, single: singleSpy });
+
+      await driverService.getDriverById('driver-1');
+
+      expect(eqSpy).toHaveBeenCalledWith('organization_id', 'org-xyz');
+      expect(eqSpy).toHaveBeenCalledWith('id', 'driver-1');
+    });
+
+    it('applies organization filter when fetching driver risk events', async () => {
+      vi.spyOn(driverService as any, '_getOrgId').mockResolvedValue('org-xyz');
+      const eqSpy = vi.fn().mockReturnThis();
+      const gteSpy = vi.fn().mockReturnThis();
+      const orderSpy = vi.fn().mockReturnValue({ data: [], error: null });
+      const selectSpy = vi.fn().mockReturnThis();
+      (supa.supabase as any).from = vi.fn().mockReturnValue({ select: selectSpy, eq: eqSpy, gte: gteSpy, order: orderSpy });
+
+      await driverService.getDriverRiskEvents('driver-1', 90);
+
+      expect(eqSpy).toHaveBeenCalledWith('organization_id', 'org-xyz');
+      expect(eqSpy).toHaveBeenCalledWith('driver_id', 'driver-1');
+    });
+
+    it('applies organization filter when fetching driver documents', async () => {
+      vi.spyOn(driverService as any, '_getOrgId').mockResolvedValue('org-xyz');
+      const eqSpy = vi.fn().mockReturnThis();
+      const orderSpy = vi.fn().mockReturnValue({ data: [], error: null });
+      const selectSpy = vi.fn().mockReturnThis();
+      (supa.supabase as any).from = vi.fn().mockReturnValue({ select: selectSpy, eq: eqSpy, order: orderSpy });
+
+      await driverService.getDriverDocuments('driver-1');
+
+      expect(eqSpy).toHaveBeenCalledWith('organization_id', 'org-xyz');
+      expect(eqSpy).toHaveBeenCalledWith('driver_id', 'driver-1');
+    });
+  });
+
   describe('updateCoachingPlan', () => {
     it('blocks readonly users from updating coaching plans', async () => {
       await expect(

@@ -137,7 +137,7 @@ Principle for this rebaseline:
 - “Looks complete” is not enough; workflows must persist correctly, enforce permissions correctly, and be operationally supportable.
 
 ### Sprint 21: Tenant Isolation and Production Access Model
-Status: In progress
+Status: Complete
 Reminder: Commit & push after checks/tests pass.
 
 User stories:
@@ -171,16 +171,27 @@ Progress update (`2026-03-07`):
   - rollout cohorts
   - hypercare daily reviews
   - reporting page preference controls
+- Extended Sprint 21 hardening into driver safety/training workflows:
+  - training mutations now require training capability
+  - coaching plan mutations now require coaching capability
+  - safety event logging and manual risk refresh now require safety capability
+- Added explicit org-scoped filters for driver reads that previously relied on implied RLS behavior:
+  - driver lists
+  - driver detail queries
+  - driver risk events
+  - driver documents
+- Added explicit org-scoped filters for document mutation paths:
+  - archive/write-side updates
+  - bulk metadata updates
 - Added regression tests for role normalization, navigation visibility, platform-admin enforcement, and readonly-vs-managerial action boundaries
 - Full verification passed on this slice:
   - `npm run test:unit`
   - `npm run build`
   - `git diff --check`
 
-Remaining Sprint 21 work:
-- Continue removing residual legacy role assumptions from lower-risk UI/tests/static copy
-- Review deeper mutation boundaries in driver safety, coaching, and training flows
-- Complete org-scoping/database-policy reconciliation against the canonical role model
+Closeout note:
+- Sprint 21 is closed at the application-layer access-control checkpoint.
+- Any remaining schema-policy refinements or lower-risk cleanup should roll into subsequent platform hardening work rather than blocking Sprint 22.
 
 ### Sprint 22: Fleet Asset System Completion
 Status: Planned
