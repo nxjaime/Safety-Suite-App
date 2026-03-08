@@ -137,3 +137,133 @@ export const fetchInterventionQueue = async (limit = 8): Promise<InterventionQue
 
   return queue.slice(0, limit);
 };
+
+export type InterventionActionType = 'accepted' | 'dismissed' | 'converted_to_coaching';
+
+export interface InterventionAction {
+  id: string;
+  organizationId?: string;
+  driverId: string;
+  action: InterventionActionType;
+  reason?: string;
+  actor?: string;
+  coachingPlanId?: string;
+  createdAt: string;
+}
+
+/** Record a disposition (accept/dismiss/convert) for a driver in the intervention queue */
+export async function recordInterventionAction(
+  driverId: string,
+  action: InterventionActionType,
+  opts: { reason?: string; actor?: string; coachingPlanId?: string } = {}
+): Promise<InterventionAction> {
+  const orgId = await getCurrentOrganization();
+  const { data, error } = await supabase
+    .from('intervention_actions')
+    .insert([{
+      organization_id: orgId,
+      driver_id: driverId,
+      action,
+      reason: opts.reason || null,
+      actor: opts.actor || null,
+      coaching_plan_id: opts.coachingPlanId || null,
+    }])
+    .select()
+    .single();
+  if (error) throw error;
+  return {
+    id: data.id,
+    organizationId: data.organization_id,
+    driverId: data.driver_id,
+    action: data.action,
+    reason: data.reason,
+    actor: data.actor,
+    coachingPlanId: data.coaching_plan_id,
+    createdAt: data.created_at,
+  };
+}
+
+/** Fetch recent intervention actions for a driver (or all drivers in org if no driverId) */
+export async function getInterventionActions(driverId?: string): Promise<InterventionAction[]> {
+  const orgId = await getCurrentOrganization();
+  let query = supabase
+    .from('intervention_actions')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (orgId) query = query.eq('organization_id', orgId);
+  if (driverId) query = query.eq('driver_id', driverId);
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data || []).map((d: any) => ({
+    id: d.id,
+    organizationId: d.organization_id,
+    driverId: d.driver_id,
+    action: d.action,
+    reason: d.reason,
+    actor: d.actor,
+    coachingPlanId: d.coaching_plan_id,
+    createdAt: d.created_at,
+  }));
+}
+
+/** Create a coaching plan for a driver and record the intervention action */
+export async function createCoachingPlanFromIntervention(
+  driverId: string,
+  details: { type: string; durationWeeks: number; startDate: string; actor?: string }
+): Promise<{ coachingPlanId: string; action: InterventionAction }> {
+  const orgId = await getCurrentOrganization();
+
+  // Create coaching plan
+  const checkIns = Array.from({ length: details.durationWeeks }, (_, i) => {
+    const d = new Date(details.startDate);
+    d.setDate(d.getDate() + i * 7);
+    return {
+      week: i + 1,
+      assigned_to: details.actor || 'Safety Manager',
+      status: 'Pending',
+      notes: '',
+      date: d.toISOString().split('T')[0],
+    };
+  });
+
+  const { data: plan, error: planError } = await supabase
+    .from('coaching_plans')
+    .insert([{
+      organization_id: orgId,
+      driver_id: driverId,
+      type: details.type,
+      start_date: details.startDate,
+      duration_weeks: details.durationWeeks,
+      status: 'Active',
+      weekly_check_ins: checkIns,
+    }])
+    .select()
+    .single();
+  if (planError) throw planError;
+
+  const action = await recordInterventionAction(driverId, 'converted_to_coaching', {
+    actor: details.actor,
+    coachingPlanId: plan.id,
+  });
+
+  return { coachingPlanId: plan.id, action };
+}
+
+/** Close a coaching plan with outcome notes */
+export async function closeCoachingPlan(
+  planId: string,
+  outcome: 'Completed' | 'Terminated',
+  outcomeNotes: string,
+  closedBy: string
+): Promise<void> {
+  const { error } = await supabase
+    .from('coaching_plans')
+    .update({
+      status: outcome,
+      outcome_notes: outcomeNotes,
+      closed_by: closedBy,
+      closed_at: new Date().toISOString(),
+    })
+    .eq('id', planId);
+  if (error) throw error;
+}

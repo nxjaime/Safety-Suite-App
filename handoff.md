@@ -285,7 +285,7 @@ Exit criteria:
 - Unsafe asset states are visible and enforceable in downstream workflows
 
 ### Sprint 25: Driver Safety, Coaching, and Intervention Completion
-Status: Planned
+Status: Complete
 Reminder: Commit & push after checks/tests pass.
 
 User stories:
@@ -302,6 +302,14 @@ Scope:
 - Link incidents, check-ins, coaching, tasks, and risk trend changes more explicitly
 - Add driver-level timeline/history and stronger accountability views
 - Add safety effectiveness reporting for interventions and coaching outcomes
+
+Progress update (`2026-03-07`):
+- Added `intervention_actions` table with org-scoped RLS for full disposition audit trail
+- Added `outcome_notes`, `closed_by`, `closed_at` to `coaching_plans` for closeout tracking
+- `interventionQueueService` extended with `recordInterventionAction`, `getInterventionActions`, `createCoachingPlanFromIntervention`, `closeCoachingPlan`
+- `Safety.tsx` updated: Coach/Dismiss action buttons on queue rows, coaching plan creation modal, dismiss reason modal
+- Both actions gated by `canManageSafetyEvents` capability
+- 306 tests pass; zero TS errors
 
 Exit criteria:
 - Risk-to-intervention workflow is closed-loop and persistent

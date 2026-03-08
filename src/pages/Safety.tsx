@@ -5,7 +5,12 @@ import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Ba
 import Modal from '../components/UI/Modal';
 import toast from 'react-hot-toast';
 import { driverService } from '../services/driverService';
-import { fetchInterventionQueue, type InterventionQueueItem } from '../services/interventionQueueService';
+import {
+    fetchInterventionQueue,
+    recordInterventionAction,
+    createCoachingPlanFromIntervention,
+    type InterventionQueueItem,
+} from '../services/interventionQueueService';
 import { useAuth } from '../contexts/AuthContext';
 import { canManageSafety } from '../services/authorizationService';
 
@@ -33,6 +38,12 @@ const Safety: React.FC = () => {
         notes: ''
     });
     const canManageSafetyEvents = capabilities?.canManageSafety ?? canManageSafety(role);
+
+    // Intervention action state
+    const [coachingModalDriver, setCoachingModalDriver] = useState<InterventionQueueItem | null>(null);
+    const [dismissModalDriver, setDismissModalDriver] = useState<InterventionQueueItem | null>(null);
+    const [coachingForm, setCoachingForm] = useState({ type: 'Performance', durationWeeks: 4, startDate: new Date().toISOString().split('T')[0] });
+    const [dismissReason, setDismissReason] = useState('');
 
 
 
@@ -116,6 +127,38 @@ const Safety: React.FC = () => {
         } catch (error) {
             toast.error('Failed to log event');
             console.error(error);
+        }
+    };
+
+    const handleStartCoaching = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!coachingModalDriver) return;
+        try {
+            await createCoachingPlanFromIntervention(coachingModalDriver.driverId, {
+                ...coachingForm,
+                actor: role || undefined,
+            });
+            toast.success(`Coaching plan started for ${coachingModalDriver.driverName}`);
+            setCoachingModalDriver(null);
+            loadData();
+        } catch (err) {
+            console.error('Start coaching', err);
+            toast.error('Failed to start coaching plan');
+        }
+    };
+
+    const handleDismissIntervention = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!dismissModalDriver) return;
+        try {
+            await recordInterventionAction(dismissModalDriver.driverId, 'dismissed', { reason: dismissReason, actor: role || undefined });
+            toast.success(`Intervention dismissed for ${dismissModalDriver.driverName}`);
+            setDismissModalDriver(null);
+            setDismissReason('');
+            loadData();
+        } catch (err) {
+            console.error('Dismiss intervention', err);
+            toast.error('Failed to dismiss intervention');
         }
     };
 
@@ -268,8 +311,8 @@ const Safety: React.FC = () => {
                                 <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Risk</th>
                                 <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Recent Events</th>
                                 <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Priority</th>
-                                <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Action</th>
-                                <th className="px-4 py-2 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Open</th>
+                                <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Recommended</th>
+                                <th className="px-4 py-2 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 bg-white">
@@ -279,13 +322,31 @@ const Safety: React.FC = () => {
                                     <td className="px-4 py-3 text-sm text-slate-600">{item.riskScore}</td>
                                     <td className="px-4 py-3 text-sm text-slate-600">{item.recentEventCount}</td>
                                     <td className="px-4 py-3 text-sm text-slate-600">{item.priorityScore}</td>
-                                    <td className="px-4 py-3 text-sm text-slate-600">{item.recommendedAction}</td>
-                                    <td className="px-4 py-3 text-right text-sm">
+                                    <td className="px-4 py-3 text-sm text-slate-600 max-w-xs truncate">{item.recommendedAction}</td>
+                                    <td className="px-4 py-3 text-right text-sm space-x-2 whitespace-nowrap">
+                                        {canManageSafetyEvents && (
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => { setCoachingForm({ type: 'Performance', durationWeeks: 4, startDate: new Date().toISOString().split('T')[0] }); setCoachingModalDriver(item); }}
+                                                    className="font-medium text-blue-600 hover:text-blue-900"
+                                                >
+                                                    Coach
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => { setDismissReason(''); setDismissModalDriver(item); }}
+                                                    className="font-medium text-slate-500 hover:text-slate-700"
+                                                >
+                                                    Dismiss
+                                                </button>
+                                            </>
+                                        )}
                                         <Link
                                             to={`/drivers/${item.driverId}`}
                                             className="font-medium text-emerald-700 hover:text-emerald-900"
                                         >
-                                            Driver
+                                            Profile
                                         </Link>
                                     </td>
                                 </tr>
@@ -477,6 +538,89 @@ const Safety: React.FC = () => {
                             className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700"
                         >
                             Log Event
+                        </button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Start Coaching Plan Modal */}
+            <Modal
+                isOpen={!!coachingModalDriver}
+                onClose={() => setCoachingModalDriver(null)}
+                title={`Start Coaching — ${coachingModalDriver?.driverName || ''}`}
+            >
+                <form onSubmit={handleStartCoaching} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700">Coaching Type</label>
+                        <select
+                            className="mt-1 block w-full rounded-md border-slate-300 border p-2 text-sm"
+                            value={coachingForm.type}
+                            onChange={e => setCoachingForm(f => ({ ...f, type: e.target.value }))}
+                        >
+                            <option>Performance</option>
+                            <option>Safety</option>
+                            <option>HOS Compliance</option>
+                            <option>Defensive Driving</option>
+                            <option>Accident Follow-up</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700">Duration (weeks)</label>
+                        <input
+                            type="number"
+                            min={1}
+                            max={26}
+                            className="mt-1 block w-full rounded-md border-slate-300 border p-2 text-sm"
+                            value={coachingForm.durationWeeks}
+                            onChange={e => setCoachingForm(f => ({ ...f, durationWeeks: parseInt(e.target.value) || 4 }))}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700">Start Date</label>
+                        <input
+                            type="date"
+                            className="mt-1 block w-full rounded-md border-slate-300 border p-2 text-sm"
+                            value={coachingForm.startDate}
+                            onChange={e => setCoachingForm(f => ({ ...f, startDate: e.target.value }))}
+                        />
+                    </div>
+                    <div className="flex justify-end space-x-2 pt-2">
+                        <button type="button" onClick={() => setCoachingModalDriver(null)} className="px-4 py-2 text-sm border border-slate-300 rounded-md text-slate-700 hover:bg-slate-50">
+                            Cancel
+                        </button>
+                        <button type="submit" className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                            Start Coaching Plan
+                        </button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Dismiss Intervention Modal */}
+            <Modal
+                isOpen={!!dismissModalDriver}
+                onClose={() => setDismissModalDriver(null)}
+                title={`Dismiss Intervention — ${dismissModalDriver?.driverName || ''}`}
+            >
+                <form onSubmit={handleDismissIntervention} className="space-y-4">
+                    <p className="text-sm text-slate-600">
+                        This driver will be removed from the intervention queue. Provide a reason for audit purposes.
+                    </p>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700">Reason</label>
+                        <textarea
+                            rows={3}
+                            className="mt-1 block w-full rounded-md border-slate-300 border p-2 text-sm"
+                            placeholder="e.g. False positive, already in coaching, no action needed..."
+                            value={dismissReason}
+                            onChange={e => setDismissReason(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex justify-end space-x-2 pt-2">
+                        <button type="button" onClick={() => setDismissModalDriver(null)} className="px-4 py-2 text-sm border border-slate-300 rounded-md text-slate-700 hover:bg-slate-50">
+                            Cancel
+                        </button>
+                        <button type="submit" className="px-4 py-2 text-sm bg-slate-600 text-white rounded-md hover:bg-slate-700">
+                            Dismiss
                         </button>
                     </div>
                 </form>
