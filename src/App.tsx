@@ -2,6 +2,7 @@ import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout/Layout';
+import ErrorBoundary from './components/ErrorBoundary';
 import { canAccessPlatformAdmin } from './services/authorizationService';
 
 // Lazy load pages
@@ -77,33 +78,33 @@ function App() {
     <Router>
       <Toaster position="top-right" />
       <Routes>
-        <Route path="/welcome" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Landing /></Suspense>} />
+        <Route path="/welcome" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Landing /></Suspense></ErrorBoundary>} />
         <Route path="/login" element={<Login />} />
 
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<Layout />}>
-            <Route index element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Dashboard /></Suspense>} />
-            <Route path="drivers" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Drivers /></Suspense>} />
-            <Route path="drivers/:id" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><DriverProfile /></Suspense>} />
-            <Route path="tasks" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Tasks /></Suspense>} />
-            <Route path="safety" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Safety /></Suspense>} />
-            <Route path="watchlist" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Watchlist /></Suspense>} />
-            <Route path="training" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Training /></Suspense>} />
-            <Route path="compliance" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Compliance /></Suspense>} />
-            <Route path="equipment" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Equipment /></Suspense>} />
-            <Route path="maintenance" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Maintenance /></Suspense>} />
-            <Route path="work-orders" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><WorkOrders /></Suspense>} />
-            <Route path="reporting" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Reporting /></Suspense>} />
-            <Route path="reporting/hypercare" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Hypercare /></Suspense>} />
-            <Route path="reporting/csa-predictor" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><CSAPredictor /></Suspense>} />
-            <Route path="documents" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Documents /></Suspense>} />
-            <Route path="fmcsa" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><FMCSA /></Suspense>} />
-            <Route path="settings" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Settings /></Suspense>} />
-            <Route path="profile" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><UserProfile /></Suspense>} />
-            <Route path="help" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><HelpFeedback /></Suspense>} />
+            <Route index element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Dashboard /></Suspense></ErrorBoundary>} />
+            <Route path="drivers" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Drivers /></Suspense></ErrorBoundary>} />
+            <Route path="drivers/:id" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><DriverProfile /></Suspense></ErrorBoundary>} />
+            <Route path="tasks" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Tasks /></Suspense></ErrorBoundary>} />
+            <Route path="safety" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Safety /></Suspense></ErrorBoundary>} />
+            <Route path="watchlist" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Watchlist /></Suspense></ErrorBoundary>} />
+            <Route path="training" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Training /></Suspense></ErrorBoundary>} />
+            <Route path="compliance" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Compliance /></Suspense></ErrorBoundary>} />
+            <Route path="equipment" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Equipment /></Suspense></ErrorBoundary>} />
+            <Route path="maintenance" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Maintenance /></Suspense></ErrorBoundary>} />
+            <Route path="work-orders" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><WorkOrders /></Suspense></ErrorBoundary>} />
+            <Route path="reporting" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Reporting /></Suspense></ErrorBoundary>} />
+            <Route path="reporting/hypercare" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Hypercare /></Suspense></ErrorBoundary>} />
+            <Route path="reporting/csa-predictor" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><CSAPredictor /></Suspense></ErrorBoundary>} />
+            <Route path="documents" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Documents /></Suspense></ErrorBoundary>} />
+            <Route path="fmcsa" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><FMCSA /></Suspense></ErrorBoundary>} />
+            <Route path="settings" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Settings /></Suspense></ErrorBoundary>} />
+            <Route path="profile" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><UserProfile /></Suspense></ErrorBoundary>} />
+            <Route path="help" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><HelpFeedback /></Suspense></ErrorBoundary>} />
             <Route element={<AdminRoute />}>
-              <Route path="admin" element={<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><AdminDashboard /></Suspense>} />
+              <Route path="admin" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><AdminDashboard /></Suspense></ErrorBoundary>} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

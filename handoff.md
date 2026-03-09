@@ -553,7 +553,28 @@ Exit criteria met: Header reflects live profile. Bell shows real notification co
 
 ---
 
+### Sprint 35: Global Search and Error Boundaries
+Status: Complete
+Reminder: Commit & push after checks/tests pass.
+
+User stories:
+- As any user, I can press ⌘K or click the search bar and instantly find any driver, task, piece of equipment, or document across the fleet.
+- As the platform, a single component crash no longer white-screens the entire application.
+
+Completed:
+- Created `src/services/searchService.ts`: parallel `Promise.allSettled` queries across drivers, tasks, equipment, and documents using `.ilike()` / `.or()`; org-scoped; 5 results per type; returns `SearchResult[]`
+- Created `src/components/SearchPanel.tsx`: full-screen modal overlay, debounced 250ms search, results grouped by type with icons, keyboard navigation (↑↓ arrows, Enter, Escape), ⌘K/Ctrl+K global shortcut, empty/loading/no-results states, keyboard shortcut hint row
+- Updated `Header.tsx`: replaced non-functional input with a search trigger button showing ⌘K hint; wired to SearchPanel; added global Cmd/Ctrl+K listener
+- Created `src/components/ErrorBoundary.tsx`: React class component catching all render errors; shows error message, "Reload page" and "Go to Dashboard" buttons; logs to console for observability
+- Wrapped every route's `<Suspense>` in `<ErrorBoundary>` in `App.tsx` — crash isolation at route level
+- Added `src/test/searchService.test.ts` (6 tests) and `src/test/errorBoundary.test.tsx` (5 tests)
+- 374 unit tests pass, zero TypeScript errors
+
+Exit criteria met: Search is live across all 4 entity types. ⌘K opens panel from anywhere. Component errors are isolated and show a recovery UI instead of a white screen.
+
+---
+
 ## Final Project Status
-**RC1 Launch Ready — Sprints 31–34 post-launch hardening applied.**
-Phase 1 (Sprints 1-30) complete. Sprints 31–34 closed remaining operational and UX gaps: Watchlist intervention hub, CSA live data, PII encryption abstraction, Driver timeline, Tasks overdue surfacing, User Profile Supabase migration, and Header live profile + real notification center. Focus is on Wave 1 cohort onboarding and monitoring.
+**RC1 Launch Ready — Sprints 31–35 post-launch hardening applied.**
+Phase 1 (Sprints 1-30) complete. Sprints 31–35 closed remaining operational, UX, and resilience gaps: Watchlist intervention hub, CSA live data, PII encryption abstraction, Driver timeline, Tasks overdue surfacing, User Profile Supabase migration, Header live profile + real notification center, global ⌘K search across all entity types, and route-level error boundaries. Focus is on Wave 1 cohort onboarding and monitoring.
 

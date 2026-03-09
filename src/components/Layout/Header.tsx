@@ -8,6 +8,7 @@ import { notificationService } from '../../services/notificationService';
 import type { Notification } from '../../services/notificationService';
 import NotificationPanel from '../NotificationPanel';
 import { formatBadgeCount } from '../../services/notificationService';
+import SearchPanel from '../SearchPanel';
 
 const Header: React.FC = () => {
     const location = useLocation();
@@ -22,6 +23,7 @@ const Header: React.FC = () => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [panelOpen, setPanelOpen] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
 
     // Load profile from Supabase and refresh on profile updates
     useEffect(() => {
@@ -46,6 +48,18 @@ const Header: React.FC = () => {
             window.removeEventListener('userProfileUpdated', loadProfile);
         };
     }, [user]);
+
+    // Cmd/Ctrl+K global shortcut to open search
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                setSearchOpen(true);
+            }
+        };
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     // Load notifications on mount
     useEffect(() => {
@@ -103,15 +117,17 @@ const Header: React.FC = () => {
             </div>
 
             <div className="flex items-center space-x-4">
-                <div className="relative">
+                <button
+                    onClick={() => setSearchOpen(true)}
+                    className="relative flex items-center bg-slate-100 hover:bg-slate-200 text-slate-500 pl-9 pr-4 py-2 rounded-full text-sm transition-colors w-52"
+                    aria-label="Search (Ctrl+K)"
+                    title="Search (⌘K)"
+                >
                     <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                    <input
-                        type="text"
-                        placeholder="Search..."
-                        aria-label="Search"
-                        className="bg-slate-100 text-slate-900 pl-9 pr-4 py-2 rounded-full text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 w-52"
-                    />
-                </div>
+                    <span className="text-slate-400">Search…</span>
+                    <kbd className="ml-auto text-[10px] font-mono bg-slate-200 text-slate-400 px-1.5 py-0.5 rounded">⌘K</kbd>
+                </button>
+                <SearchPanel isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
                 <div className="relative">
                     <button
