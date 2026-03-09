@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Truck, AlertTriangle, Wrench, ClipboardList, FileText, CalendarClock, CheckCircle, Archive, XCircle } from 'lucide-react';
+import { Truck, AlertTriangle, Wrench, ClipboardList, FileText, CalendarClock, CheckCircle, Archive, XCircle, History, Plus } from 'lucide-react';
 import clsx from 'clsx';
 import Modal from '../components/UI/Modal';
 import toast from 'react-hot-toast';
 import { settingsService } from '../services/settingsService';
 import { equipmentService } from '../services/equipmentService';
 import { maintenanceService } from '../services/maintenanceService';
+import { workOrderService } from '../services/workOrderService';
 import { useAuth } from '../contexts/AuthContext';
 import type { Equipment, EquipmentStatus, OwnershipType } from '../types';
 
-export const equipmentProfileTabs = ['Overview', 'Inspections', 'Maintenance', 'Work Orders', 'Documents'] as const;
+export const equipmentProfileTabs = ['Overview', 'Inspections', 'Maintenance', 'Work Orders', 'Documents', 'Service History'] as const;
 
 type CategoryTab = 'Trucks' | 'Trailers' | 'Forklifts' | 'Pallet Jacks' | 'Sales Vehicles';
 
@@ -79,6 +80,12 @@ const Equipment: React.FC = () => {
     const [linkedDocuments, setLinkedDocuments] = useState<any[]>([]);
     const [loadingLinked, setLoadingLinked] = useState(false);
 
+    // Work order creation state
+    const [woModalOpen, setWoModalOpen] = useState(false);
+    const [woFromInspection, setWoFromInspection] = useState<{ id: string; report_number: string; date: string } | null>(null);
+    const [woForm, setWoForm] = useState({ title: '', description: '', priority: 'High' as 'High' | 'Medium' | 'Low', dueDate: '' });
+    const [woSaving, setWoSaving] = useState(false);
+
     // Load equipment for the current category tab and status filter
     const loadEquipment = useCallback(async () => {
         setLoadingVehicles(true);
@@ -141,7 +148,7 @@ const Equipment: React.FC = () => {
                     .catch(() => setLinkedPMTemplates([]))
             );
         }
-        if (profileTab === 'Work Orders') {
+        if (profileTab === 'Work Orders' || profileTab === 'Service History') {
             fetches.push(
                 equipmentService.getLinkedWorkOrders(selectedEquipmentId)
                     .then(setLinkedWorkOrders)
@@ -254,6 +261,50 @@ const Equipment: React.FC = () => {
     const selectAsset = (id: string) => {
         setSelectedEquipmentId(id);
         setProfileTab('Overview');
+    };
+
+    const openWoModal = (inspection?: { id: string; report_number: string; date: string }) => {
+        const defaultTitle = inspection
+            ? `Defect remediation: ${inspection.date} inspection (${inspection.report_number})`
+            : selectedAsset ? `Work order — ${selectedAsset.assetTag}` : '';
+        setWoFromInspection(inspection ?? null);
+        setWoForm({ title: defaultTitle, description: '', priority: 'High', dueDate: '' });
+        setWoModalOpen(true);
+    };
+
+    const handleCreateWO = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedEquipmentId || !woForm.title.trim()) return;
+        setWoSaving(true);
+        try {
+            if (woFromInspection) {
+                await workOrderService.createWorkOrderFromInspection(
+                    woFromInspection.id,
+                    { equipmentId: selectedEquipmentId, title: woForm.title, description: woForm.description, priority: woForm.priority },
+                    role
+                );
+            } else {
+                await workOrderService.createWorkOrder({
+                    equipmentId: selectedEquipmentId,
+                    title: woForm.title,
+                    description: woForm.description,
+                    priority: woForm.priority,
+                    status: 'Draft',
+                    dueDate: woForm.dueDate || undefined,
+                }, [], role);
+            }
+            toast.success('Work order created');
+            setWoModalOpen(false);
+            // Refresh work orders list if on that tab
+            if (profileTab === 'Work Orders' || profileTab === 'Service History') {
+                const updated = await equipmentService.getLinkedWorkOrders(selectedEquipmentId);
+                setLinkedWorkOrders(updated);
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to create work order');
+        } finally {
+            setWoSaving(false);
+        }
     };
 
     const activeCount = vehicles.filter(v => v.status === 'active').length;
@@ -483,16 +534,41 @@ const Equipment: React.FC = () => {
                         <p className="text-sm text-slate-500">No inspections recorded for this asset.</p>
                     ) : (
                         <ul className="divide-y divide-slate-100">
-                            {linkedInspections.map((insp: any) => (
-                                <li key={insp.id} className="py-2 flex justify-between items-center text-sm">
-                                    <span className="font-medium text-slate-800">{insp.date} — {insp.inspection_level || 'Inspection'}</span>
-                                    <span className={clsx('px-2 py-0.5 text-xs rounded-full font-semibold',
-                                        insp.out_of_service ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                                    )}>
-                                        {insp.out_of_service ? 'OOS' : 'Passed'}
-                                    </span>
-                                </li>
-                            ))}
+                            {linkedInspections.map((insp: any) => {
+                                const hasDefects = insp.out_of_service || (insp.defect_count ?? 0) > 0 || insp.remediation_status === 'Open';
+                                return (
+                                    <li key={insp.id} className="py-3 flex items-center justify-between text-sm gap-3">
+                                        <div className="flex-1 min-w-0">
+                                            <span className="font-medium text-slate-800">{insp.date} — {insp.inspection_level || 'Inspection'}</span>
+                                            {insp.report_number && (
+                                                <span className="ml-2 text-xs text-slate-400">#{insp.report_number}</span>
+                                            )}
+                                            {(insp.defect_count ?? 0) > 0 && (
+                                                <span className="ml-2 text-xs text-amber-700">
+                                                    {insp.defect_count} defect{insp.defect_count !== 1 ? 's' : ''}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                            <span className={clsx('px-2 py-0.5 text-xs rounded-full font-semibold',
+                                                insp.out_of_service ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                                            )}>
+                                                {insp.out_of_service ? 'OOS' : 'Passed'}
+                                            </span>
+                                            {hasDefects && canMutate && (
+                                                <button
+                                                    onClick={() => openWoModal({ id: insp.id, report_number: insp.report_number || '', date: insp.date })}
+                                                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-amber-50 border border-amber-200 text-amber-800 rounded-md hover:bg-amber-100"
+                                                    title="Create work order from this inspection's defects"
+                                                >
+                                                    <Plus className="w-3 h-3" />
+                                                    Create WO
+                                                </button>
+                                            )}
+                                        </div>
+                                    </li>
+                                );
+                            })}
                         </ul>
                     )}
                 </div>
@@ -552,13 +628,23 @@ const Equipment: React.FC = () => {
                                     {selectedAsset ? `Work orders for ${selectedAsset.assetTag}` : 'Select an asset to view its work orders.'}
                                 </p>
                             </div>
+                            {canMutate && selectedEquipmentId && (
+                                <button
+                                    type="button"
+                                    onClick={() => openWoModal()}
+                                    className="px-3 py-2 text-sm font-medium bg-emerald-600 text-white rounded-md hover:bg-emerald-700 inline-flex items-center gap-1.5"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    New Work Order
+                                </button>
+                            )}
                             <button
                                 type="button"
                                 onClick={() => navigate('/work-orders')}
                                 className="px-3 py-2 text-sm font-medium border border-slate-200 rounded-md hover:bg-slate-50 inline-flex items-center"
                             >
                                 <ClipboardList className="w-4 h-4 inline mr-2" />
-                                Create Work Order
+                                All Work Orders
                             </button>
                         </div>
                         {!selectedEquipmentId ? (
@@ -623,6 +709,159 @@ const Equipment: React.FC = () => {
                     )}
                 </div>
             )}
+
+            {/* SERVICE HISTORY TAB */}
+            {profileTab === 'Service History' && (
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-800">Service History</h3>
+                            <p className="text-sm text-slate-500">
+                                {selectedAsset
+                                    ? `Completed and closed work orders for ${selectedAsset.assetTag}`
+                                    : 'Select an asset in the Overview tab to view its service history.'}
+                            </p>
+                        </div>
+                        <History className="w-5 h-5 text-slate-400" />
+                    </div>
+                    {!selectedEquipmentId ? (
+                        <p className="text-sm text-slate-500">No asset selected.</p>
+                    ) : loadingLinked ? (
+                        <p className="text-sm text-slate-500">Loading…</p>
+                    ) : (() => {
+                        const history = linkedWorkOrders.filter((wo: any) => ['Completed', 'Closed'].includes(wo.status));
+                        if (history.length === 0) {
+                            return <p className="text-sm text-slate-500">No completed service records for this asset yet.</p>;
+                        }
+                        const totalCost = history.reduce((sum: number, wo: any) => sum + (wo.total_cost || wo.totalCost || 0), 0);
+                        return (
+                            <>
+                                <div className="mb-4 flex items-center gap-4 text-sm text-slate-600">
+                                    <span>{history.length} service record{history.length !== 1 ? 's' : ''}</span>
+                                    {totalCost > 0 && (
+                                        <span className="font-medium text-slate-800">
+                                            Total cost: ${totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        </span>
+                                    )}
+                                </div>
+                                <ol className="relative border-l border-slate-200 space-y-6 pl-6">
+                                    {history.map((wo: any) => {
+                                        const completedDate = wo.completedAt || wo.completed_at;
+                                        const cost = wo.total_cost || wo.totalCost || 0;
+                                        return (
+                                            <li key={wo.id} className="relative">
+                                                <span className="absolute -left-[1.45rem] flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 ring-2 ring-white">
+                                                    <CheckCircle className="h-3 w-3 text-emerald-600" />
+                                                </span>
+                                                <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-3">
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <p className="text-sm font-semibold text-slate-800">{wo.title}</p>
+                                                        <span className={clsx(
+                                                            'flex-shrink-0 px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wide',
+                                                            wo.status === 'Closed' ? 'bg-slate-100 text-slate-600' : 'bg-emerald-100 text-emerald-700'
+                                                        )}>
+                                                            {wo.status}
+                                                        </span>
+                                                    </div>
+                                                    <div className="mt-1 flex flex-wrap gap-3 text-xs text-slate-500">
+                                                        {completedDate && (
+                                                            <span>Completed {new Date(completedDate).toLocaleDateString()}</span>
+                                                        )}
+                                                        {wo.assignedTo || wo.assigned_to ? (
+                                                            <span>Tech: {wo.assignedTo || wo.assigned_to}</span>
+                                                        ) : null}
+                                                        {cost > 0 && (
+                                                            <span className="font-medium text-slate-700">
+                                                                ${cost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {(wo.closeoutNotes || wo.closeout_notes) && (
+                                                        <p className="mt-1 text-xs text-slate-500 italic">{wo.closeoutNotes || wo.closeout_notes}</p>
+                                                    )}
+                                                </div>
+                                            </li>
+                                        );
+                                    })}
+                                </ol>
+                            </>
+                        );
+                    })()}
+                </div>
+            )}
+
+            {/* WORK ORDER CREATION MODAL */}
+            <Modal
+                isOpen={woModalOpen}
+                onClose={() => setWoModalOpen(false)}
+                title={woFromInspection ? 'Create Work Order from Inspection Defects' : 'Create Work Order'}
+            >
+                <form onSubmit={handleCreateWO} className="space-y-4">
+                    {woFromInspection && (
+                        <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800">
+                            Linked to inspection <strong>{woFromInspection.report_number}</strong> ({woFromInspection.date})
+                        </div>
+                    )}
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Title</label>
+                        <input
+                            type="text"
+                            required
+                            className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            value={woForm.title}
+                            onChange={(e) => setWoForm({ ...woForm, title: e.target.value })}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                        <textarea
+                            rows={3}
+                            className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            value={woForm.description}
+                            onChange={(e) => setWoForm({ ...woForm, description: e.target.value })}
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Priority</label>
+                            <select
+                                className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                value={woForm.priority}
+                                onChange={(e) => setWoForm({ ...woForm, priority: e.target.value as 'High' | 'Medium' | 'Low' })}
+                            >
+                                <option value="High">High</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Due Date</label>
+                            <input
+                                type="date"
+                                className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                value={woForm.dueDate}
+                                onChange={(e) => setWoForm({ ...woForm, dueDate: e.target.value })}
+                            />
+                        </div>
+                    </div>
+                    <div className="flex justify-end gap-3 pt-2">
+                        <button
+                            type="button"
+                            onClick={() => setWoModalOpen(false)}
+                            className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-md text-slate-700 hover:bg-slate-50"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={woSaving}
+                            className="px-4 py-2 text-sm font-medium bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:opacity-50"
+                        >
+                            {woSaving ? 'Creating…' : 'Create Work Order'}
+                        </button>
+                    </div>
+                </form>
+            </Modal>
 
             {/* ADD / EDIT MODAL */}
             <Modal
