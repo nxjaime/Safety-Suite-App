@@ -49,9 +49,10 @@ async function collectExpiringDocuments(): Promise<Notification[]> {
   const today = new Date().toISOString().split('T')[0];
 
   return expiring.map((doc) => {
-    const daysOut = doc.expirationDate
+    const expirationDate = String((doc.metadata || {}).expirationDate || '');
+    const daysOut = expirationDate
       ? Math.floor(
-          (new Date(doc.expirationDate).getTime() - new Date(today).getTime()) /
+          (new Date(expirationDate).getTime() - new Date(today).getTime()) /
             (24 * 60 * 60 * 1000)
         )
       : 30;
@@ -63,7 +64,7 @@ async function collectExpiringDocuments(): Promise<Notification[]> {
       detail: doc.name,
       href: '/documents',
       severity: daysOut <= 7 ? 'critical' : 'warning',
-      createdAt: doc.expirationDate || today,
+      createdAt: expirationDate || today,
     };
   });
 }
