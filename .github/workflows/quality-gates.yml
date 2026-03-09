@@ -1,4 +1,4 @@
-access token name: Quality Gates
+name: Quality Gates
 
 on:
   pull_request:
