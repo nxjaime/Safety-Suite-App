@@ -1,19 +1,59 @@
-import React from 'react';
-import { Bell, Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bell, Search, User } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../../contexts/AuthContext';
+import { profileService } from '../../services/profileService';
+import { notificationService } from '../../services/notificationService';
+import type { Notification } from '../../services/notificationService';
+import NotificationPanel from '../NotificationPanel';
+import { formatBadgeCount } from '../../services/notificationService';
+
 const Header: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { user, signOut } = useAuth();
 
-    // Derived user state
-    const displayUser = {
-        name: user?.user_metadata?.full_name || user?.email || 'User',
-        title: user?.user_metadata?.title || 'Safety Manager',
-        avatarUrl: user?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-    };
+    const [profileState, setProfileState] = useState({
+        name: user?.email || 'User',
+        title: '',
+        avatarUrl: '',
+    });
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [panelOpen, setPanelOpen] = useState(false);
+
+    // Load profile from Supabase and refresh on profile updates
+    useEffect(() => {
+        let cancelled = false;
+
+        const loadProfile = () => {
+            profileService.getExtendedProfile().then((profile) => {
+                if (cancelled || !profile) return;
+                setProfileState({
+                    name: profile.fullName || profile.email || 'User',
+                    title: profile.title,
+                    avatarUrl: profile.avatarUrl,
+                });
+            }).catch(() => {/* silently degrade */});
+        };
+
+        loadProfile();
+
+        window.addEventListener('userProfileUpdated', loadProfile);
+        return () => {
+            cancelled = true;
+            window.removeEventListener('userProfileUpdated', loadProfile);
+        };
+    }, [user]);
+
+    // Load notifications on mount
+    useEffect(() => {
+        notificationService.getNotifications().then((result) => {
+            setNotifications(result);
+            setUnreadCount(result.length);
+        }).catch(() => {/* silently degrade */});
+    }, []);
 
     const handleSignOut = async () => {
         await signOut();
@@ -73,10 +113,27 @@ const Header: React.FC = () => {
                     />
                 </div>
 
-                <button className="p-2 hover:bg-slate-100 rounded-full relative text-slate-600 transition-colors" aria-label="Notifications">
-                    <Bell className="w-5 h-5" />
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
-                </button>
+                <div className="relative">
+                    <button
+                        className="p-2 hover:bg-slate-100 rounded-full relative text-slate-600 transition-colors"
+                        aria-label="Notifications"
+                        onClick={() => setPanelOpen((prev) => !prev)}
+                    >
+                        <Bell className="w-5 h-5" />
+                        {unreadCount > 0 && (
+                            <span className="absolute top-1 right-1 min-w-[18px] h-[18px] bg-rose-500 text-white text-[9px] font-bold rounded-full border-2 border-white flex items-center justify-center px-0.5">
+                                {formatBadgeCount(unreadCount)}
+                            </span>
+                        )}
+                    </button>
+                    <NotificationPanel
+                        isOpen={panelOpen}
+                        onClose={() => setPanelOpen(false)}
+                        notifications={notifications}
+                        unreadCount={unreadCount}
+                        onMarkAllRead={() => setUnreadCount(0)}
+                    />
+                </div>
 
                 <div
                     onClick={handleSignOut}
@@ -86,14 +143,23 @@ const Header: React.FC = () => {
                     tabIndex={0}
                     aria-label="Sign out"
                 >
-                    <img
-                        src={displayUser.avatarUrl}
-                        alt="User"
-                        className="w-8 h-8 rounded-full border-2 border-white object-cover"
-                    />
+                    {profileState.avatarUrl ? (
+                        <img
+                            src={profileState.avatarUrl}
+                            alt="User"
+                            className="w-8 h-8 rounded-full border-2 border-white object-cover"
+                        />
+                    ) : (
+                        <div
+                            data-testid="avatar-fallback"
+                            className="w-8 h-8 rounded-full border-2 border-slate-200 bg-slate-100 flex items-center justify-center"
+                        >
+                            <User className="w-4 h-4 text-slate-500" />
+                        </div>
+                    )}
                     <div className="text-sm hidden md:block">
-                        <div className="font-medium text-slate-900">{displayUser.name}</div>
-                        <div className="text-xs text-slate-500">{displayUser.title}</div>
+                        <div className="font-medium text-slate-900">{profileState.name}</div>
+                        <div className="text-xs text-slate-500">{profileState.title}</div>
                     </div>
                 </div>
             </div>

@@ -534,7 +534,26 @@ Exit criteria met: Profile loads from Supabase auth + profiles table. Saves pers
 
 ---
 
+### Sprint 34: Header Live Profile and Real Notification Center
+Status: Complete
+Reminder: Commit & push after checks/tests pass.
+
+User stories:
+- As a logged-in user, when I save my profile, the header reflects my new name and avatar immediately — no re-login required.
+- As any user, the notification bell shows me live counts of things that need my attention: overdue tasks, expiring documents, unreviewed training, and due coaching check-ins.
+
+Completed:
+- Rewrote `Header.tsx`: loads profile from `profileService.getExtendedProfile()` on mount; listens for `'userProfileUpdated'` event and re-fetches live; avatar falls back to Lucide `User` icon (removed hardcoded Unsplash URL); bell button wired to notification panel
+- Created `src/services/notificationService.ts`: four `Promise.allSettled` collectors (overdue tasks, expiring documents, unreviewed training, pending coaching check-ins); sorted critical → warning → info; exports `formatBadgeCount` helper
+- Created `src/components/NotificationPanel.tsx`: dropdown with severity-colored rows, relative time, per-type icons, outside-click and Escape-to-close, "Mark all read" button, empty state, `99+` badge cap
+- Added `src/test/notificationService.test.ts` (7 tests) and `src/test/header.test.tsx` (6 tests)
+- 363 unit tests pass, zero TypeScript errors
+
+Exit criteria met: Header reflects live profile. Bell shows real notification count. Panel is actionable and fully keyboard/click dismissible.
+
+---
+
 ## Final Project Status
-**RC1 Launch Ready — Sprints 31–33 post-launch hardening applied.**
-Phase 1 (Sprints 1-30) complete. Sprints 31–33 closed remaining operational and data-integrity gaps: Watchlist is a full intervention hub, CSAPredictor uses real data, SSN encryption abstracted to Edge Function path, Driver Profile has a unified Timeline tab, Tasks surface overdue work with status controls, and User Profile now reads/writes real Supabase data (localStorage fully removed). Focus is on Wave 1 cohort onboarding and monitoring.
+**RC1 Launch Ready — Sprints 31–34 post-launch hardening applied.**
+Phase 1 (Sprints 1-30) complete. Sprints 31–34 closed remaining operational and UX gaps: Watchlist intervention hub, CSA live data, PII encryption abstraction, Driver timeline, Tasks overdue surfacing, User Profile Supabase migration, and Header live profile + real notification center. Focus is on Wave 1 cohort onboarding and monitoring.
 
