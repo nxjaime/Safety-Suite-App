@@ -36,21 +36,27 @@ vi.mock('../services/profileService', () => ({
   },
 }));
 
+vi.mock('../contexts/NotificationContext', () => ({
+  useNotifications: vi.fn().mockImplementation(() => ({
+    notifications: mockNotificationsData.value,
+    unreadCount: mockNotificationsData.value.length,
+    markAllRead: vi.fn(),
+    refresh: vi.fn(),
+    lastRefreshed: null,
+  })),
+  getNavBadgeCounts: vi.fn().mockReturnValue({}),
+}));
+
 vi.mock('../services/notificationService', () => ({
-  notificationService: {
-    getNotifications: vi.fn().mockImplementation(() =>
-      Promise.resolve(mockNotificationsData.value)
-    ),
-  },
   formatBadgeCount: (n: number) => (n > 99 ? '99+' : String(n)),
 }));
 
 import Header from '../components/Layout/Header';
 import { profileService } from '../services/profileService';
-import { notificationService } from '../services/notificationService';
+import { useNotifications } from '../contexts/NotificationContext';
 
 const mockGetProfile = profileService.getExtendedProfile as ReturnType<typeof vi.fn>;
-const mockGetNotifications = notificationService.getNotifications as ReturnType<typeof vi.fn>;
+const mockUseNotifications = useNotifications as ReturnType<typeof vi.fn>;
 
 function renderHeader() {
   return render(
@@ -75,7 +81,13 @@ describe('Header', () => {
     };
     mockNotificationsData.value = [];
     mockGetProfile.mockImplementation(() => Promise.resolve(mockProfileData.value));
-    mockGetNotifications.mockImplementation(() => Promise.resolve(mockNotificationsData.value));
+    mockUseNotifications.mockImplementation(() => ({
+      notifications: mockNotificationsData.value,
+      unreadCount: mockNotificationsData.value.length,
+      markAllRead: vi.fn(),
+      refresh: vi.fn(),
+      lastRefreshed: null,
+    }));
   });
 
   it('shows profile name from profileService, not user_metadata', async () => {
@@ -104,37 +116,30 @@ describe('Header', () => {
   });
 
   it('shows notification badge with count when notifications exist', async () => {
-    mockNotificationsData.value = [
-      { id: 'n1', type: 'overdue_task', title: 'Task overdue', detail: 'Fix it', href: '/tasks', severity: 'critical', createdAt: new Date().toISOString() },
-      { id: 'n2', type: 'expiring_document', title: 'Doc expiring', detail: 'CDL', href: '/documents', severity: 'warning', createdAt: new Date().toISOString() },
-      { id: 'n3', type: 'unreviewed_training', title: 'Review needed', detail: 'HOS', href: '/training', severity: 'info', createdAt: new Date().toISOString() },
-    ];
-    mockGetNotifications.mockImplementation(() => Promise.resolve(mockNotificationsData.value));
-
+    const items = Array.from({ length: 3 }, (_, i) => ({
+      id: `n${i}`, type: 'overdue_task' as const, title: 'Task', detail: 'Fix',
+      href: '/tasks', severity: 'critical' as const, createdAt: new Date().toISOString(),
+    }));
+    mockUseNotifications.mockReturnValue({
+      notifications: items, unreadCount: 3, markAllRead: vi.fn(), refresh: vi.fn(), lastRefreshed: null,
+    });
     renderHeader();
     expect(await screen.findByText('3')).toBeInTheDocument();
   });
 
   it('does not show badge when notifications is empty', async () => {
-    mockNotificationsData.value = [];
+    mockUseNotifications.mockReturnValue({
+      notifications: [], unreadCount: 0, markAllRead: vi.fn(), refresh: vi.fn(), lastRefreshed: null,
+    });
     renderHeader();
     await screen.findByText('Jane Doe');
-    // Badge only renders when unreadCount > 0 — should not be present
     expect(screen.queryByText(/^\d+$|^99\+$/)).not.toBeInTheDocument();
   });
 
   it('shows 99+ badge when unread count exceeds 99', async () => {
-    mockNotificationsData.value = Array.from({ length: 100 }, (_, i) => ({
-      id: `n${i}`,
-      type: 'overdue_task' as const,
-      title: 'Task',
-      detail: 'Detail',
-      href: '/tasks',
-      severity: 'warning' as const,
-      createdAt: new Date().toISOString(),
-    }));
-    mockGetNotifications.mockImplementation(() => Promise.resolve(mockNotificationsData.value));
-
+    mockUseNotifications.mockReturnValue({
+      notifications: [], unreadCount: 100, markAllRead: vi.fn(), refresh: vi.fn(), lastRefreshed: null,
+    });
     renderHeader();
     expect(await screen.findByText('99+')).toBeInTheDocument();
   });

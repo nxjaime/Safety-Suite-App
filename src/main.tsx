@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { AuthProvider } from './contexts/AuthContext'
+import { NotificationProvider } from './contexts/NotificationContext'
 import { isSupabaseConfigured } from './lib/supabase'
 
 const rootElement = document.getElementById('root');
@@ -39,7 +40,9 @@ if (!isSupabaseConfigured) {
   createRoot(rootElement).render(
     <StrictMode>
       <AuthProvider>
-        <App />
+        <NotificationProvider>
+          <App />
+        </NotificationProvider>
       </AuthProvider>
     </StrictMode>,
   );

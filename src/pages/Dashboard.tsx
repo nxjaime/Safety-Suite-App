@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   BarChart,
   Bar,
@@ -25,7 +25,8 @@ import {
   Shield,
   FileCheck,
   BookOpen,
-  ChevronRight
+  ChevronRight,
+  RefreshCw
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { reportingService } from '../services/reportingService';
@@ -75,6 +76,8 @@ const Dashboard: React.FC = () => {
   const [trendData, setTrendData] = useState<ReportingTrendPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [window, setWindow] = useState<ReportingWindow>('90d');
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshedAt, setRefreshedAt] = useState<Date | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -90,6 +93,7 @@ const Dashboard: React.FC = () => {
           setSnapshot(dash);
           setBacklog(buildBacklog(reporting));
           setTrendData(reporting.trends);
+          setRefreshedAt(new Date());
         }
       } catch (err: any) {
         if (!cancelled) toast.error(err.message || 'Failed to load dashboard data');
@@ -100,7 +104,16 @@ const Dashboard: React.FC = () => {
     load();
 
     return () => { cancelled = true; };
-  }, [window]);
+  }, [window, refreshKey]);
+
+  const handleRefresh = useCallback(() => setRefreshKey((k) => k + 1), []);
+
+  const refreshLabel = refreshedAt
+    ? (() => {
+        const mins = Math.floor((Date.now() - refreshedAt.getTime()) / 60_000);
+        return mins < 1 ? 'Just now' : `${mins}m ago`;
+      })()
+    : null;
 
   if (loading) {
     return (
@@ -145,6 +158,18 @@ const Dashboard: React.FC = () => {
             <div className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700">
               Live Board
             </div>
+            {refreshLabel && (
+              <span className="text-xs text-slate-400">Updated {refreshLabel}</span>
+            )}
+            <button
+              onClick={handleRefresh}
+              disabled={loading}
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 shadow-sm hover:bg-slate-50 disabled:opacity-50 transition-colors"
+              title="Refresh dashboard"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
             <select
               value={window}
               onChange={(e) => setWindow(e.target.value as ReportingWindow)}

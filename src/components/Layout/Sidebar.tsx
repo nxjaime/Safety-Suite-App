@@ -21,6 +21,7 @@ import clsx from 'clsx';
 import CarrierHealthWidget from './CarrierHealthWidget';
 import { useAuth } from '../../contexts/AuthContext';
 import { canAccessPlatformAdmin, type ProfileRole } from '../../services/authorizationService';
+import { useNotifications, getNavBadgeCounts } from '../../contexts/NotificationContext';
 
 type LinkItem = {
     name: string;
@@ -144,6 +145,8 @@ export const getVisibleMenuGroups = (role: ProfileRole): MenuGroup[] => {
 
 const Sidebar: React.FC = () => {
     const { capabilities, role } = useAuth();
+    const { notifications } = useNotifications();
+    const badgeCounts = useMemo(() => getNavBadgeCounts(notifications), [notifications]);
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
         quick: true,
         operations: true,
@@ -202,6 +205,7 @@ const Sidebar: React.FC = () => {
                                             );
                                         }
 
+                                        const badge = badgeCounts[item.path as keyof typeof badgeCounts] ?? 0;
                                         return (
                                             <li key={item.name}>
                                                 <NavLink
@@ -215,8 +219,13 @@ const Sidebar: React.FC = () => {
                                                         )
                                                     }
                                                 >
-                                                    <item.icon className="mr-3 h-4 w-4" />
-                                                    {item.name}
+                                                    <item.icon className="mr-3 h-4 w-4 flex-shrink-0" />
+                                                    <span className="flex-1">{item.name}</span>
+                                                    {badge > 0 && (
+                                                        <span className="ml-auto min-w-[20px] rounded-full bg-rose-500 px-1.5 py-0.5 text-center text-[10px] font-bold text-white">
+                                                            {badge > 99 ? '99+' : badge}
+                                                        </span>
+                                                    )}
                                                 </NavLink>
                                             </li>
                                         );

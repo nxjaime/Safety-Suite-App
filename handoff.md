@@ -574,7 +574,29 @@ Exit criteria met: Search is live across all 4 entity types. ⌘K opens panel fr
 
 ---
 
+### Sprint 36: Notification Context, Sidebar Live Badges, and Dashboard Refresh
+Status: Complete
+Reminder: Commit & push after checks/tests pass.
+
+User stories:
+- As any user, I can see at a glance from the sidebar how many overdue tasks, pending check-ins, expiring documents, and unreviewed trainings are waiting for me.
+- As a safety manager, the notification count in the header stays fresh automatically — I don't need to reload the page.
+- As an ops lead, I can manually refresh the dashboard to get the latest data without changing the time window.
+
+Completed:
+- Created `src/contexts/NotificationContext.tsx`: single shared fetch with 60s polling, provides `notifications`, `unreadCount`, `markAllRead()`, `refresh()`, `lastRefreshed`; `getNavBadgeCounts()` maps types to nav paths
+- Wrapped `<App>` with `<NotificationProvider>` in `main.tsx` — eliminates duplicate fetches between Header and Sidebar
+- Updated `Header.tsx`: removed local notification fetch, now uses `useNotifications()` context
+- Updated `Sidebar.tsx`: reads `getNavBadgeCounts()` from context; each NavLink shows a red `99+`-capped badge when count > 0
+- Updated `Dashboard.tsx`: added `refreshKey` + `refreshedAt` state, Refresh button with spinning icon, "Updated Xm ago" label
+- Added `src/test/notificationContext.test.tsx` (6 tests)
+- 380 unit tests pass, zero TypeScript errors
+
+Exit criteria met: Notifications are polled every 60s from a single context. Sidebar shows live badge counts. Dashboard has manual refresh with timestamp.
+
+---
+
 ## Final Project Status
-**RC1 Launch Ready — Sprints 31–35 post-launch hardening applied.**
-Phase 1 (Sprints 1-30) complete. Sprints 31–35 closed remaining operational, UX, and resilience gaps: Watchlist intervention hub, CSA live data, PII encryption abstraction, Driver timeline, Tasks overdue surfacing, User Profile Supabase migration, Header live profile + real notification center, global ⌘K search across all entity types, and route-level error boundaries. Focus is on Wave 1 cohort onboarding and monitoring.
+**RC1 Launch Ready — Sprints 31–36 post-launch hardening applied.**
+Phase 1 (Sprints 1-30) complete. Sprints 31–36 closed remaining operational, UX, and resilience gaps: Watchlist intervention hub, CSA live data, PII encryption abstraction, Driver timeline, Tasks overdue surfacing, User Profile Supabase migration, Header live profile + real notification center, global ⌘K search, route-level error boundaries, shared notification context with 60s polling, sidebar live badge counts, and dashboard manual refresh. Focus is on Wave 1 cohort onboarding and monitoring.
 

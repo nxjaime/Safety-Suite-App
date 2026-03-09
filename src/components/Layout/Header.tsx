@@ -4,8 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../../contexts/AuthContext';
 import { profileService } from '../../services/profileService';
-import { notificationService } from '../../services/notificationService';
-import type { Notification } from '../../services/notificationService';
+import { useNotifications } from '../../contexts/NotificationContext';
 import NotificationPanel from '../NotificationPanel';
 import { formatBadgeCount } from '../../services/notificationService';
 import SearchPanel from '../SearchPanel';
@@ -20,8 +19,7 @@ const Header: React.FC = () => {
         title: '',
         avatarUrl: '',
     });
-    const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [unreadCount, setUnreadCount] = useState(0);
+    const { notifications, unreadCount, markAllRead } = useNotifications();
     const [panelOpen, setPanelOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
 
@@ -59,14 +57,6 @@ const Header: React.FC = () => {
         };
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
-    }, []);
-
-    // Load notifications on mount
-    useEffect(() => {
-        notificationService.getNotifications().then((result) => {
-            setNotifications(result);
-            setUnreadCount(result.length);
-        }).catch(() => {/* silently degrade */});
     }, []);
 
     const handleSignOut = async () => {
@@ -147,7 +137,7 @@ const Header: React.FC = () => {
                         onClose={() => setPanelOpen(false)}
                         notifications={notifications}
                         unreadCount={unreadCount}
-                        onMarkAllRead={() => setUnreadCount(0)}
+                        onMarkAllRead={markAllRead}
                     />
                 </div>
 
