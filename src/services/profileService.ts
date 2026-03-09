@@ -7,6 +7,25 @@ export interface ProfileSummary {
   fullName: string | null;
 }
 
+export interface ExtendedProfile {
+  email: string;
+  fullName: string;
+  title: string;
+  phone: string;
+  location: string;
+  avatarUrl: string;
+  role: ProfileRole;
+  organizationId: string | null;
+}
+
+export interface ProfileUpdates {
+  fullName?: string;
+  title?: string;
+  phone?: string;
+  location?: string;
+  avatarUrl?: string;
+}
+
 const OWNER_ADMIN_EMAILS = ['nxjaime@gmail.com'];
 
 const parseAdminEmails = (): string[] => {
@@ -22,6 +41,62 @@ const parseAdminEmails = (): string[] => {
 };
 
 export const profileService = {
+  async getExtendedProfile(): Promise<ExtendedProfile | null> {
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData.user;
+    if (!user) return null;
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('full_name, title, phone, location, avatar_url, role, organization_id')
+      .eq('id', user.id)
+      .single();
+
+    if (error) {
+      return {
+        email: user.email || '',
+        fullName: user.user_metadata?.full_name || '',
+        title: user.user_metadata?.title || '',
+        phone: '',
+        location: '',
+        avatarUrl: user.user_metadata?.avatar_url || '',
+        role: this.isEmailAdmin(user.email || '') ? 'platform_admin' : 'readonly',
+        organizationId: null,
+      };
+    }
+
+    return {
+      email: user.email || '',
+      fullName: data.full_name || '',
+      title: data.title || '',
+      phone: data.phone || '',
+      location: data.location || '',
+      avatarUrl: data.avatar_url || '',
+      role: normalizeRole((data.role || 'viewer') as ProfileRole),
+      organizationId: data.organization_id || null,
+    };
+  },
+
+  async updateProfile(updates: ProfileUpdates): Promise<void> {
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData.user;
+    if (!user) throw new Error('Not authenticated');
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        full_name: updates.fullName,
+        title: updates.title,
+        phone: updates.phone,
+        location: updates.location,
+        avatar_url: updates.avatarUrl,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', user.id);
+
+    if (error) throw new Error(error.message);
+  },
+
   async getCurrentProfileSummary(): Promise<ProfileSummary | null> {
     const { data: userData } = await supabase.auth.getUser();
     const user = userData.user;

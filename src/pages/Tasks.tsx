@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { CheckSquare, Filter, Search, Calendar, User, ArrowRight, Plus, Edit } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { CheckSquare, Filter, Search, Calendar, User, ArrowRight, Plus, Edit, Play } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 import Modal from '../components/UI/Modal';
@@ -147,18 +147,37 @@ const Tasks: React.FC = () => {
         }
     };
 
+    const today = new Date().toISOString().split('T')[0];
+    const isOverdue = (task: TaskItem) => task.status !== 'Completed' && !!task.dueDate && task.dueDate < today;
+
     // Filter Logic
     const filteredTasks = tasks.filter(task => {
         const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (task.driverName && task.driverName.toLowerCase().includes(searchTerm.toLowerCase()));
         const matchesPriority = filterPriority === 'All' || task.priority === filterPriority;
-        // 'Pending' filter shows all active tasks (Pending + In Progress)
         const matchesStatus = filterStatus === 'All' ||
             (filterStatus === 'Pending' && (task.status === 'Pending' || task.status === 'In Progress')) ||
-            (filterStatus === 'Completed' && task.status === 'Completed');
+            (filterStatus === 'Completed' && task.status === 'Completed') ||
+            (filterStatus === 'Overdue' && isOverdue(task));
 
         return matchesSearch && matchesPriority && matchesStatus;
     });
+
+    const taskSummary = useMemo(() => ({
+        active: tasks.filter(t => t.status !== 'Completed').length,
+        overdue: tasks.filter(isOverdue).length,
+        highPriority: tasks.filter(t => t.priority === 'High' && t.status !== 'Completed').length,
+    }), [tasks]);
+
+    const handleStartTask = async (task: TaskItem) => {
+        try {
+            await taskService.updateTaskStatus(task.id, 'In Progress');
+            toast.success('Task started');
+            loadTasks();
+        } catch {
+            toast.error('Failed to start task');
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -190,6 +209,7 @@ const Tasks: React.FC = () => {
                             >
                                 <option value="Pending">Active (default)</option>
                                 <option value="All">All Tasks</option>
+                                <option value="Overdue">Overdue</option>
                                 <option value="Completed">Completed Only</option>
                             </select>
                         </div>
@@ -202,6 +222,22 @@ const Tasks: React.FC = () => {
                         <Plus className="w-4 h-4 mr-2" />
                         New Task
                     </button>
+                </div>
+            </div>
+
+            {/* Summary stats */}
+            <div className="grid grid-cols-3 gap-4">
+                <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <p className="text-xs text-slate-500 uppercase tracking-wide">Active</p>
+                    <p className="mt-1 text-2xl font-bold text-slate-900">{taskSummary.active}</p>
+                </div>
+                <div className={`rounded-xl border p-4 shadow-sm ${taskSummary.overdue > 0 ? 'border-red-200 bg-red-50' : 'border-slate-200 bg-white'}`}>
+                    <p className={`text-xs uppercase tracking-wide ${taskSummary.overdue > 0 ? 'text-red-600' : 'text-slate-500'}`}>Overdue</p>
+                    <p className={`mt-1 text-2xl font-bold ${taskSummary.overdue > 0 ? 'text-red-700' : 'text-slate-900'}`}>{taskSummary.overdue}</p>
+                </div>
+                <div className="rounded-xl border border-amber-100 bg-amber-50 p-4 shadow-sm">
+                    <p className="text-xs text-amber-600 uppercase tracking-wide">High Priority</p>
+                    <p className="mt-1 text-2xl font-bold text-amber-700">{taskSummary.highPriority}</p>
                 </div>
             </div>
 
@@ -234,7 +270,7 @@ const Tasks: React.FC = () => {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {filteredTasks.map((task) => (
-                                <tr key={task.id} className={clsx("hover:bg-slate-50", task.status === 'Completed' && "opacity-60")}>
+                                <tr key={task.id} className={clsx("hover:bg-slate-50", task.status === 'Completed' && "opacity-60", isOverdue(task) && "bg-red-50 hover:bg-red-100")}>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
                                             <div className={clsx(
@@ -263,10 +299,13 @@ const Tasks: React.FC = () => {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                                         {task.assignee}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                                        <div className="flex items-center">
-                                            <Calendar className="w-4 h-4 text-slate-400 mr-2" />
-                                            {task.dueDate}
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <Calendar className={clsx("w-4 h-4", isOverdue(task) ? "text-red-500" : "text-slate-400")} />
+                                            <span className={isOverdue(task) ? "text-red-700 font-medium" : "text-slate-500"}>{task.dueDate}</span>
+                                            {isOverdue(task) && (
+                                                <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-red-700">Overdue</span>
+                                            )}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
@@ -293,6 +332,15 @@ const Tasks: React.FC = () => {
                                         <div className="flex items-center justify-end space-x-2">
                                             {task.status !== 'Completed' && (
                                                 <>
+                                                    {task.status === 'Pending' && (
+                                                        <button
+                                                            onClick={() => handleStartTask(task)}
+                                                            className="text-emerald-600 hover:text-emerald-800 p-1"
+                                                            title="Start Task"
+                                                        >
+                                                            <Play className="w-4 h-4" />
+                                                        </button>
+                                                    )}
                                                     <button
                                                         onClick={() => handleEditTask(task)}
                                                         className="text-blue-600 hover:text-blue-800 p-1"

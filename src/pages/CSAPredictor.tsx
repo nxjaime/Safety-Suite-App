@@ -1,8 +1,10 @@
 
 import React, { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Plus, Trash2, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, AlertTriangle, Database } from 'lucide-react';
 import Modal from '../components/UI/Modal';
+import { inspectionService } from '../services/inspectionService';
+import toast from 'react-hot-toast';
 
 interface Violation {
     id: string;
@@ -18,11 +20,31 @@ const initialViolations: Violation[] = [
     { id: '3', category: 'Vehicle Maint.', description: 'Tire - Flat/Audible Leak', severityWeight: 8, timeWeight: 3 },
 ];
 
+const csaCategoryFromViolation = (type: 'Driver' | 'Vehicle', description: string): string => {
+    if (type === 'Vehicle') return 'Vehicle Maint.';
+    const desc = description.toLowerCase();
+    if (desc.includes('hos') || desc.includes('log') || desc.includes('hours of service')) return 'HOS Compliance';
+    if (desc.includes('license') || desc.includes('medical') || desc.includes('fitness')) return 'Driver Fitness';
+    if (desc.includes('drug') || desc.includes('alcohol') || desc.includes('substance')) return 'Drugs/Alcohol';
+    return 'Unsafe Driving';
+};
+
+const timeWeightFromDate = (dateStr: string): number => {
+    const days = Math.floor((Date.now() - new Date(dateStr).getTime()) / (24 * 60 * 60 * 1000));
+    if (days <= 180) return 3;
+    if (days <= 365) return 2;
+    if (days <= 730) return 1;
+    return 0; // older than 24 months — excluded from BASIC window
+};
+
 const CSAPredictor: React.FC = () => {
     const [violations, setViolations] = useState<Violation[]>(initialViolations);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [loadingInspections, setLoadingInspections] = useState(false);
+    const [seededFromReal, setSeededFromReal] = useState(false);
+    const [powerUnits, setPowerUnits] = useState(10);
+    const [totalInspections, setTotalInspections] = useState(24);
 
-    // New Violation Input State
     const [newViolation, setNewViolation] = useState({
         category: 'Unsafe Driving',
         description: '',
@@ -33,22 +55,21 @@ const CSAPredictor: React.FC = () => {
     const calculateCategoryScore = (category: string, violationList: Violation[]) => {
         const catViolations = violationList.filter(v => v.category === category);
         const totalPoints = catViolations.reduce((acc, v) => acc + (v.severityWeight * v.timeWeight), 0);
-        // Simplified normalization for demo (Total Measure / 50 * 100)
-        // In reality, this requires number of relevant inspections and power units.
-        return Math.min(100, Math.round((totalPoints / 100) * 100)); // Capped at 100 for percentile-like display
+        // Simplified BASIC normalization: points / (inspections * powerUnits * factor) * 100
+        const denominator = Math.max(1, totalInspections * Math.log10(Math.max(1, powerUnits)));
+        return Math.min(100, Math.round((totalPoints / denominator) * 10));
     };
 
     const categories = ['Unsafe Driving', 'HOS Compliance', 'Vehicle Maint.', 'Drugs/Alcohol', 'Driver Fitness'];
 
     const chartData = categories.map(cat => ({
         name: cat,
-        Current: calculateCategoryScore(cat, violations.slice(0, 3)), // Simulate "Before"
-        Projected: calculateCategoryScore(cat, violations) // "After" with all violations
+        Current: calculateCategoryScore(cat, violations.slice(0, 3)),
+        Projected: calculateCategoryScore(cat, violations)
     }));
 
     const handleAddViolation = (e: React.FormEvent) => {
         e.preventDefault();
-        console.log("Adding violation:", newViolation);
         const violationToAdd = { ...newViolation, id: Date.now().toString() };
         setViolations(prev => [...prev, violationToAdd]);
         setIsModalOpen(false);
@@ -59,20 +80,97 @@ const CSAPredictor: React.FC = () => {
         setViolations(violations.filter(v => v.id !== id));
     };
 
+    const handleLoadFromInspections = async () => {
+        setLoadingInspections(true);
+        try {
+            const inspections = await inspectionService.getInspections();
+            const mapped: Violation[] = [];
+            for (const inspection of inspections) {
+                if (!inspection.violations_data?.length) continue;
+                for (const v of inspection.violations_data) {
+                    const tw = timeWeightFromDate(inspection.date);
+                    if (tw === 0) continue; // outside 24-month window
+                    mapped.push({
+                        id: `${inspection.id}-${v.code}`,
+                        category: csaCategoryFromViolation(v.type, v.description),
+                        description: v.description || v.code,
+                        severityWeight: v.oos ? 8 : 4,
+                        timeWeight: tw,
+                    });
+                }
+            }
+            if (mapped.length === 0) {
+                toast('No violations found in inspection records for the 24-month window.', { icon: 'ℹ️' });
+                return;
+            }
+            setViolations(mapped);
+            setSeededFromReal(true);
+            toast.success(`Loaded ${mapped.length} violation(s) from inspection records`);
+        } catch (err) {
+            console.error('Failed to load inspections', err);
+            toast.error('Failed to load inspection data');
+        } finally {
+            setLoadingInspections(false);
+        }
+    };
+
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-wrap justify-between items-center gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-gray-800">CSA Score Predictor</h2>
-                    <p className="text-gray-500 text-sm mt-1">Simulate the impact of new violations on your CSA BASIC scores.</p>
+                    <p className="text-gray-500 text-sm mt-1">Simulate the impact of violations on your CSA BASIC scores.</p>
                 </div>
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 flex items-center shadow-sm"
-                >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Mock Violation
-                </button>
+                <div className="flex items-center gap-2">
+                    {seededFromReal && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
+                            <Database className="w-3 h-3" />
+                            Seeded from real data
+                        </span>
+                    )}
+                    <button
+                        onClick={handleLoadFromInspections}
+                        disabled={loadingInspections}
+                        className="px-4 py-2 bg-slate-700 text-white rounded-md text-sm font-medium hover:bg-slate-800 flex items-center shadow-sm disabled:opacity-50"
+                    >
+                        <Database className="w-4 h-4 mr-2" />
+                        {loadingInspections ? 'Loading...' : 'Load from Inspections'}
+                    </button>
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 flex items-center shadow-sm"
+                    >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Simulated Violation
+                    </button>
+                </div>
+            </div>
+
+            {/* Fleet Parameters */}
+            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">Fleet Parameters (for BASIC normalization)</h3>
+                <div className="flex flex-wrap gap-6">
+                    <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Power Units</label>
+                        <input
+                            type="number"
+                            min={1}
+                            className="w-28 border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                            value={powerUnits}
+                            onChange={e => setPowerUnits(parseInt(e.target.value) || 1)}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Total Inspections (24-mo)</label>
+                        <input
+                            type="number"
+                            min={1}
+                            className="w-28 border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                            value={totalInspections}
+                            onChange={e => setTotalInspections(parseInt(e.target.value) || 1)}
+                        />
+                    </div>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -113,7 +211,9 @@ const CSAPredictor: React.FC = () => {
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
                     <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
                         <h3 className="text-lg font-bold text-gray-800">Violation Scenario</h3>
-                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">Draft Mode</span>
+                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${seededFromReal ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}`}>
+                            {seededFromReal ? 'Real Data' : 'Simulation Mode'}
+                        </span>
                     </div>
                     <div className="flex-1 overflow-auto max-h-[400px]">
                         <table className="min-w-full divide-y divide-gray-200">
@@ -165,11 +265,11 @@ const CSAPredictor: React.FC = () => {
                 </div>
             </div>
 
-            {/* Add Violation Modal */}
+            {/* Add Simulated Violation Modal */}
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title="Add Mock Violation"
+                title="Add Simulated Violation"
             >
                 <form onSubmit={handleAddViolation} className="space-y-4">
                     <div>

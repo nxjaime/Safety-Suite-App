@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Save, ChevronDown, ChevronRight, UserPlus, AlertTriangle, FileText, Trash2, Upload, Mail, GraduationCap } from 'lucide-react';
+import { Save, ChevronDown, ChevronRight, UserPlus, AlertTriangle, FileText, Trash2, Upload, Mail, GraduationCap, Activity, BookOpen, Clock } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Modal from '../components/UI/Modal';
 // import { storage } from '../utils/storage';
@@ -95,7 +95,7 @@ const DriverProfile: React.FC = () => {
     });
 
     // Tab State
-    const [activeTab, setActiveTab] = useState<'overview' | 'safety' | 'documents' | 'training'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'safety' | 'documents' | 'training' | 'timeline'>('overview');
     const [trainingAssignments, setTrainingAssignments] = useState<TrainingAssignment[]>([]);
 
     // Motive Events State
@@ -105,6 +105,47 @@ const DriverProfile: React.FC = () => {
     const [riskEvents, setRiskEvents] = useState<any[]>([]);
     const canManageDriverCoaching = capabilities?.canManageCoaching ?? canManageCoaching(role);
     const canManageDriverSafety = capabilities?.canManageSafety ?? canManageSafety(role);
+
+    // Unified chronological activity timeline
+    interface TimelineEntry { id: string; date: string; kind: string; title: string; detail: string; }
+    const timeline = useMemo((): TimelineEntry[] => {
+        const entries: TimelineEntry[] = [];
+        for (const e of riskEvents) {
+            if (e.occurredAt || e.occurred_at) {
+                entries.push({ id: `risk-${e.id}`, date: e.occurredAt || e.occurred_at, kind: 'risk', title: e.eventType || e.type || 'Risk Event', detail: `Severity ${e.severity ?? '—'}${e.scoreDelta ? ` • +${e.scoreDelta} pts` : ''}` });
+            }
+        }
+        for (const a of trainingAssignments) {
+            if (a.status === 'Completed' && a.completed_at) {
+                entries.push({ id: `training-${a.id}`, date: a.completed_at, kind: 'training', title: a.module_name, detail: 'Training completed' });
+            } else if (a.escalated_at) {
+                entries.push({ id: `training-esc-${a.id}`, date: a.escalated_at, kind: 'training_overdue', title: a.module_name, detail: 'Escalated — overdue training' });
+            }
+        }
+        for (const plan of (driver?.coachingPlans || [])) {
+            if (plan.startDate) {
+                entries.push({ id: `plan-${plan.id}`, date: plan.startDate, kind: 'coaching_start', title: `${plan.type} Coaching Plan Started`, detail: `${plan.durationWeeks} weeks` });
+            }
+            for (const ci of (plan.weeklyCheckIns || [])) {
+                if (ci.status === 'Complete' && ci.date) {
+                    entries.push({ id: `ci-${plan.id}-${ci.week}`, date: ci.date, kind: 'coaching', title: `Week ${ci.week} Check-in Completed`, detail: `${plan.type} Plan` });
+                }
+            }
+        }
+        for (const doc of driverDocuments) {
+            const date = doc.uploaded_at || doc.created_at;
+            if (date) {
+                entries.push({ id: `doc-${doc.id}`, date, kind: 'document', title: doc.name || 'Document', detail: doc.type || 'File' });
+            }
+        }
+        for (const e of motiveEvents) {
+            const date = e.start_time || e.occurred_at;
+            if (date) {
+                entries.push({ id: `motive-${e.id || Math.random()}`, date, kind: 'telematics', title: e.type_label || e.event_type || 'Telematics Event', detail: 'Motive' });
+            }
+        }
+        return entries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }, [riskEvents, trainingAssignments, driverDocuments, motiveEvents, driver]);
 
     useEffect(() => {
         if (driver) {
@@ -703,6 +744,12 @@ const DriverProfile: React.FC = () => {
                     >
                         Training
                     </button>
+                    <button
+                        onClick={() => setActiveTab('timeline')}
+                        className={`pb-3 px-2 text-sm font-medium transition-colors border-b-2 ${activeTab === 'timeline' ? 'border-green-600 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Timeline
+                    </button>
                 </div>
             </div>
 
@@ -1010,6 +1057,67 @@ const DriverProfile: React.FC = () => {
                     </div>
                 )
             }
+
+            {/* Timeline Tab */}
+            {activeTab === 'timeline' && driver && (() => {
+                const kindMeta: Record<string, { icon: React.ReactNode; border: string; bg: string; label: string }> = {
+                    risk:           { icon: <AlertTriangle className="h-4 w-4 text-red-600" />,    border: 'border-red-200',    bg: 'bg-red-50',    label: 'Risk Event' },
+                    training:       { icon: <GraduationCap className="h-4 w-4 text-green-600" />,  border: 'border-green-200',  bg: 'bg-green-50',  label: 'Training' },
+                    training_overdue:{ icon: <BookOpen className="h-4 w-4 text-orange-600" />,    border: 'border-orange-200', bg: 'bg-orange-50', label: 'Training Escalated' },
+                    coaching:       { icon: <UserPlus className="h-4 w-4 text-blue-600" />,        border: 'border-blue-200',   bg: 'bg-blue-50',   label: 'Coaching Check-in' },
+                    coaching_start: { icon: <UserPlus className="h-4 w-4 text-blue-700" />,        border: 'border-blue-300',   bg: 'bg-blue-50',   label: 'Coaching Started' },
+                    document:       { icon: <FileText className="h-4 w-4 text-slate-600" />,       border: 'border-slate-200',  bg: 'bg-slate-50',  label: 'Document' },
+                    telematics:     { icon: <Activity className="h-4 w-4 text-purple-600" />,      border: 'border-purple-200', bg: 'bg-purple-50', label: 'Telematics' },
+                };
+                return (
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                        <div className="flex items-center justify-between mb-5">
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-800">Activity Timeline</h3>
+                                <p className="text-sm text-slate-500">All recorded activity for this driver, newest first.</p>
+                            </div>
+                            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                                {timeline.length} events
+                            </span>
+                        </div>
+                        {timeline.length === 0 ? (
+                            <div className="flex flex-col items-center py-12 text-slate-400">
+                                <Clock className="h-10 w-10 mb-2" />
+                                <p className="text-sm">No recorded activity yet.</p>
+                            </div>
+                        ) : (
+                            <ol className="relative border-l-2 border-slate-200 space-y-5 ml-3">
+                                {timeline.map(entry => {
+                                    const meta = kindMeta[entry.kind] ?? kindMeta.document;
+                                    const displayDate = (() => {
+                                        try { return new Date(entry.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }); }
+                                        catch { return entry.date; }
+                                    })();
+                                    return (
+                                        <li key={entry.id} className="ml-5">
+                                            <span className={`absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full border ${meta.border} ${meta.bg}`}>
+                                                {meta.icon}
+                                            </span>
+                                            <div className={`ml-2 rounded-lg border ${meta.border} ${meta.bg} px-4 py-3`}>
+                                                <div className="flex items-center justify-between gap-4">
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-slate-800">{entry.title}</p>
+                                                        <p className="text-xs text-slate-500 mt-0.5">{entry.detail}</p>
+                                                    </div>
+                                                    <div className="shrink-0 text-right">
+                                                        <span className="text-xs text-slate-500">{displayDate}</span>
+                                                        <p className="text-[11px] font-medium text-slate-400 mt-0.5">{meta.label}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    );
+                                })}
+                            </ol>
+                        )}
+                    </div>
+                );
+            })()}
 
             {/* Modals */}
             <Modal

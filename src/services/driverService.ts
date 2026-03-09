@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
 import type { Driver, RiskEvent } from '../types';
-import { encryptData, decryptData } from '../utils/crypto';
+import { encryptPII, decryptPII } from './encryptionService';
 import { riskService } from './riskService';
 import { canManageCoaching, canManageSafety, type ProfileRole } from './authorizationService';
 
@@ -10,7 +10,7 @@ const DRIVER_DOCUMENT_BUCKET = 'driver-documents';
 const processDriverForStorage = async (driver: any) => {
     const processed = { ...driver };
     if (processed.ssn) {
-        processed.ssn = await encryptData(processed.ssn);
+        processed.ssn = await encryptPII(processed.ssn);
     }
     return processed;
 };
@@ -18,7 +18,7 @@ const processDriverForStorage = async (driver: any) => {
 const processDriverFromStorage = async (driver: any) => {
     const processed = { ...driver };
     if (processed.ssn) {
-        processed.ssn = await decryptData(processed.ssn);
+        processed.ssn = await decryptPII(processed.ssn);
     }
     return processed;
 };
@@ -301,7 +301,7 @@ export const driverService = {
         if (updates.image !== undefined) dbUpdates.image = updates.image;
         if (updates.address !== undefined) dbUpdates.address = updates.address;
         if (updates.ssn !== undefined) {
-            dbUpdates.ssn = await encryptData(updates.ssn);
+            dbUpdates.ssn = await encryptPII(updates.ssn);
         }
         if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
         if (updates.licenseNumber !== undefined) dbUpdates.license_number = updates.licenseNumber;

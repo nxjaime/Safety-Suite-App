@@ -45,7 +45,7 @@ A release candidate is functioning when:
 - App shell and route surface exist in `src/App.tsx` and `src/components/Layout/*`
 - Domain services exist in `src/services/*`
 
-## Current Application Assessment (`2026-03-07`)
+## Current Application Assessment (`2026-03-08`)
 
 ### What Exists
 - Broad route coverage exists for dashboard, drivers, safety, watchlist, training, compliance, equipment, maintenance, work orders, reporting, hypercare, documents, FMCSA, settings, help/feedback, and admin.
@@ -78,9 +78,10 @@ A release candidate is functioning when:
 - Historical migration/schema consistency still needs reconciliation.
 
 #### 3. Production Readiness Gaps
-- Sensitive-data handling still needs stronger server-side/security posture review (`src/utils/crypto.ts` remains a concern).
+- PII encryption abstracted to `encryptionService.ts`; Edge Function path available via `VITE_USE_EDGE_CRYPTO=true` (Sprint 31). Key migration to server-side remains a post-launch operational step.
 - Integration paths are not yet production-complete for carrier/FMCSA and related external data acquisition.
-- End-to-end verification, production-like seed flows, observability, and DR readiness are not finished.
+- Offline/PWA capability for field technicians (IndexedDB) not yet started.
+- Telematics race conditions: buffer logic exists, formal hardening not done.
 
 ## Remaining Product Themes
 - Replace demo/static pockets with live, persistent workflows
@@ -472,7 +473,68 @@ Exit criteria met: No open release-blocking P0/P1 issues remain. Risk Register d
 - Cross-module workflow linkage
 - Sensitive-data handling and operational recovery
 
+### Sprint 31: Watchlist Operations Hub, CSA Live Data, and Server-Side Encryption Foundation
+Status: Complete
+Reminder: Commit & push after checks/tests pass.
+
+User stories:
+- As a safety manager, I can act directly from the Watchlist — coaching, dismissing, and filtering without navigating away.
+- As a compliance lead, I can seed the CSA predictor from real inspection records rather than mock data.
+- As the platform, SSN encryption is now routable to a server-side Edge Function without any code changes in callers.
+
+Completed:
+- Rewrote `Watchlist.tsx`: summary stat cards (total, critical, coaching), priority tier badges (Critical/High/Medium), Active Coaching badge, filter tabs (All / Needs Action / Has Active Coaching), Coach/Dismiss action buttons with modals, `canManageSafety` capability gating
+- Updated `CSAPredictor.tsx`: "Load from Inspections" button seeding from `inspectionService.getInspections()` with BASIC category inference, OOS severity weighting, 24-month rolling window; fleet parameter inputs (power units, inspection count) for BASIC normalization; "Seeded from real data" badge; "Add Simulated Violation" rename; removed stray console.log
+- Created `src/services/encryptionService.ts`: `encryptPII`/`decryptPII` abstraction layer; client-side fallback at RC1, Edge Function path when `VITE_USE_EDGE_CRYPTO=true`
+- Created `supabase/functions/encrypt-pii/index.ts`: production-ready Edge Function with server-held AES-256-GCM key; deploy-ready
+- Updated `driverService.ts` to use `encryptionService` instead of direct `crypto.ts` imports
+- Added 12 Watchlist tests (priority tiers, filter tabs, role gating, modals) and 4 encryptionService tests
+- 344 unit tests pass, zero TypeScript errors
+
+Exit criteria met: Watchlist is a full intervention hub. CSAPredictor is real-data capable. PII encryption is abstracted and migration-ready.
+
+---
+
+### Sprint 32: Driver Activity Timeline and Tasks Overdue Management
+Status: Complete
+Reminder: Commit & push after checks/tests pass.
+
+User stories:
+- As a safety manager, I can open any driver profile and see their complete activity history in one chronological timeline.
+- As a team lead, I can see at a glance which tasks are overdue, start tasks in progress, and filter to overdue items only.
+
+Completed:
+- Added "Timeline" 5th tab to `DriverProfile.tsx`: unified activity feed aggregating risk events, completed/escalated training, coaching plan starts, completed check-ins, documents, and telematics events — color-coded, icon-differentiated, newest-first, built with `useMemo` from already-loaded data sources
+- Added task summary stat bar to `Tasks.tsx`: Active, Overdue (red when >0), High Priority counts
+- Added overdue row highlighting (red bg + "Overdue" badge on due date) to tasks table
+- Added "Start" Play button for Pending tasks → `updateTaskStatus('In Progress')` inline
+- Added "Overdue" filter option to status filter dropdown
+- 344 unit tests pass, zero TypeScript errors
+
+Exit criteria met: Driver timeline renders all activity sources. Tasks overdue surfacing is live with visual indicators, status progression, and filter.
+
+---
+
+### Sprint 33: User Profile — Supabase-backed, localStorage Removed
+Status: Complete
+Reminder: Commit & push after checks/tests pass.
+
+User stories:
+- As a logged-in user, when I open My Profile, I see my actual name and email from my account, not placeholder data.
+- As a logged-in user, when I save my profile changes, they persist across sessions and devices.
+
+Completed:
+- Added `getExtendedProfile()` and `updateProfile()` to `profileService.ts` — reads from `profiles` table, falls back to `user_metadata` on first login, throws on unauthenticated save
+- Rewrote `UserProfile.tsx` from scratch: loads via `profileService.getExtendedProfile()` on mount, saves via `profileService.updateProfile()`, removed all `localStorage` reads/writes and all hardcoded defaults ("John Doe", Unsplash avatar, etc.)
+- Email field is now read-only (auth-owned); avatar falls back to User icon when unset; spinner shown during load and save
+- Added `src/test/profileService.test.ts` — 6 tests covering: row-exists, first-login fallback, unauthenticated (get), success update, DB error, unauthenticated (update)
+- 350 unit tests pass, zero TypeScript errors
+
+Exit criteria met: Profile loads from Supabase auth + profiles table. Saves persist to DB. localStorage anti-pattern fully removed.
+
+---
+
 ## Final Project Status
-**RC1 Launch Ready.** 
-Phase 1 (Sprints 1-30) is complete. Safety Suite acts as a full fleet asset registry, risk profiling engine, compliance and training delivery system, and enterprise administration application. Focus is now on scaling the platform and executing Wave 1 cohort onboarding.
+**RC1 Launch Ready — Sprints 31–33 post-launch hardening applied.**
+Phase 1 (Sprints 1-30) complete. Sprints 31–33 closed remaining operational and data-integrity gaps: Watchlist is a full intervention hub, CSAPredictor uses real data, SSN encryption abstracted to Edge Function path, Driver Profile has a unified Timeline tab, Tasks surface overdue work with status controls, and User Profile now reads/writes real Supabase data (localStorage fully removed). Focus is on Wave 1 cohort onboarding and monitoring.
 
