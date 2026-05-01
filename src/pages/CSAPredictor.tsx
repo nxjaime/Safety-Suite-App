@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Plus, Trash2, TrendingUp, AlertTriangle, Database } from 'lucide-react';
 import Modal from '../components/UI/Modal';
 import { inspectionService } from '../services/inspectionService';
+import { carrierService, type CarrierHealth } from '../services/carrierService';
 import toast from 'react-hot-toast';
 
 interface Violation {
@@ -37,11 +38,66 @@ const timeWeightFromDate = (dateStr: string): number => {
     return 0; // older than 24 months — excluded from BASIC window
 };
 
+const buildViolationsFromCarrierHealth = (health: CarrierHealth): Violation[] => {
+    const summary = health.inspectionSummary;
+    const seedAge = Math.max(1, timeWeightFromDate(health.lastUpdated));
+    const csaScores = health.csaScores ?? {};
+    const totalInspections = summary?.totalInspections ?? 0;
+    const totalCrashes = summary?.crashes.total ?? 0;
+    const outOfServiceRate = summary?.outOfServiceRate ?? 0;
+
+    const scoreToSeverity = (fallback: number, score?: number) => {
+        if (score === undefined) return fallback;
+        return Math.max(1, Math.min(10, Math.round(score / 10)));
+    };
+
+    return [
+        {
+            id: `fmcsa-unsafe-${health.dotNumber}`,
+            category: 'Unsafe Driving',
+            description: `FMCSA crash indicator seed — ${totalCrashes} crash(es), ${outOfServiceRate.toFixed(1)}% OOS`,
+            severityWeight: scoreToSeverity(Math.max(1, Math.round(totalCrashes * 2 + outOfServiceRate / 12)), csaScores.unsafeDriving),
+            timeWeight: seedAge,
+        },
+        {
+            id: `fmcsa-hos-${health.dotNumber}`,
+            category: 'HOS Compliance',
+            description: `FMCSA inspection seed — ${totalInspections} inspection(s) in the latest SAFER snapshot`,
+            severityWeight: scoreToSeverity(Math.max(1, Math.round(totalInspections / 3 + outOfServiceRate / 15)), csaScores.hoursOfService),
+            timeWeight: seedAge,
+        },
+        {
+            id: `fmcsa-maint-${health.dotNumber}`,
+            category: 'Vehicle Maint.',
+            description: `FMCSA maintenance seed — ${summary?.crashes.tow ?? 0} tow-away crash(es) / ${outOfServiceRate.toFixed(1)}% OOS`,
+            severityWeight: scoreToSeverity(Math.max(1, Math.round(outOfServiceRate / 10 + totalInspections / 4)), csaScores.vehicleMaintenance),
+            timeWeight: seedAge,
+        },
+        {
+            id: `fmcsa-drugs-${health.dotNumber}`,
+            category: 'Drugs/Alcohol',
+            description: `FMCSA composite seed from live carrier snapshot`,
+            severityWeight: scoreToSeverity(Math.max(1, Math.round(totalCrashes)), csaScores.controlledSubstances),
+            timeWeight: seedAge,
+        },
+        {
+            id: `fmcsa-fitness-${health.dotNumber}`,
+            category: 'Driver Fitness',
+            description: `FMCSA composite seed from live carrier snapshot`,
+            severityWeight: scoreToSeverity(Math.max(1, Math.round((health.drivers ?? 0) + outOfServiceRate / 20)), csaScores.driverFitness),
+            timeWeight: seedAge,
+        },
+    ];
+};
+
 const CSAPredictor: React.FC = () => {
     const [violations, setViolations] = useState<Violation[]>(initialViolations);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [loadingInspections, setLoadingInspections] = useState(false);
     const [seededFromReal, setSeededFromReal] = useState(false);
+    const [carrierNotice, setCarrierNotice] = useState<string | null>(null);
+    const [carrierDotNumber, setCarrierDotNumber] = useState('');
+    const [loadingCarrier, setLoadingCarrier] = useState(false);
     const [powerUnits, setPowerUnits] = useState(10);
     const [totalInspections, setTotalInspections] = useState(24);
 
@@ -105,12 +161,37 @@ const CSAPredictor: React.FC = () => {
             }
             setViolations(mapped);
             setSeededFromReal(true);
+            setCarrierNotice('Seeded from inspection records');
             toast.success(`Loaded ${mapped.length} violation(s) from inspection records`);
         } catch (err) {
             console.error('Failed to load inspections', err);
             toast.error('Failed to load inspection data');
         } finally {
             setLoadingInspections(false);
+        }
+    };
+
+    const handleLoadFromCarrier = async () => {
+        if (!carrierDotNumber.trim()) return;
+        setLoadingCarrier(true);
+        setCarrierNotice(null);
+        try {
+            const result = await carrierService.lookupCarrierHealth(carrierDotNumber.trim());
+            if (!result.health) {
+                toast.error(result.message);
+                setCarrierNotice(result.message);
+                return;
+            }
+
+            setViolations(prev => [...prev, ...buildViolationsFromCarrierHealth(result.health as CarrierHealth)]);
+            setSeededFromReal(true);
+            setCarrierNotice(result.message);
+            toast.success('Loaded FMCSA carrier snapshot into CSA predictor');
+        } catch (err) {
+            console.error('Failed to load carrier snapshot', err);
+            toast.error('Failed to load FMCSA carrier snapshot');
+        } finally {
+            setLoadingCarrier(false);
         }
     };
 
@@ -136,6 +217,24 @@ const CSAPredictor: React.FC = () => {
                         <Database className="w-4 h-4 mr-2" />
                         {loadingInspections ? 'Loading...' : 'Load from Inspections'}
                     </button>
+                    <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 shadow-sm">
+                        <input
+                            type="text"
+                            inputMode="numeric"
+                            placeholder="DOT #"
+                            className="w-28 border-0 p-0 text-sm focus:outline-none focus:ring-0"
+                            value={carrierDotNumber}
+                            onChange={e => setCarrierDotNumber(e.target.value)}
+                        />
+                        <button
+                            onClick={handleLoadFromCarrier}
+                            disabled={loadingCarrier || !carrierDotNumber.trim()}
+                            className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 flex items-center disabled:opacity-50"
+                        >
+                            <Database className="w-4 h-4 mr-1" />
+                            {loadingCarrier ? 'Loading...' : 'Load FMCSA'}
+                        </button>
+                    </div>
                     <button
                         onClick={() => setIsModalOpen(true)}
                         className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 flex items-center shadow-sm"
@@ -146,7 +245,11 @@ const CSAPredictor: React.FC = () => {
                 </div>
             </div>
 
-            {/* Fleet Parameters */}
+            {carrierNotice && (
+                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                    {carrierNotice}
+                </div>
+            )}
             <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                 <h3 className="text-sm font-semibold text-gray-700 mb-3">Fleet Parameters (for BASIC normalization)</h3>
                 <div className="flex flex-wrap gap-6">

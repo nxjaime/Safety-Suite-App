@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Search, BookOpen, ChevronDown, ChevronRight, ExternalLink, Truck, AlertTriangle } from 'lucide-react';
-import { carrierService, type CarrierHealth } from '../services/carrierService';
+import { Search, BookOpen, ChevronDown, ChevronRight, ExternalLink, Truck, AlertTriangle, Gauge, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { carrierService, type CarrierHealth, type CarrierLookupResult, type CarrierSafetyRating } from '../services/carrierService';
 import toast from 'react-hot-toast';
 
 
@@ -72,19 +72,35 @@ const FMCSA: React.FC = () => {
     const [carrierHealth, setCarrierHealth] = useState<CarrierHealth | null>(null);
     const [carrierLoading, setCarrierLoading] = useState(false);
     const [carrierError, setCarrierError] = useState<string | null>(null);
+    const [carrierNotice, setCarrierNotice] = useState<string | null>(null);
+    const [ratingThreshold, setRatingThreshold] = useState<CarrierSafetyRating>('CONDITIONAL');
+    const [carrierResult, setCarrierResult] = useState<CarrierLookupResult | null>(null);
 
     const handleCarrierLookup = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!dotInput.trim()) return;
         setCarrierLoading(true);
         setCarrierError(null);
+        setCarrierNotice(null);
         setCarrierHealth(null);
+        setCarrierResult(null);
         try {
-            const result = await carrierService.fetchCarrierHealth(dotInput.trim());
-            if (result) {
-                setCarrierHealth(result);
+            const result = await carrierService.lookupCarrierHealth(dotInput.trim(), { threshold: ratingThreshold });
+            setCarrierResult(result);
+
+            if (result.health) {
+                setCarrierHealth(result.health);
+                if (result.status === 'degraded') {
+                    setCarrierNotice(result.message);
+                    toast(result.message, { icon: '⚠️' });
+                } else if (result.belowThreshold) {
+                    setCarrierNotice(`Carrier safety rating is below the configured ${ratingThreshold} threshold.`);
+                } else {
+                    setCarrierNotice(result.message);
+                }
             } else {
-                setCarrierError('No carrier data found for this DOT number. Data may not be cached yet.');
+                setCarrierError(result.message);
+                toast.error('Carrier lookup failed');
             }
         } catch (err) {
             console.error('Carrier lookup', err);
@@ -124,26 +140,47 @@ const FMCSA: React.FC = () => {
                     <Truck className="w-4 h-4 text-slate-600 mr-2" />
                     <h3 className="text-sm font-semibold text-slate-700">Carrier Health Lookup (DOT Number)</h3>
                 </div>
-                <form onSubmit={handleCarrierLookup} className="flex gap-2 mb-3">
-                    <input
-                        type="text"
-                        placeholder="Enter USDOT number..."
-                        className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value={dotInput}
-                        onChange={e => setDotInput(e.target.value)}
-                    />
-                    <button
-                        type="submit"
-                        disabled={carrierLoading}
-                        className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-                    >
-                        {carrierLoading ? 'Looking up...' : 'Look Up'}
-                    </button>
+                <form onSubmit={handleCarrierLookup} className="flex flex-col gap-3 mb-3">
+                    <div className="flex gap-2">
+                        <input
+                            type="text"
+                            placeholder="Enter USDOT number..."
+                            className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            value={dotInput}
+                            onChange={e => setDotInput(e.target.value)}
+                        />
+                        <button
+                            type="submit"
+                            disabled={carrierLoading}
+                            className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                        >
+                            {carrierLoading ? 'Looking up...' : 'Look Up'}
+                        </button>
+                    </div>
+                    <label className="flex items-center gap-3 text-sm text-slate-600">
+                        <span className="shrink-0 font-medium">Alert threshold</span>
+                        <select
+                            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            value={ratingThreshold}
+                            onChange={e => setRatingThreshold(e.target.value as CarrierSafetyRating)}
+                        >
+                            <option value="SATISFACTORY">Satisfactory</option>
+                            <option value="CONDITIONAL">Conditional</option>
+                            <option value="UNSATISFACTORY">Unsatisfactory</option>
+                            <option value="OUT OF SERVICE">Out of service</option>
+                        </select>
+                    </label>
                 </form>
                 {carrierError && (
-                    <div className="flex items-center text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                    <div className="flex items-center text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">
                         <AlertTriangle className="w-4 h-4 mr-2 flex-shrink-0" />
                         {carrierError}
+                    </div>
+                )}
+                {carrierNotice && !carrierError && (
+                    <div className="flex items-center text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                        <Gauge className="w-4 h-4 mr-2 flex-shrink-0" />
+                        {carrierNotice}
                     </div>
                 )}
                 {carrierHealth && (
@@ -154,18 +191,49 @@ const FMCSA: React.FC = () => {
                         </div>
                         <div className="bg-slate-50 rounded-md p-3">
                             <p className="text-xs text-slate-500">Operating Status</p>
-                            <p className={`text-sm font-semibold ${carrierHealth.operatingStatus === 'AUTHORIZED' ? 'text-green-700' : 'text-red-700'}`}>
+                            <p className={`text-sm font-semibold ${carrierHealth.operatingStatus.toUpperCase().includes('OUT OF SERVICE') ? 'text-red-700' : 'text-green-700'}`}>
                                 {carrierHealth.operatingStatus}
                             </p>
                         </div>
                         <div className="bg-slate-50 rounded-md p-3">
                             <p className="text-xs text-slate-500">Safety Rating</p>
                             <p className="text-sm font-semibold text-slate-900">{carrierHealth.saferRating || 'N/A'}</p>
+                            {carrierResult?.belowThreshold ? (
+                                <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-700">
+                                    <ShieldAlert className="h-3 w-3" />
+                                    Below threshold
+                                </span>
+                            ) : (
+                                <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                                    <ShieldCheck className="h-3 w-3" />
+                                    Within threshold
+                                </span>
+                            )}
                         </div>
                         <div className="bg-slate-50 rounded-md p-3">
                             <p className="text-xs text-slate-500">Power Units / Drivers</p>
                             <p className="text-sm font-semibold text-slate-900">{carrierHealth.powerUnits} / {carrierHealth.drivers}</p>
                         </div>
+                        {carrierHealth.inspectionSummary && (
+                            <>
+                                <div className="bg-slate-50 rounded-md p-3">
+                                    <p className="text-xs text-slate-500">Total inspections</p>
+                                    <p className="text-sm font-semibold text-slate-900">{carrierHealth.inspectionSummary.totalInspections}</p>
+                                </div>
+                                <div className="bg-slate-50 rounded-md p-3">
+                                    <p className="text-xs text-slate-500">Crash total</p>
+                                    <p className="text-sm font-semibold text-slate-900">{carrierHealth.inspectionSummary.crashes.total}</p>
+                                </div>
+                                <div className="bg-slate-50 rounded-md p-3">
+                                    <p className="text-xs text-slate-500">OOS rate</p>
+                                    <p className="text-sm font-semibold text-slate-900">{carrierHealth.inspectionSummary.outOfServiceRate.toFixed(1)}%</p>
+                                </div>
+                                <div className="bg-slate-50 rounded-md p-3">
+                                    <p className="text-xs text-slate-500">FMCSA-derived CSA seed</p>
+                                    <p className="text-sm font-semibold text-slate-900">{carrierHealth.csaScores?.crashIndicator ?? '—'}</p>
+                                </div>
+                            </>
+                        )}
                         {carrierHealth.csaScores && Object.keys(carrierHealth.csaScores).length > 0 && (
                             <div className="col-span-2 md:col-span-4 bg-slate-50 rounded-md p-3">
                                 <p className="text-xs text-slate-500 mb-2">CSA Scores</p>
@@ -178,8 +246,11 @@ const FMCSA: React.FC = () => {
                                 </div>
                             </div>
                         )}
-                        <div className="col-span-2 md:col-span-4 text-xs text-slate-400">
-                            Last updated: {new Date(carrierHealth.lastUpdated).toLocaleDateString()} — Data sourced from FMCSA SAFER (cached)
+                        <div className="col-span-2 md:col-span-4 text-xs text-slate-400 flex flex-wrap items-center gap-2">
+                            <span>Last updated: {new Date(carrierHealth.lastUpdated).toLocaleDateString()}</span>
+                            <span>—</span>
+                            <span>{carrierResult?.status === 'success' ? 'Live FMCSA SAFER snapshot' : 'Cached or derived snapshot'}</span>
+                            {carrierHealth.fmcsaAsOf && <span>— SAFER as of {carrierHealth.fmcsaAsOf}</span>}
                         </div>
                     </div>
                 )}

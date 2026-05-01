@@ -1,5 +1,20 @@
-// Carrier Health Service - SAFER/CSA Data Scraping
-// Uses web scraping to fetch carrier data from FMCSA SAFER website
+import { supabase } from '../lib/supabase';
+
+export interface CarrierInspectionSummary {
+    usInspections: number;
+    canadianInspections: number;
+    totalInspections: number;
+    outOfServiceInspections: number;
+    outOfServiceRate: number;
+    crashes: {
+        fatal: number;
+        injury: number;
+        tow: number;
+        total: number;
+    };
+    derivedAt: string;
+    safetyRatingAsOf?: string;
+}
 
 export interface CarrierHealth {
     dotNumber: string;
@@ -13,6 +28,7 @@ export interface CarrierHealth {
     powerUnits: number;
     drivers: number;
     mcs150FormDate?: string;
+    inspectionSummary?: CarrierInspectionSummary;
     csaScores?: {
         unsafeDriving?: number;
         hoursOfService?: number;
@@ -30,6 +46,7 @@ export interface CarrierHealth {
         }
     };
     lastUpdated: string;
+    fmcsaAsOf?: string;
 }
 
 export interface CarrierSettings {
@@ -39,10 +56,85 @@ export interface CarrierSettings {
     companyName?: string;
 }
 
-import { supabase } from '../lib/supabase';
+export type CarrierSafetyRating = 'SATISFACTORY' | 'CONDITIONAL' | 'UNSATISFACTORY' | 'OUT OF SERVICE' | 'NOT RATED' | 'NONE' | 'UNKNOWN';
+
+export interface CarrierLookupResult {
+    status: 'success' | 'degraded' | 'unavailable';
+    source: 'live' | 'cache' | 'circuit-breaker' | 'api-error';
+    health: CarrierHealth | null;
+    message: string;
+    belowThreshold: boolean;
+    threshold: CarrierSafetyRating;
+}
+
+interface CarrierLookupOptions {
+    threshold?: CarrierSafetyRating;
+    retryDelayMs?: number;
+    endpointUrl?: string;
+    bypassCircuitBreaker?: boolean;
+}
+
+const DEFAULT_THRESHOLD: CarrierSafetyRating = 'CONDITIONAL';
+const DEFAULT_ENDPOINT = '/api/carrier-health';
+const MAX_RETRIES = 3;
+const CIRCUIT_BREAKER_THRESHOLD = 3;
+const CIRCUIT_BREAKER_COOLDOWN_MS = 5 * 60 * 1000;
+const lookupCircuit = {
+    failures: 0,
+    openUntil: 0,
+};
+
+const RATING_RANK: Record<string, number> = {
+    'SATISFACTORY': 4,
+    'CONDITIONAL': 3,
+    'UNSATISFACTORY': 2,
+    'OUT OF SERVICE': 1,
+    'NOT RATED': 0,
+    'NONE': 0,
+    'UNKNOWN': 0,
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const normalizeRating = (rating?: string | null): CarrierSafetyRating => {
+    const normalized = rating?.trim().toUpperCase();
+    if (!normalized) return 'UNKNOWN';
+    if (normalized in RATING_RANK) return normalized as CarrierSafetyRating;
+    return 'UNKNOWN';
+};
+
+const getRatingRank = (rating?: string | null): number => RATING_RANK[normalizeRating(rating)] ?? 0;
+
+const buildUnavailableResult = (threshold: CarrierSafetyRating, message: string, source: CarrierLookupResult['source']): CarrierLookupResult => ({
+    status: 'unavailable',
+    source,
+    health: null,
+    message,
+    belowThreshold: false,
+    threshold,
+});
+
+const isCircuitOpen = () => lookupCircuit.openUntil > Date.now();
+
+const recordFailure = () => {
+    lookupCircuit.failures += 1;
+    if (lookupCircuit.failures >= CIRCUIT_BREAKER_THRESHOLD) {
+        lookupCircuit.openUntil = Date.now() + CIRCUIT_BREAKER_COOLDOWN_MS;
+    }
+};
+
+const recordSuccess = () => {
+    lookupCircuit.failures = 0;
+    lookupCircuit.openUntil = 0;
+};
+
+const buildRequestUrl = (dotNumber: string, endpointUrl?: string) => {
+    const base = endpointUrl ?? DEFAULT_ENDPOINT;
+    const separator = base.includes('?') ? '&' : '?';
+    return `${base}${separator}dot=${encodeURIComponent(dotNumber)}`;
+};
 
 export const carrierService = {
-    // Save carrier settings to database
     async saveCarrierSettings(settings: CarrierSettings): Promise<void> {
         const payload = {
             id: settings.id || 'default',
@@ -68,7 +160,6 @@ export const carrierService = {
         }
     },
 
-    // Get carrier settings from database
     async getCarrierSettings(): Promise<CarrierSettings | null> {
         try {
             const { data, error } = await supabase
@@ -77,9 +168,7 @@ export const carrierService = {
                 .eq('id', 'default')
                 .single();
 
-            // Handle both "no rows" and "table doesn't exist" errors gracefully
             if (error) {
-                // PGRST116 = no rows, PGRST205 = table doesn't exist
                 if (error.code === 'PGRST116' || error.code === 'PGRST205' || error.code === '42P01') {
                     return null;
                 }
@@ -101,41 +190,116 @@ export const carrierService = {
         }
     },
 
-    // Fetch carrier health data from FMCSA SAFER
-    // Note: This requires a backend proxy due to CORS
-    async fetchCarrierHealth(dotNumber: string): Promise<CarrierHealth | null> {
-        try {
-            // In production, this would call a backend API that scrapes SAFER
-            // For now, we'll use a mock API endpoint structure
-            const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 10000);
-            let response: Response;
-            try {
-                response = await fetch(`/api/carrier-health?dot=${dotNumber}`, {
-                    signal: controller.signal
-                });
-            } finally {
-                clearTimeout(timer);
-            }
+    async lookupCarrierHealth(dotNumber: string, options: CarrierLookupOptions = {}): Promise<CarrierLookupResult> {
+        const threshold = options.threshold ?? DEFAULT_THRESHOLD;
+        const normalizedDot = dotNumber.trim();
 
-            if (!response.ok) {
-                // If API not available, return cached data from DB
-                return this.getCachedCarrierHealth(dotNumber);
-            }
-
-            const data = await response.json();
-
-            // Cache the result
-            await this.cacheCarrierHealth(data);
-
-            return data;
-        } catch (error) {
-            console.error('Failed to fetch carrier health:', error);
-            return this.getCachedCarrierHealth(dotNumber);
+        if (!normalizedDot) {
+            return buildUnavailableResult(threshold, 'Enter a USDOT number to look up carrier health.', 'api-error');
         }
+
+        if (!options.bypassCircuitBreaker && isCircuitOpen()) {
+            const cached = await this.getCachedCarrierHealth(normalizedDot);
+            if (cached) {
+                return {
+                    status: 'degraded',
+                    source: 'circuit-breaker',
+                    health: cached,
+                    message: 'FMCSA carrier lookup is temporarily rate-limited. Showing the last cached snapshot.',
+                    belowThreshold: this.isSafetyRatingBelowThreshold(cached.saferRating, threshold),
+                    threshold,
+                };
+            }
+
+            return buildUnavailableResult(threshold, 'FMCSA carrier lookup is temporarily unavailable. Please retry in a few minutes.', 'circuit-breaker');
+        }
+
+        let lastError: unknown = null;
+        const retryDelayMs = options.retryDelayMs ?? 250;
+        const endpointUrl = options.endpointUrl ?? DEFAULT_ENDPOINT;
+
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt += 1) {
+            try {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 10000);
+                let response: Response;
+                try {
+                    response = await fetch(buildRequestUrl(normalizedDot, endpointUrl), { signal: controller.signal });
+                } finally {
+                    clearTimeout(timeout);
+                }
+
+                if (!response.ok) {
+                    throw new Error(`FMCSA lookup failed with HTTP ${response.status}`);
+                }
+
+                const payload = await response.json() as unknown;
+                let health: CarrierHealth | null = null;
+                if (payload && typeof payload === 'object') {
+                    const payloadRecord = payload as Record<string, unknown>;
+                    if ('health' in payloadRecord && payloadRecord.health) {
+                        health = payloadRecord.health as CarrierHealth;
+                    } else if ('data' in payloadRecord && payloadRecord.data) {
+                        health = payloadRecord.data as CarrierHealth;
+                    } else if ('dotNumber' in payloadRecord) {
+                        health = payload as CarrierHealth;
+                    }
+                }
+
+                if (!health || !health.dotNumber) {
+                    throw new Error('FMCSA lookup returned an empty carrier snapshot');
+                }
+
+                recordSuccess();
+                await this.cacheCarrierHealth(health);
+
+                return {
+                    status: 'success',
+                    source: 'live',
+                    health,
+                    message: 'Live FMCSA carrier snapshot loaded.',
+                    belowThreshold: this.isSafetyRatingBelowThreshold(health.saferRating, threshold),
+                    threshold,
+                };
+            } catch (error) {
+                lastError = error;
+                recordFailure();
+
+                if (attempt < MAX_RETRIES) {
+                    await sleep(retryDelayMs * attempt);
+                    continue;
+                }
+            }
+        }
+
+        const cached = await this.getCachedCarrierHealth(normalizedDot);
+        if (cached) {
+            return {
+                status: 'degraded',
+                source: 'cache',
+                health: cached,
+                message: lastError instanceof Error
+                    ? `FMCSA lookup unavailable (${lastError.message}). Showing the last cached snapshot.`
+                    : 'FMCSA lookup unavailable. Showing the last cached snapshot.',
+                belowThreshold: this.isSafetyRatingBelowThreshold(cached.saferRating, threshold),
+                threshold,
+            };
+        }
+
+        return buildUnavailableResult(
+            threshold,
+            lastError instanceof Error
+                ? `FMCSA carrier lookup failed: ${lastError.message}`
+                : 'FMCSA carrier lookup failed. Please try again later.',
+            'api-error'
+        );
     },
 
-    // Cache carrier health data
+    async fetchCarrierHealth(dotNumber: string): Promise<CarrierHealth | null> {
+        const result = await this.lookupCarrierHealth(dotNumber);
+        return result.health;
+    },
+
     async cacheCarrierHealth(health: CarrierHealth): Promise<void> {
         const { error } = await supabase
             .from('carrier_health_cache')
@@ -148,7 +312,6 @@ export const carrierService = {
         if (error) console.error('Failed to cache carrier health:', error);
     },
 
-    // Get cached carrier health
     async getCachedCarrierHealth(dotNumber: string): Promise<CarrierHealth | null> {
         const { data, error } = await supabase
             .from('carrier_health_cache')
@@ -160,24 +323,22 @@ export const carrierService = {
         return data?.data || null;
     },
 
-    // Mock data for development/demo
-    getMockCarrierHealth(dotNumber: string): CarrierHealth {
+    isSafetyRatingBelowThreshold(rating: string | undefined, threshold: CarrierSafetyRating = DEFAULT_THRESHOLD): boolean {
+        const normalizedRating = normalizeRating(rating);
+        const normalizedThreshold = normalizeRating(threshold);
+        return getRatingRank(normalizedRating) < getRatingRank(normalizedThreshold);
+    },
+
+    getCarrierLookupCircuitState() {
         return {
-            dotNumber: dotNumber,
-            legalName: 'Sample Trucking LLC',
-            entityType: 'CARRIER',
-            operatingStatus: 'AUTHORIZED',
-            saferRating: 'SATISFACTORY',
-            powerUnits: 25,
-            drivers: 30,
-            csaScores: {
-                unsafeDriving: 45,
-                hoursOfService: 62,
-                driverFitness: 28,
-                vehicleMaintenance: 55,
-                crashIndicator: 38
-            },
-            lastUpdated: new Date().toISOString()
+            failures: lookupCircuit.failures,
+            openUntil: lookupCircuit.openUntil,
+            isOpen: isCircuitOpen(),
         };
-    }
+    },
+
+    resetCarrierLookupCircuit() {
+        lookupCircuit.failures = 0;
+        lookupCircuit.openUntil = 0;
+    },
 };

@@ -296,30 +296,21 @@ Summary:
 ---
 
 ### Sprint 40: FMCSA Live Integration and Carrier Data Completion
-Status: Planned
+Status: Complete
+Summary:
+- Replaced the mock/development carrier lookup path with a live FMCSA SAFER snapshot flow backed by `/api/carrier-health`.
+- Added FMCSA inspection/crash/OOS parsing, derived CSA seeding, retry handling, and a circuit breaker for lookup failures.
+- Updated the FMCSA page to show live carrier health, inspection totals, crash totals, OOS rate, and configurable safety-rating threshold alerts.
+- Updated the Carrier Health widget to surface live snapshot status, threshold alerts, and inspection summary cards without mock fallback behavior.
+- Wired the CSA Predictor to ingest FMCSA carrier snapshots as an additional real-data source alongside inspection records.
+- Added regression tests for the carrier service, FMCSA page, and CSA Predictor FMCSA-seeding workflow.
 
-User stories:
-- As a compliance lead, I can look up a carrier's live FMCSA safety rating, inspection history, and crash data directly in the app.
-- As a fleet manager, I can see CSA BASIC scores populated from real FMCSA data, not manually entered estimates.
-- As the platform, all carrier data calls have production-grade fallbacks, retry logic, and error messaging — no mock/dev patterns remain in `carrierService`.
-
-Goal:
-- Complete the FMCSA module from a static/demo page into a live integration and remove all remaining mock fallback patterns in `carrierService`.
-
-Scope:
-- Replace `carrierService` mock patterns with real FMCSA API calls (SAFER Web or FMCSA API v1)
-- Add carrier safety rating, inspection totals, crash totals, and OOS rate to the carrier health panel
-- Wire CSA BASIC score ingestion from FMCSA data into `CSAPredictor` as an additional source alongside real inspection records
-- Add FMCSA alert rules: flag carriers below a configurable safety rating threshold
-- Add retry/circuit-breaker pattern for FMCSA API unavailability
-- Remove all `// TODO: mock` and development fallback branches in `carrierService.ts`
-- Add integration tests with mocked HTTP layer (no live API calls in CI)
-
-Exit criteria:
-- `carrierService` contains zero mock/dev fallback patterns
-- Carrier health lookup returns real FMCSA data in the UI
-- CSA BASIC scores can be seeded from FMCSA data in addition to inspection records
-- API unavailability shows a graceful degraded state, not an error crash
+Verification:
+- `npm exec vitest --run src/test/carrierService.test.ts src/test/fmcsaPage.test.tsx src/test/csaPredictor.test.tsx`
+- `npm run build`
+- Browser verification on the local app:
+  - `/fmcsa` looked up USDOT `3114665` and rendered live carrier health, inspection totals, crash totals, OOS rate, CSA scores, and a below-threshold warning.
+  - `/reporting/csa-predictor` loaded the same FMCSA carrier snapshot and appended FMCSA-derived violation seeds into the predictor table.
 
 ---
 

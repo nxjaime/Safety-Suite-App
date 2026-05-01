@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, AlertTriangle, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
-import { carrierService, type CarrierHealth, type CarrierSettings } from '../../services/carrierService';
+import { Activity, AlertTriangle, CheckCircle, XCircle, RefreshCw, Gauge, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { carrierService, type CarrierHealth, type CarrierLookupResult, type CarrierSettings } from '../../services/carrierService';
 import clsx from 'clsx';
 
 
@@ -46,6 +46,8 @@ const StatusBox: React.FC<{
 const CarrierHealthWidget: React.FC = () => {
     const [settings, setSettings] = useState<CarrierSettings | null>(null);
     const [health, setHealth] = useState<CarrierHealth | null>(null);
+    const [lookupResult, setLookupResult] = useState<CarrierLookupResult | null>(null);
+    const [lookupMessage, setLookupMessage] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
@@ -59,15 +61,14 @@ const CarrierHealthWidget: React.FC = () => {
             setSettings(carrierSettings);
 
             if (carrierSettings?.dotNumber) {
-                // Try to get real data, fallback to mock for demo
-                let healthData = await carrierService.fetchCarrierHealth(carrierSettings.dotNumber);
-                if (!healthData) {
-                    healthData = carrierService.getMockCarrierHealth(carrierSettings.dotNumber);
-                }
-                setHealth(healthData);
+                const lookup = await carrierService.lookupCarrierHealth(carrierSettings.dotNumber);
+                setLookupResult(lookup);
+                setLookupMessage(lookup.message);
+                setHealth(lookup.health);
             }
         } catch (error) {
             console.error('Failed to load carrier data:', error);
+            setLookupMessage('Unable to load carrier snapshot');
         } finally {
             setLoading(false);
         }
@@ -77,8 +78,10 @@ const CarrierHealthWidget: React.FC = () => {
         if (!settings?.dotNumber) return;
         setRefreshing(true);
         try {
-            const healthData = carrierService.getMockCarrierHealth(settings.dotNumber);
-            setHealth(healthData);
+            const lookup = await carrierService.lookupCarrierHealth(settings.dotNumber, { bypassCircuitBreaker: true });
+            setLookupResult(lookup);
+            setLookupMessage(lookup.message);
+            setHealth(lookup.health);
         } finally {
             setRefreshing(false);
         }
@@ -145,8 +148,9 @@ const CarrierHealthWidget: React.FC = () => {
     if (!health && !isEditing) {
         return (
             <div className="p-3">
-                <div className="text-xs text-green-300 text-center">
+                <div className="rounded-md border border-red-700/40 bg-red-900/40 p-2 text-center text-xs text-red-100">
                     <p>Unable to load carrier data</p>
+                    {lookupMessage && <p className="mt-1 text-[10px] text-red-200">{lookupMessage}</p>}
                     <button onClick={handleRefresh} className="underline hover:text-white mr-2">Retry</button>
                 </div>
             </div>
@@ -181,6 +185,21 @@ const CarrierHealthWidget: React.FC = () => {
             </div>
 
             {/* Company Info */}
+            {lookupMessage && !isEditing && (
+                <div className={clsx(
+                    'flex items-center rounded-md border px-2 py-1.5 text-[10px]',
+                    lookupResult?.status === 'unavailable'
+                        ? 'border-red-700/40 bg-red-900/40 text-red-100'
+                        : 'border-amber-700/40 bg-amber-900/30 text-amber-100'
+                )}>
+                    {lookupResult?.status === 'unavailable' ? (
+                        <AlertTriangle className="mr-2 h-3.5 w-3.5 flex-shrink-0" />
+                    ) : (
+                        <Gauge className="mr-2 h-3.5 w-3.5 flex-shrink-0" />
+                    )}
+                    <span>{lookupMessage}</span>
+                </div>
+            )}
             {isEditing ? (
                 <div className="space-y-2 bg-green-800/50 p-2 rounded">
                     <input
@@ -225,14 +244,21 @@ const CarrierHealthWidget: React.FC = () => {
             {health?.saferRating && !isEditing && (
                 <div className="flex items-center justify-between bg-green-800/30 rounded-md p-2">
                     <span className="text-xs text-green-200">SAFER Rating</span>
-                    <span className={clsx(
-                        "text-xs font-semibold px-2 py-0.5 rounded",
-                        health.saferRating === 'SATISFACTORY' ? "bg-green-600 text-white" :
-                            health.saferRating === 'CONDITIONAL' ? "bg-yellow-600 text-white" :
-                                "bg-red-600 text-white"
-                    )}>
-                        {health.saferRating}
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <span className={clsx(
+                            "text-xs font-semibold px-2 py-0.5 rounded",
+                            health.saferRating === 'SATISFACTORY' ? "bg-green-600 text-white" :
+                                health.saferRating === 'CONDITIONAL' ? "bg-yellow-600 text-white" :
+                                    "bg-red-600 text-white"
+                        )}>
+                            {health.saferRating}
+                        </span>
+                        {lookupResult?.belowThreshold ? (
+                            <ShieldAlert className="h-4 w-4 text-red-300" />
+                        ) : (
+                            <ShieldCheck className="h-4 w-4 text-green-300" />
+                        )}
+                    </div>
                 </div>
             )}
 
@@ -269,9 +295,27 @@ const CarrierHealthWidget: React.FC = () => {
 
             {/* Fleet Info */}
             {!isEditing && health && (
-                <div className="flex justify-between text-[10px] text-green-400 pt-1 border-t border-green-700/50">
-                    <span>{health.powerUnits} Power Units</span>
-                    <span>{health.drivers} Drivers</span>
+                <div className="space-y-2 pt-1 border-t border-green-700/50">
+                    <div className="flex justify-between text-[10px] text-green-400">
+                        <span>{health.powerUnits} Power Units</span>
+                        <span>{health.drivers} Drivers</span>
+                    </div>
+                    {health.inspectionSummary && (
+                        <div className="grid grid-cols-3 gap-1 text-[10px] text-green-100">
+                            <div className="rounded bg-green-800/30 p-1 text-center">
+                                <div className="font-semibold">{health.inspectionSummary.totalInspections}</div>
+                                <div className="text-green-300">Inspections</div>
+                            </div>
+                            <div className="rounded bg-green-800/30 p-1 text-center">
+                                <div className="font-semibold">{health.inspectionSummary.crashes.total}</div>
+                                <div className="text-green-300">Crashes</div>
+                            </div>
+                            <div className="rounded bg-green-800/30 p-1 text-center">
+                                <div className="font-semibold">{health.inspectionSummary.outOfServiceRate.toFixed(1)}%</div>
+                                <div className="text-green-300">OOS</div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

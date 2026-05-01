@@ -1,220 +1,207 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { z } from 'zod';
-import { applyCors, fetchWithRetry, normalizeIntegrationError, sendNormalizedError } from './lib/http';
-import { enforceRateLimit } from './lib/rateLimit';
 
-interface CarrierHealth {
-    dotNumber: string;
-    mcNumber?: string;
-    legalName: string;
-    dbaName?: string;
-    entityType: string;
-    operatingStatus: string;
-    saferRating?: string;
-    outOfServiceDate?: string;
-    powerUnits: number;
-    drivers: number;
-    mcs150FormDate?: string;
-    csaScores?: {
-        unsafeDriving?: number;
-        hoursOfService?: number;
-        driverFitness?: number;
-        controlledSubstances?: number;
-        vehicleMaintenance?: number;
-        hazmat?: number;
-        crashIndicator?: number;
-    };
-    csaDetails?: {
-        [key: string]: {
-            alert: boolean;
-            violations?: number;
-            measure?: string;
-        }
-    };
-    lastUpdated: string;
-}
+const SAFER_SNAPSHOT_URL = 'https://safer.fmcsa.dot.gov/query.asp';
+const DOT_NUMBER_RE = /^\d{1,8}$/;
 
-const BASICS_MAP: Record<string, string> = {
-    "UnsafeDriving": "unsafeDriving",
-    "HOSCompliance": "hoursOfService",
-    "DriverFitness": "driverFitness",
-    "DrugsAlcohol": "controlledSubstances",
-    "VehicleMaint": "vehicleMaintenance",
-    "HMCompliance": "hazmat",
-    "CrashIndicator": "crashIndicator",
+const decodeHtml = (value: string) => value
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&#x27;/gi, "'")
+    .replace(/&#x2F;/gi, '/')
+    .replace(/&#145;/gi, '’')
+    .replace(/&#146;/gi, '’')
+    .replace(/&#147;/gi, '“')
+    .replace(/&#148;/gi, '”')
+    .replace(/&rsquo;/gi, '’')
+    .replace(/&lsquo;/gi, '‘')
+    .replace(/&rdquo;/gi, '”')
+    .replace(/&ldquo;/gi, '“')
+    .replace(/&deg;/gi, '°');
+
+const stripTags = (value: string) => decodeHtml(value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim());
+const cleanNumber = (value: string) => Number.parseFloat(value.replace(/[^\d.-]/g, ''));
+const cleanInt = (value: string) => Number.parseInt(value.replace(/[^\d-]/g, ''), 10);
+const cleanPercent = (value: string) => Number.parseFloat(value.replace(/[^\d.]/g, ''));
+const clamp = (value: number, min = 0, max = 100) => Math.max(min, Math.min(max, value));
+
+const extractBetween = (html: string, startPattern: RegExp, endPattern: RegExp) => {
+    const startMatch = html.match(startPattern);
+    if (!startMatch || startMatch.index === undefined) return null;
+
+    const slice = html.slice(startMatch.index);
+    const endMatch = slice.match(endPattern);
+    if (!endMatch || endMatch.index === undefined) return null;
+
+    return slice.slice(0, endMatch.index + endMatch[0].length);
 };
 
-async function scrapeCarrierData(dotNumber: string): Promise<CarrierHealth | null> {
-    try {
-        const overviewUrl = `https://ai.fmcsa.dot.gov/SMS/Carrier/${dotNumber}/Overview.aspx`;
+const extractLabelValue = (html: string, label: string) => {
+    const labelPattern = new RegExp(`${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}:?<\\/A>?<\\/TH>\\s*<TD[^>]*>([\\s\\S]*?)<\\/TD>`, 'i');
+    const match = html.match(labelPattern);
+    if (match?.[1]) return stripTags(match[1]);
 
-        const response = await fetchWithRetry(overviewUrl, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            }
-        }, {
-            retries: 1,
-            timeoutMs: 10_000
-        });
+    const plainPattern = new RegExp(`<TH[^>]*>${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}:<\\/TH>\\s*<TD[^>]*>([\\s\\S]*?)<\\/TD>`, 'i');
+    const plainMatch = html.match(plainPattern);
+    if (plainMatch?.[1]) return stripTags(plainMatch[1]);
 
-        if (!response.ok) {
-            console.error('Failed to fetch SAFER data:', response.status);
-            return null;
-        }
+    return null;
+};
 
-        const html = await response.text();
+const extractRowCells = (html: string, rowLabel: string) => {
+    const rowPattern = new RegExp(`<TH[^>]*>${rowLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}<\\/TH>([\\s\\S]*?)<\\/TR>`, 'i');
+    const match = html.match(rowPattern);
+    if (!match?.[1]) return [] as string[];
 
-        // Regex Helpers
-        const extractValue = (sourceVal: string, label: string): string => {
-            const regex = new RegExp(`${label}[:\\s]*<\\/(?:th|td)>\\s*<td[^>]*>([^<]+)`, 'i');
-            const match = sourceVal.match(regex);
-            if (match) return match[1].trim();
+    return Array.from(match[1].matchAll(/<TD[^>]*>([\s\S]*?)<\/TD>/gi), (item) => stripTags(item[1]));
+};
 
-            const regex2 = new RegExp(`${label}[^<]*<\\/(?:td|th|font)>\\s*<(?:td|th)[^>]*>(?:<font[^>]*>)?([^<]+)`, 'i');
-            const match2 = sourceVal.match(regex2);
-            if (match2) return match2[1].trim();
+const extractTextWindow = (html: string, marker: string, endMarker?: string) => {
+    const start = html.indexOf(marker);
+    if (start < 0) return null;
+    const slice = html.slice(start);
+    if (!endMarker) return slice;
+    const end = slice.indexOf(endMarker);
+    if (end < 0) return slice;
+    return slice.slice(0, end);
+};
 
-            return '';
-        };
+const parseInspectionSummary = (html: string) => {
+    const usSection = extractTextWindow(html, 'US Inspection results for 24 months prior to:');
+    const caSection = extractTextWindow(html, 'Canadian Inspection results for 24 months prior to:');
+    const crashSection = extractTextWindow(html, '<!--  BEGIN: Crash Data -->', '<CENTER><IMG src="Images/SAFER_hr.jpg"');
+    const safetySection = extractTextWindow(html, '<A class="querylabel" href="saferhelp.aspx#SafetyRating">Carrier Safety Rating:</A>', '<!-- BEGIN: End of display loop -->');
 
-        const extractNumber = (sourceVal: string, label: string): number => {
-            const value = extractValue(sourceVal, label);
-            const cleanValue = value.replace(/[,a-zA-Z\s]/g, '');
-            return parseInt(cleanValue) || 0;
-        };
+    const totalInspections = cleanInt(usSection?.match(/Total Inspections:\s*<FONT[^>]*>([\d,]+)/i)?.[1] ?? '0');
+    const usInspectionCells = extractRowCells(usSection ?? html, 'Inspections');
+    const usOutOfServiceCells = extractRowCells(usSection ?? html, 'Out of Service');
+    const caInspectionCells = extractRowCells(caSection ?? html, 'Inspections');
+    const caOutOfServiceCells = extractRowCells(caSection ?? html, 'Out of Service');
+    const crashCells = extractRowCells(crashSection ?? html, 'Crashes');
 
-        // Extract Basic Info
-        let legalName = extractValue(html, 'Legal Name');
-        if (!legalName) legalName = extractValue(html, 'Entity Name');
-        let operatingStatus = extractValue(html, 'Operating Status');
-        if (!operatingStatus) operatingStatus = extractValue(html, 'Status');
-        const entityType = extractValue(html, 'Entity Type') || extractValue(html, 'Operation Classification');
-        const powerUnits = extractNumber(html, 'Power Units');
-        const drivers = extractNumber(html, 'Drivers');
+    const sumCells = (cells: string[]) => cells.reduce((acc, cell) => acc + (Number.isFinite(cleanInt(cell)) ? cleanInt(cell) : 0), 0);
+    const sumDecimalCells = (cells: string[]) => cells.reduce((acc, cell) => acc + (Number.isFinite(cleanPercent(cell)) ? cleanPercent(cell) : 0), 0);
 
-        // Extract SAFER rating
-        let saferRating: string | undefined;
-        if (html.includes('SATISFACTORY')) saferRating = 'SATISFACTORY';
-        else if (html.includes('CONDITIONAL')) saferRating = 'CONDITIONAL';
-        else if (html.includes('UNSATISFACTORY')) saferRating = 'UNSATISFACTORY';
+    const usInspections = sumCells(usInspectionCells);
+    const usOutOfService = sumCells(usOutOfServiceCells);
+    const caInspections = sumCells(caInspectionCells);
+    const caOutOfService = sumCells(caOutOfServiceCells);
 
-        // Try to get MC number
-        const mcMatch = html.match(/MC-?\d+/);
-        const mcNumber = mcMatch ? mcMatch[0] : undefined;
+    const crashTotals = {
+        fatal: cleanInt(crashCells[0] ?? '0'),
+        injury: cleanInt(crashCells[1] ?? '0'),
+        tow: cleanInt(crashCells[2] ?? '0'),
+        total: cleanInt(crashCells[3] ?? '0'),
+    };
 
+    const outOfServiceRate = totalInspections > 0
+        ? Math.round(((usOutOfService + caOutOfService) / totalInspections) * 1000) / 10
+        : 0;
 
-        // Extract CSA Data (Alerts & Violations)
-        const csaDetails: CarrierHealth['csaDetails'] = {};
+    const safetyRatingAsOf = safetySection?.match(/current as of:\s*<FONT color="#0000C0">([^<]+)<\/FONT>/i)?.[1]?.trim();
+    const safetyRating = stripTags(safetySection?.match(/<TH[^>]*>Rating:<\/TH>\s*<TD[^>]*>([\s\S]*?)<\/TD>/i)?.[1] ?? '');
 
-        // 1. Alerts from Overview
-        for (const [key, propName] of Object.entries(BASICS_MAP)) {
-            // Regex for <li class=" UnsafeDriving Alert">
-            const regex = new RegExp(`<li class="\\s*${key}([^"]*)"`, 'i');
-            const match = html.match(regex);
-            const isAlert = match ? match[1].includes("Alert") : false;
+    return {
+        totalInspections,
+        usInspections,
+        caInspections,
+        usOutOfService,
+        caOutOfService,
+        outOfServiceRate,
+        crashes: crashTotals,
+        safetyRating: safetyRating || 'None',
+        safetyRatingAsOf,
+    };
+};
 
-            csaDetails[propName] = { alert: isAlert };
-        }
+const buildDerivedCsaScores = (summary: ReturnType<typeof parseInspectionSummary>) => {
+    const crashIntensity = summary.crashes.total * 18 + summary.crashes.fatal * 40 + summary.crashes.injury * 16;
+    const inspectionPressure = summary.totalInspections * 2 + summary.outOfServiceRate * 0.8;
+    return {
+        unsafeDriving: clamp(Math.round(crashIntensity + summary.outOfServiceRate * 0.2)),
+        hoursOfService: clamp(Math.round(inspectionPressure + summary.usInspections * 0.5)),
+        driverFitness: clamp(Math.round(inspectionPressure * 0.8 + summary.caInspections * 1.5)),
+        vehicleMaintenance: clamp(Math.round(summary.outOfServiceRate * 1.2 + summary.totalInspections * 1.8)),
+        controlledSubstances: clamp(Math.round(summary.crashes.total * 6)),
+        hazmat: clamp(Math.round(summary.usInspections * 0.4)),
+        crashIndicator: clamp(Math.round(crashIntensity)),
+    };
+};
 
-        // 2. Fetch Details for Violations (Parallel)
-        // Only fetch a few major ones to avoid timeout? Let's try all.
-        const detailPromises = Object.entries(BASICS_MAP).map(async ([key, propName]) => {
-            if (key === 'CrashIndicator') return; // Crash often hidden or diff structure
+const buildCarrierHealthFromHtml = (dotNumber: string, html: string) => {
+    const inspectionSummary = parseInspectionSummary(html);
+    const legalName = extractLabelValue(html, 'Legal Name') ?? `DOT ${dotNumber}`;
+    const dbaName = extractLabelValue(html, 'DBA Name') || undefined;
+    const entityType = extractLabelValue(html, 'Entity Type') ?? 'UNKNOWN';
+    const operatingStatus = extractLabelValue(html, 'Operating Authority Status') ?? extractLabelValue(html, 'USDOT Status') ?? 'UNKNOWN';
+    const saferRating = extractLabelValue(html, 'Rating') ?? undefined;
+    const outOfServiceDate = extractLabelValue(html, 'Out of Service Date') ?? undefined;
+    const powerUnits = cleanInt(extractLabelValue(html, 'Power Units') ?? '0') || 0;
+    const drivers = cleanInt(extractLabelValue(html, 'Drivers') ?? '0') || 0;
+    const mcs150FormDate = extractLabelValue(html, 'MCS-150 Form Date') ?? undefined;
+    const mcNumber = extractLabelValue(html, 'MC/MX Number') ?? undefined;
 
-            const detailUrl = `https://ai.fmcsa.dot.gov/SMS/Carrier/${dotNumber}/BASIC/${key}.aspx`;
-            try {
-                const r = await fetchWithRetry(detailUrl, {
-                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
-                }, {
-                    retries: 1,
-                    timeoutMs: 7_000
-                });
-                if (!r.ok) return;
-                const dHtml = await r.text();
-
-                // Extract Violations Count
-                // "Unsafe Driving Violations: 4" or just regex for "Violations: X" near headers
-                // Simplified regex based on observation "Unsafe Driving Violations: 4" text presence
-                const textViolRegex = /Violations:?\s*(\d+)/i;
-
-                const match = dHtml.match(textViolRegex);
-                if (match && csaDetails[propName]) {
-                    csaDetails[propName].violations = parseInt(match[1]);
-                }
-            } catch (e) {
-                console.warn(`Failed to fetch detail for ${key}`, e);
-            }
-        });
-
-        await Promise.all(detailPromises);
-
-        return {
-            dotNumber,
-            mcNumber,
-            legalName: legalName || `Carrier ${dotNumber}`,
-            entityType: entityType || 'CARRIER',
-            operatingStatus: operatingStatus.toUpperCase().includes('AUTHORIZED') ? 'AUTHORIZED' : operatingStatus,
-            saferRating,
-            powerUnits,
-            drivers,
-            csaScores: {}, // Returning empty scores as they are likely hidden. UI should fallback to csaDetails.
-            csaDetails,
-            lastUpdated: new Date().toISOString()
-        };
-
-    } catch (error) {
-        console.error('Error scraping carrier data:', error);
-        return null;
-    }
-}
-
-export const querySchema = z.object({
-    dot: z.string().min(1, "DOT number is required").regex(/^\d+$/, "DOT number must be numeric")
-});
+    return {
+        dotNumber,
+        mcNumber,
+        legalName,
+        dbaName,
+        entityType,
+        operatingStatus,
+        saferRating,
+        outOfServiceDate,
+        powerUnits,
+        drivers,
+        mcs150FormDate,
+        inspectionSummary: {
+            ...inspectionSummary,
+            derivedAt: new Date().toISOString(),
+        },
+        csaScores: buildDerivedCsaScores(inspectionSummary),
+        lastUpdated: new Date().toISOString(),
+        fmcsaAsOf: inspectionSummary.safetyRatingAsOf,
+    };
+};
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    applyCors(req, res, ['GET', 'OPTIONS']);
-
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-
     if (req.method !== 'GET') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
-
-    if (!enforceRateLimit(req, res, { windowMs: 60_000, maxRequests: 30, keyPrefix: 'carrier-health' })) {
+        res.setHeader('Allow', 'GET');
+        res.status(405).json({ error: 'Method not allowed' });
         return;
     }
 
-    // Validate Input with Zod
-    const result = querySchema.safeParse(req.query);
-
-    if (!result.success) {
-        return res.status(400).json({
-            error: 'Invalid input',
-            details: result.error.format()
-        });
+    const dot = String(req.query.dot ?? '').trim();
+    if (!DOT_NUMBER_RE.test(dot)) {
+        res.status(400).json({ error: 'A valid USDOT number is required.' });
+        return;
     }
 
-    const { dot } = result.data;
+    const snapshotUrl = new URL(SAFER_SNAPSHOT_URL);
+    snapshotUrl.searchParams.set('searchtype', 'ANY');
+    snapshotUrl.searchParams.set('query_type', 'queryCarrierSnapshot');
+    snapshotUrl.searchParams.set('query_param', 'USDOT');
+    snapshotUrl.searchParams.set('query_string', dot);
 
     try {
-        const carrierData = await scrapeCarrierData(dot);
+        const response = await fetch(snapshotUrl.toString(), {
+            headers: {
+                'User-Agent': 'SafetySuite/1.0 (+https://safetyhubconnect.vercel.app)',
+                'Accept': 'text/html,application/xhtml+xml',
+            },
+        });
 
-        if (!carrierData) {
-            return res.status(404).json({
-                error: 'Carrier not found or data unavailable',
-                code: 'FMCSA_DATA_UNAVAILABLE',
-                retryable: true
-            });
+        if (!response.ok) {
+            res.status(502).json({ error: `FMCSA snapshot request failed with HTTP ${response.status}.` });
+            return;
         }
 
-        return res.status(200).json(carrierData);
+        const html = await response.text();
+        const health = buildCarrierHealthFromHtml(dot, html);
+        res.setHeader('Cache-Control', 'no-store');
+        res.status(200).json({ health });
     } catch (error) {
-        console.error('Carrier health API error:', error);
-        const normalized = normalizeIntegrationError(error, 'Failed to fetch FMCSA carrier data');
-        return sendNormalizedError(res, normalized);
+        const message = error instanceof Error ? error.message : 'Unknown FMCSA lookup failure.';
+        res.status(503).json({ error: `Unable to load FMCSA carrier snapshot: ${message}` });
     }
 }
