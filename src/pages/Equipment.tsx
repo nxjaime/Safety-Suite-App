@@ -9,11 +9,43 @@ import { equipmentService } from '../services/equipmentService';
 import { maintenanceService } from '../services/maintenanceService';
 import { workOrderService } from '../services/workOrderService';
 import { useAuth } from '../contexts/AuthContext';
-import type { Equipment, EquipmentStatus, OwnershipType } from '../types';
-
-export const equipmentProfileTabs = ['Overview', 'Inspections', 'Maintenance', 'Work Orders', 'Documents', 'Service History'] as const;
+import type { Equipment, EquipmentStatus, OwnershipType, MaintenanceTemplate } from '../types';
+import { equipmentProfileTabs, type EquipmentProfileTab } from './equipmentConstants';
 
 type CategoryTab = 'Trucks' | 'Trailers' | 'Forklifts' | 'Pallet Jacks' | 'Sales Vehicles';
+
+type LinkedInspection = {
+    id: string;
+    date: string;
+    inspection_level?: string;
+    report_number?: string;
+    out_of_service?: boolean;
+    defect_count?: number;
+    remediation_status?: string;
+};
+
+type LinkedTemplate = MaintenanceTemplate;
+
+type LinkedWorkOrder = {
+    id: string;
+    title: string;
+    status: string;
+    total_cost?: number;
+    totalCost?: number;
+    assignedTo?: string;
+    assigned_to?: string;
+    completedAt?: string;
+    completed_at?: string;
+    closeoutNotes?: string;
+    closeout_notes?: string;
+};
+
+type LinkedDocument = {
+    id: string;
+    name: string;
+    category: string;
+    uploaded_at: string;
+};
 
 const CATEGORY_TYPE_MAP: Record<CategoryTab, string> = {
     'Trucks': 'Truck',
@@ -65,7 +97,7 @@ const Equipment: React.FC = () => {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<CategoryTab>('Trucks');
-    const [profileTab, setProfileTab] = useState<(typeof equipmentProfileTabs)[number]>('Overview');
+    const [profileTab, setProfileTab] = useState<EquipmentProfileTab>('Overview');
     const [statusFilter, setStatusFilter] = useState<string>('active');
     const [vehicleTypes, setVehicleTypes] = useState<string[]>([]);
     const [formData, setFormData] = useState(EMPTY_FORM);
@@ -74,10 +106,10 @@ const Equipment: React.FC = () => {
 
     const [vehicles, setVehicles] = useState<Equipment[]>([]);
     const [loadingVehicles, setLoadingVehicles] = useState(false);
-    const [linkedInspections, setLinkedInspections] = useState<any[]>([]);
-    const [linkedPMTemplates, setLinkedPMTemplates] = useState<any[]>([]);
-    const [linkedWorkOrders, setLinkedWorkOrders] = useState<any[]>([]);
-    const [linkedDocuments, setLinkedDocuments] = useState<any[]>([]);
+    const [linkedInspections, setLinkedInspections] = useState<LinkedInspection[]>([]);
+    const [linkedPMTemplates, setLinkedPMTemplates] = useState<LinkedTemplate[]>([]);
+    const [linkedWorkOrders, setLinkedWorkOrders] = useState<LinkedWorkOrder[]>([]);
+    const [linkedDocuments, setLinkedDocuments] = useState<LinkedDocument[]>([]);
     const [loadingLinked, setLoadingLinked] = useState(false);
 
     // Work order creation state
@@ -111,7 +143,7 @@ const Equipment: React.FC = () => {
     useEffect(() => {
         settingsService.getOptionsByCategory('vehicle_type').then(types => {
             if (types && types.length > 0) {
-                setVehicleTypes(types.map((t: any) => t.value));
+                setVehicleTypes((types as Array<{ value: string }>).map((t) => t.value));
             } else {
                 setVehicleTypes(['Truck', 'Trailer', 'Forklift', 'Pallet Jack', 'Sales Vehicle']);
             }
@@ -132,7 +164,7 @@ const Equipment: React.FC = () => {
         if (profileTab === 'Overview') return;
 
         setLoadingLinked(true);
-        const fetches: Promise<any>[] = [];
+        const fetches: Promise<unknown>[] = [];
 
         if (profileTab === 'Inspections') {
             fetches.push(
@@ -200,8 +232,8 @@ const Equipment: React.FC = () => {
             setIsModalOpen(false);
             setEditingId(null);
             setFormData(EMPTY_FORM);
-        } catch (err: any) {
-            toast.error(err.message || 'Failed to save asset');
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Failed to save asset');
         }
     };
 
@@ -233,8 +265,8 @@ const Equipment: React.FC = () => {
             if (statusFilter !== 'archived' && statusFilter !== 'all') {
                 setVehicles(prev => prev.filter(v => v.id !== asset.id));
             }
-        } catch (err: any) {
-            toast.error(err.message || 'Failed to archive asset');
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Failed to archive asset');
         }
     };
 
@@ -247,8 +279,8 @@ const Equipment: React.FC = () => {
             if (statusFilter !== 'retired' && statusFilter !== 'all') {
                 setVehicles(prev => prev.filter(v => v.id !== asset.id));
             }
-        } catch (err: any) {
-            toast.error(err.message || 'Failed to retire asset');
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Failed to retire asset');
         }
     };
 
@@ -300,8 +332,8 @@ const Equipment: React.FC = () => {
                 const updated = await equipmentService.getLinkedWorkOrders(selectedEquipmentId);
                 setLinkedWorkOrders(updated);
             }
-        } catch (err: any) {
-            toast.error(err.message || 'Failed to create work order');
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Failed to create work order');
         } finally {
             setWoSaving(false);
         }
@@ -534,7 +566,7 @@ const Equipment: React.FC = () => {
                         <p className="text-sm text-slate-500">No inspections recorded for this asset.</p>
                     ) : (
                         <ul className="divide-y divide-slate-100">
-                            {linkedInspections.map((insp: any) => {
+                            {linkedInspections.map((insp) => {
                                 const hasDefects = insp.out_of_service || (insp.defect_count ?? 0) > 0 || insp.remediation_status === 'Open';
                                 return (
                                     <li key={insp.id} className="py-3 flex items-center justify-between text-sm gap-3">
@@ -601,8 +633,8 @@ const Equipment: React.FC = () => {
                     ) : (
                         <ul className="divide-y divide-slate-100">
                             {linkedPMTemplates
-                                .filter((t: any) => !t.appliesToType || t.appliesToType === selectedAsset?.type)
-                                .map((t: any) => (
+                                .filter((t) => !t.appliesToType || t.appliesToType === selectedAsset?.type)
+                                .map((t) => (
                                     <li key={t.id} className="py-3 flex justify-between items-center text-sm">
                                         <span className="font-medium text-slate-800">{t.name}</span>
                                         <span className="text-xs text-slate-500">
@@ -657,10 +689,10 @@ const Equipment: React.FC = () => {
                             <>
                                 <div className="flex items-center gap-2 mb-3">
                                     <CheckCircle className="w-4 h-4 text-green-600" />
-                                    <span className="text-sm text-slate-600">{linkedWorkOrders.filter((wo: any) => !['Completed', 'Closed', 'Cancelled'].includes(wo.status)).length} open · {linkedWorkOrders.filter((wo: any) => wo.status === 'Completed' || wo.status === 'Closed').length} completed</span>
+                                    <span className="text-sm text-slate-600">{linkedWorkOrders.filter((wo) => !['Completed', 'Closed', 'Cancelled'].includes(wo.status)).length} open · {linkedWorkOrders.filter((wo) => wo.status === 'Completed' || wo.status === 'Closed').length} completed</span>
                                 </div>
                                 <ul className="divide-y divide-slate-100">
-                                    {linkedWorkOrders.map((wo: any) => (
+                                    {linkedWorkOrders.map((wo) => (
                                         <li key={wo.id} className="py-2 flex justify-between items-center">
                                             <span className="font-medium text-slate-900 text-sm">{wo.title}</span>
                                             <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-sky-100 text-sky-800">{wo.status}</span>
@@ -699,7 +731,7 @@ const Equipment: React.FC = () => {
                         <p className="text-sm text-slate-500">No documents attached to this asset. Upload documents via the Documents module and link them to this asset.</p>
                     ) : (
                         <ul className="divide-y divide-slate-100">
-                            {linkedDocuments.map((doc: any) => (
+                            {linkedDocuments.map((doc) => (
                                 <li key={doc.id} className="py-2 flex justify-between items-center text-sm">
                                     <span className="font-medium text-slate-800">{doc.name}</span>
                                     <span className="text-xs text-slate-500">{doc.category} · {new Date(doc.uploaded_at).toLocaleDateString()}</span>
@@ -729,11 +761,11 @@ const Equipment: React.FC = () => {
                     ) : loadingLinked ? (
                         <p className="text-sm text-slate-500">Loading…</p>
                     ) : (() => {
-                        const history = linkedWorkOrders.filter((wo: any) => ['Completed', 'Closed'].includes(wo.status));
+                        const history = linkedWorkOrders.filter((wo) => ['Completed', 'Closed'].includes(wo.status));
                         if (history.length === 0) {
                             return <p className="text-sm text-slate-500">No completed service records for this asset yet.</p>;
                         }
-                        const totalCost = history.reduce((sum: number, wo: any) => sum + (wo.total_cost || wo.totalCost || 0), 0);
+                        const totalCost = history.reduce((sum: number, wo) => sum + (wo.total_cost || wo.totalCost || 0), 0);
                         return (
                             <>
                                 <div className="mb-4 flex items-center gap-4 text-sm text-slate-600">
@@ -745,9 +777,9 @@ const Equipment: React.FC = () => {
                                     )}
                                 </div>
                                 <ol className="relative border-l border-slate-200 space-y-6 pl-6">
-                                    {history.map((wo: any) => {
-                                        const completedDate = wo.completedAt || wo.completed_at;
-                                        const cost = wo.total_cost || wo.totalCost || 0;
+                                    {history.map((wo) => {
+                                        const completedDate = String(wo.completedAt || wo.completed_at || '');
+                                        const cost = Number(wo.total_cost || wo.totalCost || 0);
                                         return (
                                             <li key={wo.id} className="relative">
                                                 <span className="absolute -left-[1.45rem] flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 ring-2 ring-white">
@@ -904,7 +936,7 @@ const Equipment: React.FC = () => {
                             <select
                                 className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 value={formData.ownershipType}
-                                onChange={(e) => setFormData({ ...formData, ownershipType: e.target.value as any })}
+                                onChange={(e) => setFormData({ ...formData, ownershipType: e.target.value as OwnershipType })}
                             >
                                 <option value="owned">Owned</option>
                                 <option value="leased">Leased</option>

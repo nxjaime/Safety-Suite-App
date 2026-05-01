@@ -7,22 +7,18 @@ Project MCP servers are configured in `.mcp.json`.
 ### Prerequisites
 
 - `node`, `npm`, `npx` installed
-- Claude Code CLI installed (`claude`)
+- MCP-enabled CLI available in your environment
 
 ### Required environment variables
 
 ```sh
-export SUPABASE_ACCESS_TOKEN="your_supabase_pat"
-export VERCEL_TOKEN="your_vercel_token"
+export SUPABASE_ACCESS_TOKEN="***"
+export VERCEL_TOKEN="***"
 ```
 
 ### Verify MCP connectivity
 
-```sh
-claude mcp list
-claude mcp get supabase
-claude mcp get vercel
-```
+Use your configured MCP client to verify the Supabase and Vercel servers are available.
 
 If `npx` is not on your path in this environment:
 
@@ -80,29 +76,29 @@ If you are developing a production application, we recommend updating the config
 
 ```js
 export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+ globalIgnores(['dist']),
+ {
+   files: ['**/*.{ts,tsx}'],
+   extends: [
+     // Other configs...
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+     // Remove tseslint.configs.recommended and replace with this
+     tseslint.configs.recommendedTypeChecked,
+     // Alternatively, use this for stricter rules
+     tseslint.configs.strictTypeChecked,
+     // Optionally, add this for stylistic rules
+     tseslint.configs.stylisticTypeChecked,
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
+     // Other configs...
+   ],
+   languageOptions: {
+     parserOptions: {
+       project: ['./tsconfig.node.json', './tsconfig.app.json'],
+       tsconfigRootDir: import.meta.dirname,
+     },
+     // other options...
+   },
+ },
 ])
 ```
 
@@ -114,23 +110,23 @@ import reactX from 'eslint-plugin-react-x'
 import reactDom from 'eslint-plugin-react-dom'
 
 export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
+ globalIgnores(['dist']),
+ {
+   files: ['**/*.{ts,tsx}'],
+   extends: [
+     // Other configs...
+     // Enable lint rules for React
+     reactX.configs['recommended-typescript'],
+     // Enable lint rules for React DOM
+     reactDom.configs.recommended,
+   ],
+   languageOptions: {
+     parserOptions: {
+       project: ['./tsconfig.node.json', './tsconfig.app.json'],
+       tsconfigRootDir: import.meta.dirname,
+     },
+     // other options...
+   },
+ },
 ])
 ```

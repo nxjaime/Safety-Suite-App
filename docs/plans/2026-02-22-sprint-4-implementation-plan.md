@@ -1,6 +1,6 @@
 # Sprint 4 Implementation Plan — Safety Intelligence Core
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+> **Implementation note:** Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Deliver a 0–100 driver risk score that blends Motive scores and local risk events, persists score history, and drives coaching workflows.
 
@@ -36,15 +36,15 @@
 
 **Steps:**
 1. In test, write failing cases for:
-   - Motive available + local events → blended score per formula (0.6 motive + 0.4 local weighted, clamp 0–100).
-   - Motive missing → fallback motive=60.
-   - Bands (green <50, yellow 50–79, red 80–100).
-   - Score history write to `driver_risk_scores` and driver record update.
+  - Motive available + local events → blended score per formula (0.6 motive + 0.4 local weighted, clamp 0–100).
+  - Motive missing → fallback motive=60.
+  - Bands (green <50, yellow 50–79, red 80–100).
+  - Score history write to `driver_risk_scores` and driver record update.
 2. Implement `riskService` with:
-   - `ingestEvent(event)` inserting into `risk_events` with org_id.
-   - `calculateScore(driverId, window='90d')` pulling Motive scores (30d) via `motiveService.getScores`, local events windowed, computing composite, writing `driver_risk_scores`, updating `drivers.risk_score`.
-   - `getScoreHistory(driverId, limit=12)`.
-   - Helpers for type weights and banding.
+  - `ingestEvent(event)` inserting into `risk_events` with org_id.
+  - `calculateScore(driverId, window='90d')` pulling Motive scores (30d) via `motiveService.getScores`, local events windowed, computing composite, writing `driver_risk_scores`, updating `drivers.risk_score`.
+  - `getScoreHistory(driverId, limit=12)`.
+  - Helpers for type weights and banding.
 3. Update `driverService` to call `riskService.calculateScore` where appropriate (e.g., after risk event insert) and to expose a `refreshRiskScore(driverId)` wrapper.
 4. Run tests: `npm run test -- --run src/test/riskService.test.ts`.
 

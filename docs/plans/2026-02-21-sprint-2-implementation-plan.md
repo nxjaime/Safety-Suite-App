@@ -1,6 +1,6 @@
 # Sprint 2 Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+> **Implementation note:** Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Implement the Sprint 2 IA/navigation refactor, design tokens, and AA accessibility baseline.
 

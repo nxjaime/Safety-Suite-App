@@ -14,6 +14,24 @@ const ensureCanMutate = (role?: ProfileRole) => {
   }
 };
 
+function normalizeSingleResult<T>(data: unknown): T {
+  let result: unknown = data;
+  if (Array.isArray(result)) {
+    result = result[0];
+  }
+  if (result && typeof result === 'object') {
+    const record = result as Record<string, unknown> & { 0?: unknown };
+    if (record[0] !== undefined) {
+      const first = record[0];
+      const mergedFirst = first && typeof first === 'object' ? (first as Record<string, unknown>) : {};
+      const rest = { ...record };
+      delete (rest as Record<string, unknown>)[0];
+      result = { ...mergedFirst, ...rest };
+    }
+  }
+  return result as T;
+}
+
 export const trainingService = {
   async listAssignments(): Promise<TrainingAssignment[]> {
     const orgId = await getCurrentOrganization();
@@ -37,14 +55,7 @@ export const trainingService = {
       .select()
       .single();
     // normalize supabase response; tests previously relied on handling
-    let result: any = data;
-    if (Array.isArray(result)) {
-      result = result[0];
-    }
-    if (result && result['0'] !== undefined) {
-      result = { ...result['0'], ...result };
-      delete result['0'];
-    }
+    const result = normalizeSingleResult<TrainingAssignment>(data);
     if (error) throw error;
     return result as TrainingAssignment;
   },
@@ -69,71 +80,6 @@ export const trainingService = {
     const orgId = await getCurrentOrganization();
     let query = supabase
       .from('training_assignments')
-      .delete()
-      .eq('id', id);
-    if (orgId) {
-      query = query.eq('organization_id', orgId);
-    }
-    const { error } = await query;
-    if (error) throw error;
-  },
-
-  // template methods
-  async listTemplates(): Promise<TrainingTemplate[]> {
-    const orgId = await getCurrentOrganization();
-    let query = supabase
-      .from('training_templates')
-      .select('*');
-    if (orgId) {
-      query = query.eq('organization_id', orgId);
-    }
-    const { data, error } = await query.order('name');
-    if (error) throw error;
-    return (data || []) as TrainingTemplate[];
-  },
-
-  async insertTemplate(payload: Partial<TrainingTemplate>, role?: ProfileRole) {
-    ensureCanMutate(role);
-    const final = await applyOrg(payload as Record<string, unknown>);
-    const { data, error } = await supabase
-      .from('training_templates')
-      .insert([final])
-      .select()
-      .single();
-    // handle cases where the supabase client returns unexpected wrappers (array or numeric keys)
-    let result: any = data;
-    if (Array.isArray(result)) {
-      result = result[0];
-    }
-    // some mocks return object with numeric '0' property; merge it so we don't lose other keys like id
-    if (result && result['0'] !== undefined) {
-      result = { ...result['0'], ...result };
-      delete result['0'];
-    }
-    if (error) throw error;
-    return result as TrainingTemplate;
-  },
-
-  async updateTemplate(id: string, updates: Partial<TrainingTemplate>, role?: ProfileRole) {
-    ensureCanMutate(role);
-    const orgId = await getCurrentOrganization();
-    let query = supabase
-      .from('training_templates')
-      .update(updates)
-      .eq('id', id);
-    if (orgId) {
-      query = query.eq('organization_id', orgId);
-    }
-    const { data, error } = await query.select().single();
-    if (error) throw error;
-    return data as TrainingTemplate;
-  },
-
-  async deleteTemplate(id: string, role?: ProfileRole) {
-    ensureCanMutate(role);
-    const orgId = await getCurrentOrganization();
-    let query = supabase
-      .from('training_templates')
       .delete()
       .eq('id', id);
     if (orgId) {
@@ -182,8 +128,8 @@ export const trainingService = {
       .neq('status', 'Completed')
       .lt('due_date', todayISO)
       .is('escalated_at', null);
-    if (orgId) query = (query as any).eq('organization_id', orgId);
-    const { data, error } = await (query as any).select('id');
+    if (orgId) query = (query as typeof query).eq('organization_id', orgId);
+    const { data, error } = await query.select('id');
     if (error) throw error;
     return (data || []).length;
   },
@@ -223,4 +169,61 @@ export const trainingService = {
     if (error) throw error;
     return data as TrainingAssignment;
   },
+
+  // template methods
+  async listTemplates(): Promise<TrainingTemplate[]> {
+    const orgId = await getCurrentOrganization();
+    let query = supabase
+      .from('training_templates')
+      .select('*');
+    if (orgId) {
+      query = query.eq('organization_id', orgId);
+    }
+    const { data, error } = await query.order('name');
+    if (error) throw error;
+    return (data || []) as TrainingTemplate[];
+  },
+
+  async insertTemplate(payload: Partial<TrainingTemplate>, role?: ProfileRole) {
+    ensureCanMutate(role);
+    const final = await applyOrg(payload as Record<string, unknown>);
+    const { data, error } = await supabase
+      .from('training_templates')
+      .insert([final])
+      .select()
+      .single();
+    // handle cases where the supabase client returns unexpected wrappers (array or numeric keys)
+    const result = normalizeSingleResult<TrainingTemplate>(data);
+    if (error) throw error;
+    return result as TrainingTemplate;
+  },
+
+  async updateTemplate(id: string, updates: Partial<TrainingTemplate>, role?: ProfileRole) {
+    ensureCanMutate(role);
+    const orgId = await getCurrentOrganization();
+    let query = supabase
+      .from('training_templates')
+      .update(updates)
+      .eq('id', id);
+    if (orgId) {
+      query = query.eq('organization_id', orgId);
+    }
+    const { data, error } = await query.select().single();
+    if (error) throw error;
+    return data as TrainingTemplate;
+  },
+
+  async deleteTemplate(id: string, role?: ProfileRole) {
+    ensureCanMutate(role);
+    const orgId = await getCurrentOrganization();
+    let query = supabase
+      .from('training_templates')
+      .delete()
+      .eq('id', id);
+    if (orgId) {
+      query = query.eq('organization_id', orgId);
+    }
+    const { error } = await query;
+    if (error) throw error;
+  }
 };

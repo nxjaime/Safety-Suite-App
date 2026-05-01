@@ -596,7 +596,406 @@ Exit criteria met: Notifications are polled every 60s from a single context. Sid
 
 ---
 
+### Sprint 37: Inspection-to-Work-Order Pipeline, Inline WO Creation, and Service History Tab
+Status: Complete
+Reminder: Commit & push after checks/tests pass.
+
+User stories:
+- As a fleet manager, I can create a work order directly from an OOS or defect inspection row without leaving the Inspections tab.
+- As a fleet manager, I can create a new work order inline on the Equipment Work Orders tab without navigating away to a separate page.
+- As a maintenance planner, I can see a complete service history timeline for any asset, including cost totals, technicians, and closeout notes.
+
+Completed:
+- Added "Create WO" button on each OOS/defect inspection row in the Inspections tab — calls `workOrderService.createWorkOrderFromInspection()` pre-populated with asset and inspection context
+- Added inline "New Work Order" modal on the Work Orders tab so fleet managers can create a work order without leaving the Equipment page; modal pre-filled with selected asset ID, priority, and due date
+- Added Service History tab (6th tab) showing completed/closed work orders as a chronological timeline with cost totals, technician, closeout notes
+- Changed "Create Work Order" button to "All Work Orders" navigate button so both inline create and full list are accessible
+- Work order data load shared between Work Orders and Service History tabs to avoid duplicate fetches
+
+Exit criteria met: Inspection defects flow directly into work orders. Inline WO creation works from Equipment page. Service history timeline is live and cost-summarized.
+
+---
+
+### Sprint 38: Telematics Hardening and Real-Time Event Reliability
+Status: Planned
+
+User stories:
+- As a safety manager, I can trust that telematics events are captured exactly once, in order, even when the data stream is delayed or arrives out of sequence.
+- As engineering, we have a formalized buffer and deduplication mechanism so race conditions cannot corrupt driver risk scores.
+- As an ops lead, I can view telematics ingestion health and see which events were dropped, retried, or deduplicated.
+
+Goal:
+- Formally harden the telematics ingestion path and eliminate Known Risk #3 (race conditions in the event buffer).
+
+Scope:
+- Audit and document the current telematics buffer logic in `telematicsService.ts`
+- Add event deduplication keyed on (driver_id, event_type, event_timestamp) at the service layer
+- Add idempotency guard on risk score recalculation triggered by telematics events
+- Add ingestion health tracking: last received, drop count, retry count per provider
+- Add telematics ingestion health panel to Admin Dashboard (platform admin only)
+- Add focused regression tests for buffer, dedup, and ordering edge cases
+
+Exit criteria:
+- Duplicate telematics events do not produce duplicate risk score entries
+- Out-of-order events are handled without corrupting score history
+- Ingestion health is visible to platform admins without raw DB access
+- All telematics dedup tests pass; zero TypeScript errors
+
+---
+
+### Sprint 39: PWA and Offline Field Operations
+Status: Planned
+
+User stories:
+- As a field technician without reliable cell service, I can complete and submit DVIR inspections offline and have them sync when I reconnect.
+- As a technician, I can view my assigned work orders and equipment details without an internet connection.
+- As the platform, offline data queued by technicians syncs automatically and without data loss when connectivity is restored.
+
+Goal:
+- Address Known Risk #2: deliver offline-capable PWA for field technicians using IndexedDB and a service worker sync queue.
+
+Scope:
+- Configure Vite PWA plugin (`vite-plugin-pwa`) with a service worker and manifest
+- Implement `offlineQueueService.ts` using IndexedDB (via `idb`) for queuing inspection submissions and WO status updates
+- Add sync trigger on `online` event that flushes the queue through the real service layer
+- Add conflict resolution strategy for records modified both offline and online
+- Add "Offline" mode banner in the UI when `navigator.onLine` is false
+- Add sync status indicator showing pending items count
+- Add focused tests for queue enqueue/dequeue, sync trigger, and conflict handling
+
+Exit criteria:
+- Technician can submit an inspection while offline; it persists in IndexedDB
+- On reconnect, queued inspections sync to Supabase without duplication
+- Conflict between local and remote edits is resolved predictably (last-write or flagged for review)
+- Offline banner appears/disappears correctly; sync count is accurate
+
+---
+
+### Sprint 40: FMCSA Live Integration and Carrier Data Completion
+Status: Planned
+
+User stories:
+- As a compliance lead, I can look up a carrier's live FMCSA safety rating, inspection history, and crash data directly in the app.
+- As a fleet manager, I can see CSA BASIC scores populated from real FMCSA data, not manually entered estimates.
+- As the platform, all carrier data calls have production-grade fallbacks, retry logic, and error messaging — no mock/dev patterns remain in `carrierService`.
+
+Goal:
+- Complete the FMCSA module from a static/demo page into a live integration and remove all remaining mock fallback patterns in `carrierService`.
+
+Scope:
+- Replace `carrierService` mock patterns with real FMCSA API calls (SAFER Web or FMCSA API v1)
+- Add carrier safety rating, inspection totals, crash totals, and OOS rate to the carrier health panel
+- Wire CSA BASIC score ingestion from FMCSA data into `CSAPredictor` as an additional source alongside real inspection records
+- Add FMCSA alert rules: flag carriers below a configurable safety rating threshold
+- Add retry/circuit-breaker pattern for FMCSA API unavailability
+- Remove all `// TODO: mock` and development fallback branches in `carrierService.ts`
+- Add integration tests with mocked HTTP layer (no live API calls in CI)
+
+Exit criteria:
+- `carrierService` contains zero mock/dev fallback patterns
+- Carrier health lookup returns real FMCSA data in the UI
+- CSA BASIC scores can be seeded from FMCSA data in addition to inspection records
+- API unavailability shows a graceful degraded state, not an error crash
+
+---
+
+### Sprint 41: Advanced Filtering, Saved Views, and Bulk Operations
+Status: Planned
+
+User stories:
+- As a fleet manager, I can save a filter preset (e.g., "Active OOS Equipment") and return to it without re-configuring filters every time.
+- As a safety manager, I can select multiple drivers or tasks and bulk-update their status, assignee, or priority in one action.
+- As a compliance lead, I can bulk-export filtered task or document lists to CSV for regulatory review.
+
+Goal:
+- Add saved filter views and bulk-action capability across the highest-traffic list views.
+
+Scope:
+- Add saved view persistence (user-scoped, stored in Supabase `user_saved_views` table) to: Tasks, Equipment, Drivers, Work Orders
+- Add multi-select mode to task and driver list tables (checkbox column, select-all row)
+- Add bulk actions for selected rows: Tasks → bulk status change, bulk assign; Drivers → bulk add to watchlist; Work Orders → bulk priority change
+- Add CSV export for any filtered list view (Tasks, Equipment, Documents)
+- Add saved view UI: save button, view picker dropdown, delete saved view
+- Add tests for saved view CRUD and bulk action service methods
+
+Exit criteria:
+- Users can save, load, and delete filter views on Tasks, Equipment, Drivers, and Work Orders
+- Bulk status update applies to all selected rows in a single operation
+- CSV export reflects current filtered results accurately
+
+---
+
+### Sprint 42: Driver Self-Service Portal and Mobile-Optimized Views
+Status: Planned
+
+User stories:
+- As a driver, I can log into a simplified view and see my current risk score, open training assignments, and any coaching check-ins due.
+- As a driver, I can acknowledge a coaching plan, complete a training attestation, and view my own safety event history without manager access.
+- As the platform, driver-facing views are mobile-responsive so drivers can use them on a phone without layout breakage.
+
+Goal:
+- Add a driver-scoped portal experience with mobile-first layout for the views drivers actually use.
+
+Scope:
+- Add `DriverPortal` route gated to `driver` role: dashboard card showing risk score, open trainings, pending check-ins
+- Add driver training completion/attestation flow (acknowledge and mark complete without manager)
+- Add driver coaching check-in acknowledgment (driver confirms receipt of coaching plan)
+- Audit and fix mobile breakpoints on the top 6 most-used pages: Dashboard, Driver Portal, Tasks, Training, Notifications, Work Orders
+- Add role guard that redirects `driver` role to portal instead of full app layout
+- Add driver portal tests for role-gated access and attestation flow
+
+Exit criteria:
+- `driver` role users land on the portal, not the full management dashboard
+- Drivers can complete a training attestation end-to-end without manager intervention
+- Portal is fully usable on a 375px-wide mobile screen with no horizontal scroll
+
+---
+
+### Sprint 43: Notification Rules, Escalation, and Delivery Preferences
+Status: Planned
+
+User stories:
+- As a safety manager, I can configure which events trigger notifications and at what thresholds (e.g., alert me when a driver's risk score exceeds 75).
+- As a team lead, I can set my notification delivery preferences: in-app only, email digest, or both.
+- As the platform, overdue items that go unacknowledged escalate automatically to the next-level owner after a configurable grace period.
+
+Goal:
+- Evolve the notification system from a read-only badge into a configurable rules and escalation engine.
+
+Scope:
+- Add `notification_rules` table: rule type, threshold value, org_id, created_by
+- Add `notificationRulesService.ts`: CRUD for rules, rule evaluation against live data
+- Add notification preferences UI in Settings: per-category toggle (in-app/email), digest frequency
+- Add email digest Edge Function: batches unread notifications and sends via Supabase email
+- Add escalation trigger: tasks/check-ins overdue by >N days are automatically escalated to manager and create an escalation notification
+- Add Notification Rules section to Admin Dashboard (org admin and above)
+- Add tests for rule evaluation logic and escalation trigger service
+
+Exit criteria:
+- Custom notification rules can be created, edited, and deleted by org admins
+- Email digest Edge Function sends correctly batched notification summaries
+- Overdue items escalate after the configured grace period without manual intervention
+
+---
+
+### Sprint 44: Audit Trail UI, Compliance Reporting, and Data Governance
+Status: Planned
+
+User stories:
+- As a compliance officer, I can pull a complete audit trail for any driver, asset, or document and export it as a PDF or CSV for regulatory submission.
+- As a platform admin, I can define and enforce data retention policies by record type and see which records are candidates for archival or deletion.
+- As the business, our audit log captures all writes, approvals, and role-changes with actor, timestamp, and before/after values.
+
+Goal:
+- Harden the audit trail into a compliance-grade system with report export and retention enforcement.
+
+Scope:
+- Extend `auditLogService` to capture before/after values for record mutations (role changes, WO closeouts, coaching plan state changes)
+- Add per-entity audit trail view: accessible from driver profile, asset detail, and document detail panels
+- Add compliance report generator: user selects entity type + date range → produces formatted summary (PDF via `jsPDF` or CSV)
+- Add data retention enforcement job (Edge Function or cron): archives records past retention threshold after admin confirmation
+- Add retention dashboard in Admin → Data Retention tab: candidates listed, bulk archive action
+- Add tests for audit capture completeness and retention candidate filtering
+
+Exit criteria:
+- Audit log captures before/after values for all major mutation types
+- Compliance report can be generated and downloaded in PDF or CSV for any entity
+- Retention enforcement correctly identifies and archives records past threshold without deleting active records
+
+---
+
+### Sprint 45: Webhook and External Integration Framework
+Status: Planned
+
+User stories:
+- As an integration engineer, I can register an outbound webhook endpoint and have the app send real-time event payloads when key events occur (inspection failed, WO closed, risk score changed).
+- As an ops lead, I can see integration health: last delivery, response status, retry count, and failure reason for each webhook.
+- As the platform, inbound telematics and FMCSA payloads are validated, logged, and processed through a shared integration pipeline.
+
+Goal:
+- Build a first-class webhook and integration framework so external systems can reliably push and pull data.
+
+Scope:
+- Add `webhooks` table: endpoint URL, secret, event types, org_id, active flag
+- Add `webhookService.ts`: registration CRUD, payload signing (HMAC-SHA256), delivery with retry (3 attempts, exponential backoff)
+- Add webhook delivery log table and delivery history UI in Admin → Integrations tab
+- Add inbound webhook receiver Edge Function for telematics providers (validates signature, enqueues event)
+- Add integration health panel: per-webhook last delivery, status code, failure rate
+- Add webhook management UI: register endpoint, select event types, test delivery, view delivery log
+- Add tests for signing, delivery, retry, and failure recording
+
+Exit criteria:
+- Outbound webhooks fire on inspection failure, WO closeout, and risk score change events
+- Webhook delivery failures are logged and retried without data loss
+- Integration health is visible to platform admins without raw DB access
+
+---
+
+### Sprint 46: Performance, Pagination, and Query Optimization
+Status: Planned
+
+User stories:
+- As a fleet manager at a large org, list views with 500+ records load in under 2 seconds and remain responsive as I scroll.
+- As a user, I can paginate or infinitely scroll any large list without loading all records upfront.
+- As engineering, we have identified and resolved the top 5 N+1 query patterns discovered during Wave 1 onboarding.
+
+Goal:
+- Address performance regressions and scalability gaps surfaced by real-world data volume during Wave 1.
+
+Scope:
+- Audit all major list views for N+1 query patterns; resolve top 5 (driver list + risk events, equipment list + WO counts, tasks + assignees, training + completion status, documents + expiry)
+- Add cursor-based or offset pagination to: Drivers, Equipment, Work Orders, Tasks, Audit Log
+- Add virtual scrolling (`@tanstack/virtual`) to notification panel and activity feeds with 100+ rows
+- Add React Query (or SWR) for request deduplication and cache-first reads on frequently-accessed service calls
+- Add performance regression tests: assert page loads with N=200 records complete within target time (using vitest-bench or similar)
+- Add `loadingMore` state and "Load more" / infinite scroll trigger to paginated lists
+
+Exit criteria:
+- Driver, Equipment, Work Order, Tasks, and Audit Log lists paginate correctly and do not load all rows on mount
+- Top 5 N+1 patterns are resolved with combined queries or batch fetches
+- Notification panel and activity feeds use virtual scrolling and do not render >200 DOM rows
+
+---
+
+### Sprint 47: Role-Based Dashboard Personalization and Pinned KPIs
+Status: Planned
+
+User stories:
+- As a safety manager, my dashboard shows safety-centric KPIs (high-risk drivers, open interventions, coaching plan completion) by default, not generic fleet metrics.
+- As a fleet manager, I can pin the metrics most relevant to my daily workflow and hide sections I don't use.
+- As an executive, I see a high-level cross-functional scorecard without operational noise.
+
+Goal:
+- Personalize the dashboard experience by role with user-configurable widget pinning.
+
+Scope:
+- Add role-aware default widget sets: `safety` role → safety KPIs first; `maintenance` role → WO/PM KPIs first; `full`/executive → balanced scorecard
+- Add `user_dashboard_preferences` table: pinned widgets, widget order, hidden widgets
+- Add drag-and-drop widget reordering using `@dnd-kit/sortable`
+- Add widget pin/hide controls (gear icon or context menu per widget)
+- Add "Reset to defaults" option per role
+- Add tests for default widget set by role and preference persistence
+
+Exit criteria:
+- Safety manager role sees safety-first dashboard on first login
+- Pinned widget order persists across sessions
+- Drag-and-drop reordering works without page reload
+
+---
+
+### Sprint 48: Customer Onboarding Wizard and Org Self-Service Provisioning
+Status: Planned
+
+User stories:
+- As a new customer admin, I can complete a guided setup wizard that walks me through adding my first drivers, assets, and configuring my org settings without engineering support.
+- As a platform admin, I can provision a new org and seed it with demo data or import a CSV of drivers and assets in one flow.
+- As customer success, I can view org setup completion status and see what steps a new customer has or hasn't completed.
+
+Goal:
+- Replace manual customer provisioning with a self-service onboarding flow, reducing time-to-value for new orgs.
+
+Scope:
+- Add `onboarding_progress` table: step name, completed_at, skipped, org_id
+- Add `OnboardingWizard.tsx`: multi-step modal shown on first login to org admin — steps: org config, invite users, add first asset, add first driver, configure notifications
+- Add wizard progress persistence: each completed step saves to `onboarding_progress`
+- Add CSV import for drivers and equipment (parse, validate, preview, confirm, persist)
+- Add org setup completion card to Admin Dashboard: shows % complete with deep links to incomplete steps
+- Add platform admin org provisioning flow: create org, set plan tier, seed demo data toggle
+- Add tests for wizard step progression, CSV validation, and completion tracking
+
+Exit criteria:
+- New org admin can complete onboarding wizard and have a functional org configured end-to-end
+- CSV import correctly validates and persists driver and equipment records
+- Org setup completion is visible to platform admins in the Admin Dashboard
+
+---
+
+### Sprint 49: Platform Observability, Feature Flags, and SRE Tooling
+Status: Planned
+
+User stories:
+- As engineering, we can see real-time error rates, slow queries, and failed background jobs from inside the app without needing raw Supabase logs.
+- As a product lead, I can gradually roll out a new feature to a subset of orgs using a feature flag without a code deploy.
+- As on-call, I have a runbook-backed incident response page that surfaces the current system health, recent errors, and recovery actions.
+
+Goal:
+- Establish production observability and feature flag infrastructure for safe, incremental deployments.
+
+Scope:
+- Add `feature_flags` table: flag name, enabled, rollout_percentage, allowed_org_ids, org_id (null = global)
+- Add `featureFlagService.ts`: evaluate flag for current org/user, expose `useFeatureFlag(flagName)` hook
+- Add Feature Flags management tab to Admin Dashboard (platform admin only): toggle flags, set rollout %, target orgs
+- Integrate Sentry (or equivalent) error boundary capture — replace console.log in `ErrorBoundary.tsx` with structured error reporting
+- Add `/health` Edge Function endpoint returning DB connectivity, last migration, and background job status
+- Add Platform Health panel to Admin Dashboard: polls `/health`, shows status indicators and last-error timestamp
+- Add SRE runbook tab to Hypercare command center with step-by-step recovery procedures for top 5 failure modes
+- Add tests for feature flag evaluation (enabled, disabled, rollout %, org targeting)
+
+Exit criteria:
+- Feature flags can be toggled per-org from Admin Dashboard without code deploy
+- Error boundary sends structured error reports to Sentry (or equivalent)
+- `/health` endpoint returns correct status and is monitored from the platform health panel
+
+---
+
+### Sprint 50: Security Hardening, Penetration Testing Remediation, and Secrets Audit
+Status: Planned
+
+User stories:
+- As the business, we have completed a structured security review and resolved all high and critical findings before expanding beyond Wave 1.
+- As engineering, all secrets, API keys, and sensitive config are stored in Supabase Vault or environment variables — no hardcoded credentials remain anywhere in the codebase.
+- As a platform admin, PII fields in the database are encrypted server-side, completing the migration started in Sprint 31.
+
+Goal:
+- Complete the security hardening work deferred from RC1 and resolve all findings from the Wave 1 security review.
+
+Scope:
+- Audit entire codebase for hardcoded secrets, keys, or credentials using `semgrep` SAST rules; resolve all findings
+- Migrate PII encryption from client-side AES-GCM to server-side Edge Function (completing the `VITE_USE_EDGE_CRYPTO` migration path from Sprint 31)
+- Add Supabase Vault storage for the server-side AES-256-GCM key used in the `encrypt-pii` Edge Function
+- Conduct structured threat model review of RBAC and RLS policies; patch any gaps found
+- Add Content Security Policy headers to the Vite/Vercel deployment config
+- Add `semgrep` scan to CI pipeline as a required check on PRs touching service or auth layers
+- Document completed security posture in `/docs/sprint-50/security-posture.md`
+- Add regression tests confirming PII round-trips through Edge Function correctly
+
+Exit criteria:
+- Zero hardcoded credentials found by `semgrep` SAST scan
+- PII encryption runs server-side via Edge Function in production; client-side path is disabled
+- CSP headers are present and block inline scripts
+- RBAC/RLS threat model gaps are patched and documented
+
+---
+
+### Sprint 51: Wave 2 Launch Preparation, Load Testing, and GA Readiness
+Status: Planned
+
+User stories:
+- As the business, we can onboard Wave 2 customer cohort with confidence that the system handles 10× Wave 1 data volume without degradation.
+- As a customer success lead, we have a comprehensive help center, in-app guided tours, and a partner API foundation for Wave 2 integrations.
+- As engineering, we have run load tests, validated backup/restore at scale, and have a capacity plan for Wave 2.
+
+Goal:
+- Complete all GA readiness activities required to expand beyond Wave 1 cohort.
+
+Scope:
+- Run k6 or Artillery load test simulating 10× Wave 1 concurrent users; document results and resolve any P0/P1 findings
+- Validate backup and point-in-time restore at production data scale (Supabase PITR)
+- Add in-app guided tour (`react-joyride` or similar) for first-time users of: Dashboard, Safety, Equipment, Tasks
+- Add partner API foundation: read-only REST endpoints for drivers, equipment, and safety events with API key auth (Edge Functions)
+- Complete help center content for all major workflows (inline help panels, tooltip expansions)
+- Produce Wave 2 capacity plan: database size projections, Edge Function invocation budgets, storage estimate
+- Update `/docs/sprint-51/ga-readiness.md` with go-live checklist for Wave 2
+
+Exit criteria:
+- Load test at 10× Wave 1 completes without P0/P1 failures
+- Backup/restore validated at scale with documented RTO/RPO
+- Partner API endpoints return correctly scoped data with API key auth
+- In-app guided tour covers the 5 highest-traffic new-user flows
+
+---
+
 ## Final Project Status
-**RC1 Launch Ready — Sprints 31–36 post-launch hardening applied.**
-Phase 1 (Sprints 1-30) complete. Sprints 31–36 closed remaining operational, UX, and resilience gaps: Watchlist intervention hub, CSA live data, PII encryption abstraction, Driver timeline, Tasks overdue surfacing, User Profile Supabase migration, Header live profile + real notification center, global ⌘K search, route-level error boundaries, shared notification context with 60s polling, sidebar live badge counts, and dashboard manual refresh. Focus is on Wave 1 cohort onboarding and monitoring.
+**RC1 Launch Ready — Sprints 31–37 post-launch hardening applied.**
+Phase 1 (Sprints 1-30) complete. Sprints 31–37 closed remaining operational, UX, and resilience gaps: Watchlist intervention hub, CSA live data, PII encryption abstraction, Driver timeline, Tasks overdue surfacing, User Profile Supabase migration, Header live profile + real notification center, global ⌘K search, route-level error boundaries, shared notification context with 60s polling, sidebar live badge counts, dashboard manual refresh, and inspection-to-work-order pipeline with inline WO creation and service history tab. Sprints 38–51 are planned and represent the Wave 1 → GA hardening, feature completion, and Wave 2 readiness roadmap.
 

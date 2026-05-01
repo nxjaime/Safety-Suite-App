@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { equipmentProfileTabs } from '../pages/Equipment';
+import { equipmentProfileTabs } from '../pages/equipmentConstants';
 
 describe('equipment profile tabs', () => {
     it('includes required tabs', () => {
@@ -9,6 +9,7 @@ describe('equipment profile tabs', () => {
             'Maintenance',
             'Work Orders',
             'Documents',
+            'Service History',
         ]);
     });
 });

@@ -1,6 +1,6 @@
 # Sprint 20 Rollout Cohort Tracker Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+> **Implementation note:** Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Add role-aware rollout cohort tracking to Hypercare so launch leads can manage phased activation decisions inside the command center.
 

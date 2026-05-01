@@ -1,6 +1,6 @@
 # Sprint 3 Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+> **Implementation note:** Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Build Fleet Operations core with equipment hub, inspections, PM templates, and work orders.
 

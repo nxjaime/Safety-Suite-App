@@ -49,7 +49,8 @@ async function collectExpiringDocuments(): Promise<Notification[]> {
   const today = new Date().toISOString().split('T')[0];
 
   return expiring.map((doc) => {
-    const expirationDate = String((doc.metadata || {}).expirationDate || '');
+    const metadata = (doc.metadata || {}) as Record<string, unknown>;
+    const expirationDate = String(metadata.expirationDate || (doc as { expirationDate?: unknown }).expirationDate || '');
     const daysOut = expirationDate
       ? Math.floor(
           (new Date(expirationDate).getTime() - new Date(today).getTime()) /

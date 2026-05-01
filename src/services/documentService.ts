@@ -62,20 +62,35 @@ const sanitizeFileName = (name: string): string => {
   return name.replace(/[^a-zA-Z0-9_.-]/g, '-');
 };
 
-const mapDocument = (row: any): AppDocument => {
+type DocumentRow = {
+  id: string;
+  name: string;
+  category: string;
+  doc_type?: string | null;
+  file_size?: number | null;
+  mime_type?: string | null;
+  storage_path: string;
+  uploaded_at: string;
+  uploaded_by?: string | null;
+  linked_driver_id?: string | null;
+  linked_equipment_id?: string | null;
+  metadata?: Record<string, unknown> | null;
+};
+
+const mapDocument = (row: DocumentRow): AppDocument => {
   return {
     id: row.id,
     name: row.name,
     category: row.category,
-    docType: row.doc_type,
-    fileSize: row.file_size,
-    mimeType: row.mime_type,
+    docType: row.doc_type ?? undefined,
+    fileSize: row.file_size ?? undefined,
+    mimeType: row.mime_type ?? undefined,
     storagePath: row.storage_path,
     uploadedAt: row.uploaded_at,
-    uploadedBy: row.uploaded_by,
-    linkedDriverId: row.linked_driver_id,
-    linkedEquipmentId: row.linked_equipment_id,
-    metadata: row.metadata || {}
+    uploadedBy: row.uploaded_by ?? undefined,
+    linkedDriverId: row.linked_driver_id ?? undefined,
+    linkedEquipmentId: row.linked_equipment_id ?? undefined,
+    metadata: row.metadata ?? {}
   };
 };
 

@@ -1,6 +1,6 @@
 # Org Isolation + Page-Based RBAC Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+> **Implementation note:** Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Add per-organization allowed domains and page-based roles, with end-to-end enforcement (UI + DB RLS).
 
@@ -31,19 +31,19 @@ Expected: FAIL once tests are added
 
 ```sql
 ALTER TABLE public.organizations
-  ADD COLUMN IF NOT EXISTS allowed_domains TEXT[] DEFAULT '{}';
+ ADD COLUMN IF NOT EXISTS allowed_domains TEXT[] DEFAULT '{}';
 
 ALTER TABLE public.profiles
-  ALTER COLUMN role SET DEFAULT 'readonly';
+ ALTER COLUMN role SET DEFAULT 'readonly';
 
 DO $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'profiles_role_check') THEN
-    ALTER TABLE public.profiles DROP CONSTRAINT profiles_role_check;
-  END IF;
-  ALTER TABLE public.profiles
-    ADD CONSTRAINT profiles_role_check
-    CHECK (role IN ('platform_admin', 'full', 'safety', 'coaching', 'maintenance', 'readonly'));
+ IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'profiles_role_check') THEN
+   ALTER TABLE public.profiles DROP CONSTRAINT profiles_role_check;
+ END IF;
+ ALTER TABLE public.profiles
+   ADD CONSTRAINT profiles_role_check
+   CHECK (role IN ('platform_admin', 'full', 'safety', 'coaching', 'maintenance', 'readonly'));
 END $$;
 ```
 
@@ -83,29 +83,29 @@ Expected: FAIL once tests are added
 CREATE OR REPLACE FUNCTION email_domain(email TEXT)
 RETURNS TEXT AS $$
 BEGIN
-  RETURN split_part(email, '@', 2);
+ RETURN split_part(email, '@', 2);
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION org_domain_allowed(org_id UUID)
 RETURNS BOOLEAN AS $$
 DECLARE
-  dom TEXT;
-  allowed TEXT[];
+ dom TEXT;
+ allowed TEXT[];
 BEGIN
-  dom := email_domain((auth.jwt() ->> 'email'));
-  SELECT allowed_domains INTO allowed FROM organizations WHERE id = org_id;
-  RETURN dom IS NOT NULL AND allowed IS NOT NULL AND dom = ANY(allowed);
+ dom := email_domain((auth.jwt() ->> 'email'));
+ SELECT allowed_domains INTO allowed FROM organizations WHERE id = org_id;
+ RETURN dom IS NOT NULL AND allowed IS NOT NULL AND dom = ANY(allowed);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE OR REPLACE FUNCTION is_platform_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM profiles
-    WHERE id = auth.uid() AND role = 'platform_admin'
-  );
+ RETURN EXISTS (
+   SELECT 1 FROM profiles
+   WHERE id = auth.uid() AND role = 'platform_admin'
+ );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ```
@@ -161,9 +161,9 @@ Expected: PASS
 
 ```bash
 git add supabase/migrations/secure_rls_policies.sql \
-  supabase/migrations/20260222030000_documents_compliance_workflows.sql \
-  supabase/migrations/20260222020000_risk_events_score_history.sql \
-  supabase/migrations/20260222040000_security_feedback_foundation.sql
+ supabase/migrations/20260222030000_documents_compliance_workflows.sql \
+ supabase/migrations/20260222020000_risk_events_score_history.sql \
+ supabase/migrations/20260222040000_security_feedback_foundation.sql
 git commit -m "db: enforce org domain and platform admin access"
 ```
 
@@ -183,9 +183,9 @@ import { describe, it, expect } from 'vitest';
 import { canAccessRoute } from '../utils/accessControl';
 
 describe('domain gate', () => {
-  it('blocks user when no org matches domain', () => {
-    expect(true).toBe(true);
-  });
+ it('blocks user when no org matches domain', () => {
+   expect(true).toBe(true);
+ });
 });
 ```
 
@@ -199,13 +199,13 @@ Expected: FAIL once tests are added
 ```ts
 // orgService.ts
 export const orgService = {
-  async resolveOrgByDomain(domain: string) {
-    return supabase
-      .from('organizations')
-      .select('id, allowed_domains')
-      .contains('allowed_domains', [domain])
-      .limit(2);
-  }
+ async resolveOrgByDomain(domain: string) {
+   return supabase
+     .from('organizations')
+     .select('id, allowed_domains')
+     .contains('allowed_domains', [domain])
+     .limit(2);
+ }
 };
 ```
 
@@ -240,9 +240,9 @@ import { describe, it, expect } from 'vitest';
 import { canAccessRoute } from '../utils/accessControl';
 
 describe('canAccessRoute', () => {
-  it('denies maintenance role on safety routes', () => {
-    expect(canAccessRoute('maintenance', '/safety')).toBe(false);
-  });
+ it('denies maintenance role on safety routes', () => {
+   expect(canAccessRoute('maintenance', '/safety')).toBe(false);
+ });
 });
 ```
 
@@ -255,11 +255,11 @@ Expected: FAIL
 
 ```ts
 export const roleAccess = {
-  full: ['*'],
-  safety: ['/drivers', '/driver', '/safety', '/compliance', '/reporting', '/training', '/fmcsa', '/help', '/settings', '/'],
-  coaching: ['/drivers', '/driver', '/safety', '/compliance', '/help', '/settings', '/'],
-  maintenance: ['/equipment', '/maintenance', '/work-orders', '/documents', '/help', '/settings', '/'],
-  readonly: ['*']
+ full: ['*'],
+ safety: ['/drivers', '/driver', '/safety', '/compliance', '/reporting', '/training', '/fmcsa', '/help', '/settings', '/'],
+ coaching: ['/drivers', '/driver', '/safety', '/compliance', '/help', '/settings', '/'],
+ maintenance: ['/equipment', '/maintenance', '/work-orders', '/documents', '/help', '/settings', '/'],
+ readonly: ['*']
 };
 ```
 
@@ -293,9 +293,9 @@ import { describe, it, expect } from 'vitest';
 import { roleOptions } from '../services/adminService';
 
 describe('role options', () => {
-  it('includes new role set', () => {
-    expect(roleOptions).toContain('full');
-  });
+ it('includes new role set', () => {
+   expect(roleOptions).toContain('full');
+ });
 });
 ```
 
@@ -335,8 +335,8 @@ git commit -m "feat: platform admin org and role management"
 import { test, expect } from '@playwright/test';
 
 test('readonly cannot access maintenance routes', async ({ page }) => {
-  await page.goto('/maintenance');
-  await expect(page).not.toHaveURL(/maintenance/);
+ await page.goto('/maintenance');
+ await expect(page).not.toHaveURL(/maintenance/);
 });
 ```
 

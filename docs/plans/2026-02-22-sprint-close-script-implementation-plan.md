@@ -1,6 +1,6 @@
 # Sprint Close Script Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+> **Implementation note:** Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Add a sprint close script that auto-stages, runs checks, commits with sprint-based message, and pushes to current branch.
 

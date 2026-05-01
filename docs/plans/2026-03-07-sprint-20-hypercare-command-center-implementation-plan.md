@@ -1,6 +1,6 @@
 # Sprint 20 Hypercare Command Center Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+> **Implementation note:** Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Build an in-app Hypercare Command Center for Sprint 20 so rollout leads can monitor launch KPIs, feedback backlog, and escalation triggers from one route.
 
@@ -25,9 +25,9 @@ Create `src/test/hypercareService.test.ts` covering:
 - snapshot composition from reporting + feedback
 - open feedback counts by priority/status
 - trigger evaluation for:
-  - high-priority open backlog
-  - critical compliance/risk thresholds
-  - no-trigger happy path
+ - high-priority open backlog
+ - critical compliance/risk thresholds
+ - no-trigger happy path
 
 **Step 2: Run test to verify it fails**
 
@@ -41,9 +41,9 @@ Create `src/services/hypercareService.ts` with:
 - `createHypercareService(...)`
 - default `hypercareService`
 - aggregation helpers for:
-  - feedback counts
-  - trigger evaluation
-  - daily summary strings/metadata needed by the page
+ - feedback counts
+ - trigger evaluation
+ - daily summary strings/metadata needed by the page
 
 **Step 4: Run test to verify it passes**
 

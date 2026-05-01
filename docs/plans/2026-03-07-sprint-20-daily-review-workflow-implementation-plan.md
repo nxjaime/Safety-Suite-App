@@ -1,6 +1,6 @@
 # Sprint 20 Daily Review Workflow Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+> **Implementation note:** Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Add a role-aware daily KPI/incident review workflow to Hypercare so rollout leads can log reviews and publish internal launch-status updates during Sprint 20.
 

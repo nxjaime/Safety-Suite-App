@@ -1,6 +1,6 @@
 # Sprint 21 Tenant Isolation and Role Model Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+> **Implementation note:** Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Replace the current coarse access model with a full enterprise role and capability system for tenant-safe route, service, and admin enforcement.
 
