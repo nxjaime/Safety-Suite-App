@@ -5,6 +5,7 @@ import { workOrderService, canTransitionStatus, getNextStatuses, type WorkOrderS
 import { equipmentService } from '../services/equipmentService';
 import type { WorkOrder, Equipment } from '../types';
 import toast from 'react-hot-toast';
+import { useOfflineSync } from '../contexts/OfflineSyncContext';
 
 export const workOrderStatusPipeline = ['Draft', 'Approved', 'In Progress', 'Completed', 'Closed', 'Cancelled'] as const;
 
@@ -17,6 +18,7 @@ const statusTransitionLabel: Record<string, string> = {
 };
 
 const WorkOrders: React.FC = () => {
+  const { transitionWorkOrderStatus, closeWorkOrder } = useOfflineSync();
   const [workOrders, setWorkOrders] = React.useState<WorkOrder[]>([]);
   const [equipment, setEquipment] = React.useState<Equipment[]>([]);
   const [isNewModalOpen, setIsNewModalOpen] = React.useState(false);
@@ -74,17 +76,9 @@ const WorkOrders: React.FC = () => {
 
     setTransitioningId(order.id);
     try {
-      const updates: Partial<WorkOrder> = { status: nextStatus };
-      if (nextStatus === 'Approved') {
-        updates.approvedAt = new Date().toISOString();
-        updates.approvedBy = 'Current User';
-      }
-      if (nextStatus === 'Completed') {
-        updates.completedAt = new Date().toISOString();
-      }
-      const updated = await workOrderService.updateWorkOrder(order.id, updates);
+      const { order: updated, queued } = await transitionWorkOrderStatus(order, nextStatus);
       setWorkOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
-      toast.success(`Status updated to ${nextStatus}`);
+      toast.success(queued ? `Queued ${nextStatus} status update` : `Status updated to ${nextStatus}`);
     } catch (err) {
       console.error('Failed to update status', err);
       toast.error('Failed to update status');
@@ -97,13 +91,11 @@ const WorkOrders: React.FC = () => {
     if (!closeoutModal) return;
     setTransitioningId(closeoutModal.orderId);
     try {
-      const updated = await workOrderService.closeOut(
-        closeoutModal.orderId,
-        closeoutNotes,
-        'Current User'
-      );
+      const order = workOrders.find((o) => o.id === closeoutModal.orderId);
+      if (!order) throw new Error('Work order not found');
+      const { order: updated, queued } = await closeWorkOrder(order, closeoutNotes, 'Current User');
       setWorkOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
-      toast.success('Work order closed');
+      toast.success(queued ? 'Queued work order closeout' : 'Work order closed');
       setCloseoutModal(null);
     } catch (err) {
       toast.error('Failed to close work order');

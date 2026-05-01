@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.tsx'
 import { AuthProvider } from './contexts/AuthContext'
 import { NotificationProvider } from './contexts/NotificationContext'
+import { OfflineSyncProvider } from './contexts/OfflineSyncContext'
 import { isSupabaseConfigured } from './lib/supabase'
 
 const rootElement = document.getElementById('root');
@@ -41,7 +42,9 @@ if (!isSupabaseConfigured) {
     <StrictMode>
       <AuthProvider>
         <NotificationProvider>
-          <App />
+          <OfflineSyncProvider>
+            <App />
+          </OfflineSyncProvider>
         </NotificationProvider>
       </AuthProvider>
     </StrictMode>,

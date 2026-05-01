@@ -285,30 +285,13 @@ Summary:
 ---
 
 ### Sprint 39: PWA and Offline Field Operations
-Status: Planned
-
-User stories:
-- As a field technician without reliable cell service, I can complete and submit DVIR inspections offline and have them sync when I reconnect.
-- As a technician, I can view my assigned work orders and equipment details without an internet connection.
-- As the platform, offline data queued by technicians syncs automatically and without data loss when connectivity is restored.
-
-Goal:
-- Address Known Risk #2: deliver offline-capable PWA for field technicians using IndexedDB and a service worker sync queue.
-
-Scope:
-- Configure Vite PWA plugin (`vite-plugin-pwa`) with a service worker and manifest
-- Implement `offlineQueueService.ts` using IndexedDB (via `idb`) for queuing inspection submissions and WO status updates
-- Add sync trigger on `online` event that flushes the queue through the real service layer
-- Add conflict resolution strategy for records modified both offline and online
-- Add "Offline" mode banner in the UI when `navigator.onLine` is false
-- Add sync status indicator showing pending items count
-- Add focused tests for queue enqueue/dequeue, sync trigger, and conflict handling
-
-Exit criteria:
-- Technician can submit an inspection while offline; it persists in IndexedDB
-- On reconnect, queued inspections sync to Supabase without duplication
-- Conflict between local and remote edits is resolved predictably (last-write or flagged for review)
-- Offline banner appears/disappears correctly; sync count is accurate
+Status: Complete
+Summary:
+- Added a Vite PWA manifest/service worker configuration and registered the app for offline-capable delivery.
+- Implemented an IndexedDB-backed offline queue for inspection submissions and work-order status/closeout updates, with last-write-wins processing on reconnect.
+- Wired Compliance and Work Orders to queue actions when offline, and surfaced the offline/pending-sync banner in the app shell.
+- Verification passed: `npm exec vitest --run src/test/offlineQueueService.test.ts src/test/inspectionService.test.ts src/test/inspectionRemediation.test.ts`, `npm run build`, and browser verification on the local app with offline mode toggled, an inspection queued, and the pending-sync banner/count visible.
+- Bug/notes: some live-data panels still emit fetch errors while offline because their list hydration is not yet offline-aware; the targeted offline submission/status workflows now queue and surface correctly.
 
 ---
 
@@ -713,6 +696,24 @@ Exit criteria:
 - All critical user-facing workflows are verified on the hosted site
 - No untriaged console errors or broken navigation remain in the production smoke pass
 - The production smoke checklist becomes part of release sign-off
+
+---
+
+## QA Bug Backlog
+
+### Bug: Login submit returns a network error in production
+- Severity: Critical
+- Category: Functional / Console
+- Environment: https://safetyhubconnect.vercel.app/
+- Observation: submitting the login form surfaces a generic "Network Error" / "Failed to fetch" state instead of authenticating or showing a recovery-friendly message.
+- Impact: blocks sign-in and prevents access to the authenticated app.
+
+### Bug: Main landing page is slow to load
+- Severity: Medium
+- Category: UX / Performance
+- Environment: https://safetyhubconnect.vercel.app/
+- Observation: the main page takes a noticeable amount of time to render and become usable.
+- Impact: creates a poor first impression and may reduce successful entry into the app.
 
 ## Final Project Status
 **RC1 Launch Ready — Sprints 31–37 post-launch hardening applied.**

@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import OfflineSyncBanner from './OfflineSyncBanner';
 
 const Layout: React.FC = () => {
     return (
@@ -10,6 +11,7 @@ const Layout: React.FC = () => {
             <div className="flex-1 ml-64">
                 <Header />
                 <main className="p-6 md:p-8 pt-24 md:pt-24">
+                    <OfflineSyncBanner />
                     <Outlet />
                 </main>
             </div>

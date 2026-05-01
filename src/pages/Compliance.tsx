@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, CheckCircle, Clock, FileText, Plus, User, Calendar, Trash2, AlertTriangle, Truck, ClipboardList, ShieldAlert } from 'lucide-react';
 import Modal from '../components/UI/Modal';
-import { inspectionService, shouldCreateWorkOrderFromInspection } from '../services/inspectionService';
+import { inspectionService } from '../services/inspectionService';
 import type { Inspection, ViolationItem, RemediationStatus } from '../services/inspectionService';
 import { driverService } from '../services/driverService';
 import type { Driver } from '../types';
 import { workOrderService } from '../services/workOrderService';
 import { getComplianceSnapshot, getOverdueComplianceTasks, escalateOverdueComplianceTasks, type ComplianceSnapshot } from '../services/complianceService';
+import { useOfflineSync } from '../contexts/OfflineSyncContext';
 import toast from 'react-hot-toast';
 
 function CreateWorkOrderFromInspectionButton({ inspection, onCreated }: { inspection: Inspection; onCreated?: () => void }) {
@@ -43,6 +44,7 @@ function CreateWorkOrderFromInspectionButton({ inspection, onCreated }: { inspec
 }
 
 const Compliance: React.FC = () => {
+    const { submitInspection } = useOfflineSync();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newDQFile, setNewDQFile] = useState({
         driverName: '',
@@ -227,31 +229,19 @@ const Compliance: React.FC = () => {
         try {
             const inspectionPayload = {
                 ...newInspection,
-                vehicle_name: newInspection.vehicle_name, // Ensure basic UI field is populated
+                vehicle_name: newInspection.vehicle_name,
                 violations_count: (newInspection.violations_data || []).length
             };
-            await inspectionService.createInspection(inspectionPayload);
-
-            const shouldCreate = shouldCreateWorkOrderFromInspection(
-                inspectionPayload.out_of_service,
-                inspectionPayload.violations_data || []
-            );
-
-            if (shouldCreate) {
-                // include org context and potentially link to vehicle if available
-                await workOrderService.createWorkOrder({
-                    title: `Inspection OOS: ${inspectionPayload.vehicle_name || 'Vehicle'}`,
-                    description: 'Auto-generated from inspection out-of-service status.',
-                    status: 'Draft',
-                    priority: 'High',
-                    equipmentId: inspectionPayload.vehicle_id || undefined,
-                    // organizationId will be filled by service fallback if not provided
-                } as any);
-            }
+            const { inspection, queued } = await submitInspection(inspectionPayload);
+            setInspections((prev) => [{
+                ...inspection,
+                status: queued ? 'Queued for sync' : 'Uploaded'
+            }, ...prev.filter((item) => item.id !== inspection.id)]);
             await loadInspections();
             setIsInspectionModalOpen(false);
             setNewInspection(initialInspectionState);
             setActiveTab('admin');
+            toast.success(queued ? 'Inspection queued for sync' : 'Inspection saved');
         } catch (error) {
             console.error('Failed to create inspection', error);
             alert('Failed to save inspection.');
