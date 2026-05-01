@@ -275,29 +275,12 @@ Summary:
 ---
 
 ### Sprint 38: Telematics Hardening and Real-Time Event Reliability
-Status: Planned
-
-User stories:
-- As a safety manager, I can trust that telematics events are captured exactly once, in order, even when the data stream is delayed or arrives out of sequence.
-- As engineering, we have a formalized buffer and deduplication mechanism so race conditions cannot corrupt driver risk scores.
-- As an ops lead, I can view telematics ingestion health and see which events were dropped, retried, or deduplicated.
-
-Goal:
-- Formally harden the telematics ingestion path and eliminate Known Risk #3 (race conditions in the event buffer).
-
-Scope:
-- Audit and document the current telematics buffer logic in `telematicsService.ts`
-- Add event deduplication keyed on (driver_id, event_type, event_timestamp) at the service layer
-- Add idempotency guard on risk score recalculation triggered by telematics events
-- Add ingestion health tracking: last received, drop count, retry count per provider
-- Add telematics ingestion health panel to Admin Dashboard (platform admin only)
-- Add focused regression tests for buffer, dedup, and ordering edge cases
-
-Exit criteria:
-- Duplicate telematics events do not produce duplicate risk score entries
-- Out-of-order events are handled without corrupting score history
-- Ingestion health is visible to platform admins without raw DB access
-- All telematics dedup tests pass; zero TypeScript errors
+Status: Complete
+Summary:
+- Added a telematics event buffer migration plus service-layer deduplication, ordered flushing, retry/drop handling, and ingestion health aggregation.
+- Added a platform-admin Telematics panel to the Admin Dashboard so ingestion health is visible without raw DB access.
+- Added focused regression coverage for duplicate-event handling, out-of-order processing, and retry/drop behavior, and updated admin dashboard coverage for the new tab.
+- Verification passed: `npm exec vitest --run src/test/telematicsService.test.ts src/test/adminDashboard.test.tsx`, `npm run build`, `git diff --check`, and browser verification on the local app at `/admin` with the Telematics health panel visible.
 
 ---
 

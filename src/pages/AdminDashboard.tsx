@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
+  Activity,
   AlertTriangle,
   Building2,
   CheckCircle2,
@@ -31,10 +32,11 @@ import {
   type SupportTicketStatus,
 } from '../services/supportTicketService';
 import { retentionPolicyService, type RetentionSnapshot } from '../services/retentionPolicyService';
+import { telematicsService, type TelematicsHealthSummary } from '../services/telematicsService';
 import type { ProfileRole } from '../services/authorizationService';
 import Modal from '../components/UI/Modal';
 
-type AdminTab = 'users' | 'org' | 'audit' | 'support' | 'retention';
+type AdminTab = 'users' | 'org' | 'audit' | 'support' | 'telematics' | 'retention';
 
 const SEVERITY_COLORS: Record<AuditSeverity, string> = {
   info: 'bg-blue-50 text-blue-700 border-blue-200',
@@ -107,6 +109,10 @@ const AdminDashboard: React.FC = () => {
     priority: 'medium' as const,
   });
 
+  // Telematics
+  const [telematicsHealth, setTelematicsHealth] = useState<TelematicsHealthSummary[]>([]);
+  const [telematicsLoading, setTelematicsLoading] = useState(false);
+
   // Retention
   const [retention, setRetention] = useState<RetentionSnapshot | null>(null);
   const [retentionDays, setRetentionDays] = useState(365);
@@ -168,6 +174,19 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const loadTelematicsHealth = async () => {
+    setTelematicsLoading(true);
+    try {
+      const summaries = await telematicsService.getIngestionHealthSummaries();
+      setTelematicsHealth(summaries);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to load telematics ingestion health');
+    } finally {
+      setTelematicsLoading(false);
+    }
+  };
+
   const loadRetention = async () => {
     setRetentionLoading(true);
     try {
@@ -186,8 +205,9 @@ const AdminDashboard: React.FC = () => {
     else if (activeTab === 'org') loadOrgConfig();
     else if (activeTab === 'audit') loadAuditLogs();
     else if (activeTab === 'support') loadTickets();
+    else if (activeTab === 'telematics') loadTelematicsHealth();
     else if (activeTab === 'retention') loadRetention();
-  }, [activeTab, auditFilter]);
+  }, [activeTab, auditFilter, retentionDays]);
 
   // ── User actions ──
   const handleRoleChange = async () => {
@@ -290,6 +310,7 @@ const AdminDashboard: React.FC = () => {
     { id: 'org', label: 'Organization', icon: <Building2 className="h-4 w-4" /> },
     { id: 'audit', label: 'Audit Log', icon: <History className="h-4 w-4" /> },
     { id: 'support', label: 'Support Tickets', icon: <Ticket className="h-4 w-4" /> },
+    { id: 'telematics', label: 'Telematics', icon: <Activity className="h-4 w-4" /> },
     { id: 'retention', label: 'Data Retention', icon: <FileText className="h-4 w-4" /> },
   ];
 
@@ -664,6 +685,81 @@ const AdminDashboard: React.FC = () => {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* ═══ TELEMATICS TAB ═══ */}
+      {activeTab === 'telematics' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900">Telematics ingestion health</h3>
+              <p className="text-sm text-slate-500">
+                Tracks buffered, processed, retried, dropped, and deduplicated events by provider. Buffered events are processed in timestamp order.
+              </p>
+            </div>
+            <button onClick={loadTelematicsHealth} className="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+              <RefreshCw className="mr-2 h-4 w-4" /> Refresh
+            </button>
+          </div>
+
+          {telematicsLoading && <p className="py-8 text-center text-sm text-slate-500">Loading telematics ingestion health...</p>}
+
+          {!telematicsLoading && telematicsHealth.length === 0 && (
+            <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">
+              No telematics ingestion records yet. Once providers send events, this panel will show last received time, dedup counts, retry counts, and dropped events.
+            </div>
+          )}
+
+          {!telematicsLoading && telematicsHealth.length > 0 && (
+            <>
+              <div className="grid gap-4 sm:grid-cols-5 xl:grid-cols-5">
+                {([
+                  { label: 'Providers', value: telematicsHealth.length },
+                  { label: 'Buffered', value: telematicsHealth.reduce((sum, row) => sum + row.bufferedCount, 0) },
+                  { label: 'Processed', value: telematicsHealth.reduce((sum, row) => sum + row.processedCount, 0) },
+                  { label: 'Retries', value: telematicsHealth.reduce((sum, row) => sum + row.retryCount, 0) },
+                  { label: 'Deduplicated', value: telematicsHealth.reduce((sum, row) => sum + row.dedupCount, 0) },
+                ] as const).map((item) => (
+                  <div key={item.label} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="text-2xl font-bold text-slate-900">{item.value}</div>
+                    <div className="text-xs text-slate-500">{item.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <table className="min-w-full divide-y divide-slate-200">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Provider</th>
+                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Last Received</th>
+                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Last Processed</th>
+                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Buffered / Processed</th>
+                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Retries / Drops</th>
+                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Dedup / OOO</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white">
+                    {telematicsHealth.map((row) => (
+                      <tr key={row.provider} className="transition-colors hover:bg-slate-50">
+                        <td className="px-5 py-4 text-sm font-medium text-slate-900">{row.provider}</td>
+                        <td className="px-5 py-4 text-sm text-slate-500">{formatDate(row.lastReceivedAt)}</td>
+                        <td className="px-5 py-4 text-sm text-slate-500">{formatDate(row.lastProcessedAt)}</td>
+                        <td className="px-5 py-4 text-sm text-slate-700">{row.bufferedCount} / {row.processedCount}</td>
+                        <td className="px-5 py-4 text-sm text-slate-700">{row.retryCount} / {row.droppedCount}</td>
+                        <td className="px-5 py-4 text-sm text-slate-700">{row.dedupCount} / {row.outOfOrderCount}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+                Deduplicated events are counted at ingestion, and each buffered event is recalculated once when flushed in timestamp order so out-of-sequence arrivals do not corrupt risk history.
+              </div>
+            </>
+          )}
         </div>
       )}
 

@@ -36,9 +36,31 @@ vi.mock('../services/supportTicketService', () => ({
 vi.mock('../services/retentionPolicyService', () => ({
     retentionPolicyService: {
         getRetentionSnapshot: vi.fn().mockResolvedValue({
-            retainableCount: 0,
+            counts: { documents: 0, tasks: 0, trainingAssignments: 0, total: 0 },
             candidates: [],
+            days: 365,
+            cutoffDate: '2026-01-01',
         }),
+    },
+}));
+
+vi.mock('../services/telematicsService', () => ({
+    telematicsService: {
+        getIngestionHealthSummaries: vi.fn().mockResolvedValue([
+            {
+                provider: 'motive',
+                lastReceivedAt: '2026-05-01T00:00:00.000Z',
+                lastProcessedAt: '2026-05-01T00:05:00.000Z',
+                bufferedCount: 2,
+                processedCount: 4,
+                retryCount: 1,
+                droppedCount: 0,
+                dedupCount: 3,
+                outOfOrderCount: 1,
+                lastEventKey: 'driver-1::speeding::2026-05-01T00:00:00.000Z',
+                lastError: null,
+            },
+        ]),
     },
 }));
 
@@ -68,8 +90,9 @@ describe('AdminDashboard — Enterprise Controls Hub', () => {
         expect(tabLabels).toContain('Organization');
         expect(tabLabels).toContain('Audit Log');
         expect(tabLabels).toContain('Support Tickets');
+        expect(tabLabels).toContain('Telematics');
         expect(tabLabels).toContain('Data Retention');
-        expect(tabButtons).toHaveLength(5);
+        expect(tabButtons).toHaveLength(6);
     });
 
     it('can switch to the Support Tickets tab', () => {
@@ -81,6 +104,18 @@ describe('AdminDashboard — Enterprise Controls Hub', () => {
 
         // Should show a "New Ticket" button on the support tickets tab
         expect(screen.getByText(/New Ticket/i)).toBeInTheDocument();
+    });
+
+    it('can switch to the Telematics tab and show provider health', async () => {
+        render(<AdminDashboard />);
+
+        const nav = screen.getByRole('navigation');
+        const telematicsTab = within(nav).getByText('Telematics');
+        fireEvent.click(telematicsTab);
+
+        expect(await screen.findByText(/Telematics ingestion health/i)).toBeInTheDocument();
+        expect(await screen.findByText('motive')).toBeInTheDocument();
+        expect(screen.getByText('Deduplicated')).toBeInTheDocument();
     });
 
     it('can switch to the Organization tab', () => {
