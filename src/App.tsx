@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout/Layout';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -28,13 +28,15 @@ const UserProfile = lazy(() => import('./pages/UserProfile'));
 const Landing = lazy(() => import('./pages/Landing'));
 const HelpFeedback = lazy(() => import('./pages/HelpFeedback'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const DriverPortal = lazy(() => import('./pages/DriverPortal'));
 
 
 import { useAuth } from './contexts/AuthContext';
 
 // Simple Protected Route Component
 const ProtectedRoute = () => {
-  const { session, loading } = useAuth();
+  const { session, loading, user } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -45,6 +47,11 @@ const ProtectedRoute = () => {
   }
 
   const isE2EAuthBypass = isAuthBypassEnabled();
+  const driverRole = String(user?.user_metadata?.role || '').toLowerCase() === 'driver';
+  if (driverRole && location.pathname !== '/driver-portal') {
+    return <Navigate to="/driver-portal" replace />;
+  }
+
   if (!session && !isE2EAuthBypass) {
     return <Navigate to="/login" replace />;
   }
@@ -80,6 +87,9 @@ function App() {
       <Routes>
         <Route path="/welcome" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Landing /></Suspense></ErrorBoundary>} />
         <Route path="/login" element={<Navigate to="/" replace />} />
+        <Route path="/driver-portal" element={<ProtectedRoute />}>
+          <Route index element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><DriverPortal /></Suspense></ErrorBoundary>} />
+        </Route>
 
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>

@@ -100,7 +100,7 @@ const Header: React.FC = () => {
     const { title, path } = getBreadcrumbs();
 
     return (
-        <header className="h-20 bg-white/90 backdrop-blur border-b border-slate-200 flex items-center justify-between px-6 md:px-8 fixed top-0 left-64 right-0 z-10">
+        <header className="h-20 bg-white/90 backdrop-blur border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 md:px-8 fixed top-0 left-0 md:left-64 right-0 z-10">
             <div className="flex flex-col">
                 <h1 className="text-lg md:text-xl font-semibold text-slate-900">{title}</h1>
                 <span className="text-xs md:text-sm text-slate-500">{path}</span>

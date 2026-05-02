@@ -349,7 +349,7 @@ Bug/notes:
 ---
 
 ### Sprint 42: Driver Self-Service Portal and Mobile-Optimized Views
-Status: Planned
+Status: Complete
 
 User stories:
 - As a driver, I can log into a simplified view and see my current risk score, open training assignments, and any coaching check-ins due.
@@ -371,6 +371,11 @@ Exit criteria:
 - `driver` role users land on the portal, not the full management dashboard
 - Drivers can complete a training attestation end-to-end without manager intervention
 - Portal is fully usable on a 375px-wide mobile screen with no horizontal scroll
+
+Progress note (2026-05-02):
+- Added a new `DriverPortal` page with live risk, training, and coaching summaries plus inline training completion and coaching acknowledgement actions.
+- Routed driver accounts to `/driver-portal` before the full management layout and tightened the shared shell for small screens by hiding the sidebar below `md` and removing the desktop-only left margin on mobile.
+- Added driver portal regression tests and verified the route renders cleanly in the browser with the driver portal content visible.
 
 ---
 

@@ -168,7 +168,7 @@ const Sidebar: React.FC = () => {
     };
 
     return (
-        <div className="fixed left-0 top-0 flex h-screen w-64 flex-col overflow-y-auto border-r border-slate-800 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900 text-white shadow-[4px_0_24px_rgba(15,23,42,0.25)]">
+        <div className="fixed left-0 top-0 hidden h-screen w-64 flex-col overflow-y-auto border-r border-slate-800 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900 text-white shadow-[4px_0_24px_rgba(15,23,42,0.25)] md:flex">
             <div className="border-b border-slate-800 p-4">
                 <div className="flex items-center gap-3">
                     <img src="/logo.png" alt="SafetyHub Logo" className="h-8 w-8 object-contain" />
