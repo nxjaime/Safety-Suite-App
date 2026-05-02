@@ -7,6 +7,7 @@ import { taskService } from '../services/taskService';
 import { driverService } from '../services/driverService';
 import toast from 'react-hot-toast';
 import type { TaskItem, Driver } from '../types';
+import ListWorkflowControls from '../components/list/ListWorkflowControls';
 
 const Tasks: React.FC = () => {
     const [tasks, setTasks] = useState<TaskItem[]>([]);
@@ -183,7 +184,18 @@ const Tasks: React.FC = () => {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-slate-800">Tasks & Follow-ups</h2>
-                <div className="flex space-x-3">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+                    <ListWorkflowControls
+                        target="tasks"
+                        filters={{ filterPriority, filterStatus, searchTerm }}
+                        headers={["Title", "Assignee", "Due Date", "Priority", "Status"]}
+                        rows={filteredTasks.map((task) => [task.title, task.assignee, task.dueDate, task.priority, task.status])}
+                        onApply={(saved) => {
+                            if (typeof saved.filterPriority === 'string') setFilterPriority(saved.filterPriority);
+                            if (typeof saved.filterStatus === 'string') setFilterStatus(saved.filterStatus);
+                            if (typeof saved.searchTerm === 'string') setSearchTerm(saved.searchTerm);
+                        }}
+                    />
                     <div className="relative group">
                         <button className="flex items-center px-4 py-2 border border-slate-300 rounded-md bg-white text-sm font-medium text-slate-700 hover:bg-slate-50">
                             <Filter className="w-4 h-4 mr-2" />
@@ -191,22 +203,14 @@ const Tasks: React.FC = () => {
                         </button>
                         <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-md shadow-lg hidden group-hover:block z-20 p-2">
                             <div className="text-xs font-semibold text-slate-500 mb-1 px-2">Priority</div>
-                            <select
-                                className="w-full text-sm border-slate-300 rounded mb-2"
-                                value={filterPriority}
-                                onChange={(e) => setFilterPriority(e.target.value)}
-                            >
+                            <select className="w-full text-sm border-slate-300 rounded mb-2" value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)}>
                                 <option value="All">All Priorities</option>
                                 <option value="High">High</option>
                                 <option value="Medium">Medium</option>
                                 <option value="Low">Low</option>
                             </select>
                             <div className="text-xs font-semibold text-slate-500 mb-1 px-2">Status</div>
-                            <select
-                                className="w-full text-sm border-slate-300 rounded"
-                                value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value)}
-                            >
+                            <select className="w-full text-sm border-slate-300 rounded" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
                                 <option value="Pending">Active (default)</option>
                                 <option value="All">All Tasks</option>
                                 <option value="Overdue">Overdue</option>
@@ -215,12 +219,8 @@ const Tasks: React.FC = () => {
                         </div>
                     </div>
 
-                    <button
-                        onClick={() => setIsTaskModalOpen(true)}
-                        className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700"
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        New Task
+                    <button onClick={() => setIsTaskModalOpen(true)} className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700">
+                        <Plus className="w-4 h-4 mr-2" /> New Task
                     </button>
                 </div>
             </div>

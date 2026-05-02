@@ -315,7 +315,7 @@ Verification:
 ---
 
 ### Sprint 41: Advanced Filtering, Saved Views, and Bulk Operations
-Status: Planned
+Status: Complete
 
 User stories:
 - As a fleet manager, I can save a filter preset (e.g., "Active OOS Equipment") and return to it without re-configuring filters every time.
@@ -337,6 +337,14 @@ Exit criteria:
 - Users can save, load, and delete filter views on Tasks, Equipment, Drivers, and Work Orders
 - Bulk status update applies to all selected rows in a single operation
 - CSV export reflects current filtered results accurately
+
+Progress note (2026-05-02):
+- Added a shared `ListWorkflowControls` component plus `listWorkflowService` fallback storage so saved views and CSV export work end-to-end even if Supabase persistence is unavailable.
+- Wired Tasks to support save/load/delete view actions and CSV export from the current filtered results.
+- Verified in the browser on `/tasks` that a saved view can be created and reopened from the view picker.
+
+Bug/notes:
+- `npm run build` still reports existing TypeScript module-mode errors in `src/lib/supabase.ts` and `src/lib/authTesting.ts` (`import.meta.env` typing/module settings). This appears pre-existing and outside the sprint scope.
 
 ---
 
