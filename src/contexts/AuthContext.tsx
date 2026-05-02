@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { isAuthBypassEnabled } from '../lib/authTesting';
 import {
     canAccessPlatformAdmin,
     getRoleCapabilities,
@@ -30,7 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [organizationId, setOrganizationId] = useState<string | null>(null);
     const [role, setRole] = useState<ProfileRole>('readonly');
     const [loading, setLoading] = useState(true);
-    const isE2EAuthBypass = import.meta.env.VITE_E2E_AUTH_BYPASS === 'true';
+    const isE2EAuthBypass = isAuthBypassEnabled();
 
     useEffect(() => {
         if (isE2EAuthBypass) {

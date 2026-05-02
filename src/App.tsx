@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout/Layout';
 import ErrorBoundary from './components/ErrorBoundary';
+import { isAuthBypassEnabled } from './lib/authTesting';
 import { canAccessPlatformAdmin } from './services/authorizationService';
 
 // Lazy load pages
@@ -23,7 +24,6 @@ const CSAPredictor = lazy(() => import('./pages/CSAPredictor'));
 const Documents = lazy(() => import('./pages/Documents'));
 const FMCSA = lazy(() => import('./pages/FMCSA'));
 const Settings = lazy(() => import('./pages/Settings'));
-const Login = lazy(() => import('./pages/Login'));
 const UserProfile = lazy(() => import('./pages/UserProfile'));
 const Landing = lazy(() => import('./pages/Landing'));
 const HelpFeedback = lazy(() => import('./pages/HelpFeedback'));
@@ -44,7 +44,7 @@ const ProtectedRoute = () => {
     );
   }
 
-  const isE2EAuthBypass = import.meta.env.VITE_E2E_AUTH_BYPASS === 'true';
+  const isE2EAuthBypass = isAuthBypassEnabled();
   if (!session && !isE2EAuthBypass) {
     return <Navigate to="/login" replace />;
   }
@@ -63,7 +63,7 @@ const AdminRoute = () => {
     );
   }
 
-  const isE2EAuthBypass = import.meta.env.VITE_E2E_AUTH_BYPASS === 'true';
+  const isE2EAuthBypass = isAuthBypassEnabled();
   const hasPlatformAdminAccess = capabilities?.canAccessPlatformAdmin ?? canAccessPlatformAdmin(role);
 
   if (!hasPlatformAdminAccess && !isE2EAuthBypass) {
@@ -79,7 +79,7 @@ function App() {
       <Toaster position="top-right" />
       <Routes>
         <Route path="/welcome" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Landing /></Suspense></ErrorBoundary>} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<Navigate to="/" replace />} />
 
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
