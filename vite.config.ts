@@ -2,6 +2,8 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+const supabaseTarget = 'https://slrxopkmbojugvenkfih.supabase.co'
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -35,4 +37,14 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    proxy: {
+      '/supabase': {
+        target: supabaseTarget,
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/supabase/, ''),
+      },
+    },
+  },
 })
