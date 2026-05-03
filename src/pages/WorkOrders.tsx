@@ -21,6 +21,9 @@ const WorkOrders: React.FC = () => {
   const { transitionWorkOrderStatus, closeWorkOrder } = useOfflineSync();
   const [workOrders, setWorkOrders] = React.useState<WorkOrder[]>([]);
   const [equipment, setEquipment] = React.useState<Equipment[]>([]);
+  const [workOrderPage, setWorkOrderPage] = React.useState(1);
+  const [workOrderPageSize] = React.useState(10);
+  const [workOrderCount, setWorkOrderCount] = React.useState(0);
   const [isNewModalOpen, setIsNewModalOpen] = React.useState(false);
   const [closeoutModal, setCloseoutModal] = React.useState<{ orderId: string; title: string } | null>(null);
   const [closeoutNotes, setCloseoutNotes] = React.useState('');
@@ -34,10 +37,11 @@ const WorkOrders: React.FC = () => {
   }>({ title: '' });
   const [transitioningId, setTransitioningId] = React.useState<string | null>(null);
 
-  const loadWorkOrders = async () => {
+  const loadWorkOrders = async (page = workOrderPage) => {
     try {
-      const data = await workOrderService.getWorkOrders();
+      const { data, count } = await workOrderService.getWorkOrdersPaginated(page, workOrderPageSize);
       setWorkOrders(data);
+      setWorkOrderCount(count);
     } catch (e) {
       console.error('Failed to load work orders', e);
       toast.error('Failed to load work orders');
@@ -54,9 +58,9 @@ const WorkOrders: React.FC = () => {
   };
 
   React.useEffect(() => {
-    loadWorkOrders();
+    loadWorkOrders(workOrderPage);
     loadEquipment();
-  }, []);
+  }, [workOrderPage, workOrderPageSize]);
 
   const backlogCount = workOrderService.getBacklogCount(workOrders);
   const overdueCount = workOrderService.getOverdueCount(workOrders);
@@ -239,6 +243,14 @@ const WorkOrders: React.FC = () => {
           </tbody>
         </table>
       </section>
+
+      <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
+        <span>Showing {workOrders.length} of {workOrderCount} work orders</span>
+        <div className="flex gap-2">
+          <button type="button" disabled={workOrderPage === 1} onClick={() => { const nextPage = Math.max(1, workOrderPage - 1); setWorkOrderPage(nextPage); loadWorkOrders(nextPage); }} className="rounded-md border border-slate-300 px-3 py-1 disabled:opacity-50">Prev</button>
+          <button type="button" disabled={workOrderPage * workOrderPageSize >= workOrderCount} onClick={() => { const nextPage = workOrderPage + 1; setWorkOrderPage(nextPage); loadWorkOrders(nextPage); }} className="rounded-md border border-slate-300 px-3 py-1 disabled:opacity-50">Next</button>
+        </div>
+      </div>
 
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <article className="rounded-2xl shadow-sm border border-slate-200 p-6 bg-white">

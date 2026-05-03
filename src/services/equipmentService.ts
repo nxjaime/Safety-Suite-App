@@ -31,14 +31,25 @@ export { mapEquipment };
 
 export const equipmentService = {
   async getEquipment(filters?: { status?: string; type?: string }): Promise<Equipment[]> {
+    const { data } = await this.getEquipmentPaginated(1, 1000, filters);
+    return data;
+  },
+
+  async getEquipmentPaginated(
+    page: number,
+    pageSize: number,
+    filters?: { status?: string; type?: string }
+  ): Promise<{ data: Equipment[]; count: number }> {
     const orgId = await getCurrentOrganization();
-    let query = supabase.from('equipment').select('*');
+    let query = supabase.from('equipment').select('*', { count: 'exact' });
     if (orgId) query = query.eq('organization_id', orgId);
     if (filters?.status) query = query.eq('status', filters.status);
     if (filters?.type) query = query.eq('type', filters.type);
-    const { data, error } = await query.order('asset_tag');
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+    const { data, count, error } = await query.order('asset_tag').range(from, to);
     if (error) throw error;
-    return (data || []).map(mapEquipment);
+    return { data: (data || []).map(mapEquipment), count: count || 0 };
   },
 
   async getEquipmentById(id: string): Promise<Equipment | null> {

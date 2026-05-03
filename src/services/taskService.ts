@@ -39,6 +39,29 @@ export const taskService = {
         return data.map(mapTaskData);
     },
 
+    async fetchTasksPaginated(
+        page: number,
+        pageSize: number,
+        filters?: { search?: string; priority?: string; status?: string }
+    ): Promise<{ data: TaskItem[]; count: number }> {
+        const orgId = await getCurrentOrganization();
+        let query = supabase.from('tasks').select('*', { count: 'exact' });
+        if (orgId) query = query.eq('organization_id', orgId);
+
+        if (filters?.search) {
+            const safeSearch = filters.search.replace(/[.%]/g, '');
+            query = query.or(`title.ilike.%${safeSearch}%,driver_name.ilike.%${safeSearch}%`);
+        }
+        if (filters?.priority && filters.priority !== 'All') query = query.eq('priority', filters.priority);
+        if (filters?.status && filters.status !== 'All') query = query.eq('status', filters.status);
+
+        const from = (page - 1) * pageSize;
+        const to = from + pageSize - 1;
+        const { data, count, error } = await query.order('created_at', { ascending: false }).range(from, to);
+        if (error) throw error;
+        return { data: (data || []).map(mapTaskData), count: count || 0 };
+    },
+
     async addTask(task: Omit<TaskItem, 'id'>) {
         const orgId = await getCurrentOrganization();
         const { data, error } = await supabase

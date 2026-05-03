@@ -15,6 +15,9 @@ const Tasks: React.FC = () => {
     const [filterPriority, setFilterPriority] = useState<string>('All');
     const [filterStatus, setFilterStatus] = useState<string>('Pending');
     const [searchTerm, setSearchTerm] = useState('');
+    const [taskPage, setTaskPage] = useState(1);
+    const [taskPageSize] = useState(12);
+    const [taskCount, setTaskCount] = useState(0);
 
     // Modal States
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -38,10 +41,15 @@ const Tasks: React.FC = () => {
         priority: ''
     });
 
-    const loadTasks = async () => {
+    const loadTasks = async (page = taskPage) => {
         try {
-            const allTasks = await taskService.fetchTasks();
-            setTasks(allTasks);
+            const { data, count } = await taskService.fetchTasksPaginated(page, taskPageSize, {
+                search: searchTerm,
+                priority: filterPriority,
+                status: filterStatus,
+            });
+            setTasks(data);
+            setTaskCount(count);
         } catch (error) {
             console.error('Failed to load tasks', error);
             toast.error('Failed to load tasks');
@@ -58,7 +66,11 @@ const Tasks: React.FC = () => {
     };
 
     useEffect(() => {
-        loadTasks();
+        loadTasks(1);
+        setTaskPage(1);
+    }, [searchTerm, filterPriority, filterStatus]);
+
+    useEffect(() => {
         loadDrivers();
     }, []);
 
@@ -90,7 +102,7 @@ const Tasks: React.FC = () => {
                 description: '',
                 driverId: ''
             });
-            loadTasks();
+            loadTasks(taskPage);
         } catch (error) {
             toast.error('Failed to create task');
         }
@@ -117,7 +129,7 @@ const Tasks: React.FC = () => {
             });
             toast.success('Task updated');
             setIsEditModalOpen(false);
-            loadTasks();
+            loadTasks(taskPage);
         } catch (error) {
             toast.error('Failed to update task');
         }
@@ -142,7 +154,7 @@ const Tasks: React.FC = () => {
             await taskService.closeTask(selectedTask.id, closeNotes);
             toast.success('Task marked as completed');
             setIsCloseModalOpen(false);
-            loadTasks();
+            loadTasks(taskPage);
         } catch (error) {
             toast.error('Failed to close task');
         }
@@ -174,7 +186,7 @@ const Tasks: React.FC = () => {
         try {
             await taskService.updateTaskStatus(task.id, 'In Progress');
             toast.success('Task started');
-            loadTasks();
+            loadTasks(taskPage);
         } catch {
             toast.error('Failed to start task');
         }
@@ -255,123 +267,80 @@ const Tasks: React.FC = () => {
                     </div>
                 </div>
 
-                {filteredTasks.length > 0 ? (
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-slate-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Task</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Related Driver</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Assigned To</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Due Date</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Priority</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {filteredTasks.map((task) => (
-                                <tr key={task.id} className={clsx("hover:bg-slate-50", task.status === 'Completed' && "opacity-60", isOverdue(task) && "bg-red-50 hover:bg-red-100")}>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center">
-                                            <div className={clsx(
-                                                "flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center",
-                                                task.status === 'Completed' ? "bg-green-100 text-green-600" :
-                                                    task.type === 'General' ? "bg-purple-100 text-purple-600" : "bg-blue-100 text-blue-600"
-                                            )}>
-                                                <CheckSquare className="w-4 h-4" />
-                                            </div>
-                                            <div className="ml-4">
-                                                <div className={clsx("text-sm font-medium", task.status === 'Completed' ? "text-slate-500 line-through" : "text-slate-900")}>{task.title}</div>
-                                                <div className="text-xs text-slate-500">{task.type}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        {task.driverId ? (
-                                            <Link to={`/drivers/${task.driverId}`} className="flex items-center text-green-600 hover:text-green-800">
-                                                <User className="w-4 h-4 mr-2" />
-                                                <span className="text-sm">{task.driverName || 'View Driver'}</span>
-                                            </Link>
-                                        ) : (
-                                            <span className="text-sm text-slate-400">-</span>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                                        {task.assignee}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                        <div className="flex items-center gap-2">
-                                            <Calendar className={clsx("w-4 h-4", isOverdue(task) ? "text-red-500" : "text-slate-400")} />
-                                            <span className={isOverdue(task) ? "text-red-700 font-medium" : "text-slate-500"}>{task.dueDate}</span>
-                                            {isOverdue(task) && (
-                                                <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-red-700">Overdue</span>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={clsx(
-                                            "px-2 inline-flex text-xs leading-5 font-semibold rounded-full",
-                                            task.priority === 'High' ? "bg-red-100 text-red-800" :
-                                                task.priority === 'Medium' ? "bg-yellow-100 text-yellow-800" :
-                                                    "bg-green-100 text-green-800"
-                                        )}>
-                                            {task.priority || 'Medium'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={clsx(
-                                            "px-2 inline-flex text-xs leading-5 font-semibold rounded-full",
-                                            task.status === 'Completed' ? "bg-green-100 text-green-800" :
-                                                task.status === 'In Progress' ? "bg-blue-100 text-blue-800" :
-                                                    "bg-slate-100 text-slate-800"
-                                        )}>
-                                            {task.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <div className="flex items-center justify-end space-x-2">
-                                            {task.status !== 'Completed' && (
-                                                <>
-                                                    {task.status === 'Pending' && (
-                                                        <button
-                                                            onClick={() => handleStartTask(task)}
-                                                            className="text-emerald-600 hover:text-emerald-800 p-1"
-                                                            title="Start Task"
-                                                        >
-                                                            <Play className="w-4 h-4" />
-                                                        </button>
-                                                    )}
-                                                    <button
-                                                        onClick={() => handleEditTask(task)}
-                                                        className="text-blue-600 hover:text-blue-800 p-1"
-                                                        title="Edit Task"
-                                                    >
-                                                        <Edit className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleOpenCloseModal(task)}
-                                                        className="text-green-600 hover:text-green-800 p-1"
-                                                        title="Close Task"
-                                                    >
-                                                        <CheckSquare className="w-4 h-4" />
-                                                    </button>
-                                                </>
-                                            )}
-                                            {task.driverId && (
-                                                <Link
-                                                    to={`/drivers/${task.driverId}`}
-                                                    className="text-slate-500 hover:text-slate-700 p-1"
-                                                    title="Go to Driver"
-                                                >
-                                                    <ArrowRight className="w-4 h-4" />
-                                                </Link>
-                                            )}
-                                        </div>
-                                    </td>
+                {tasks.length > 0 ? (
+                    <>
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-slate-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Task</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Related Driver</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Assigned To</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Due Date</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Priority</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {tasks.map((task) => (
+                                    <tr key={task.id} className={clsx("hover:bg-slate-50", task.status === 'Completed' && "opacity-60", isOverdue(task) && "bg-red-50 hover:bg-red-100")}>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center">
+                                                <div className={clsx("flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center", task.status === 'Completed' ? "bg-green-100 text-green-600" : task.type === 'General' ? "bg-purple-100 text-purple-600" : "bg-blue-100 text-blue-600") }>
+                                                    <CheckSquare className="w-4 h-4" />
+                                                </div>
+                                                <div className="ml-4">
+                                                    <div className={clsx("text-sm font-medium", task.status === 'Completed' ? "text-slate-500 line-through" : "text-slate-900")}>{task.title}</div>
+                                                    <div className="text-xs text-slate-500">{task.type}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {task.driverId ? (
+                                                <Link to={`/drivers/${task.driverId}`} className="flex items-center text-green-600 hover:text-green-800">
+                                                    <User className="w-4 h-4 mr-2" />
+                                                    <span className="text-sm">{task.driverName || 'View Driver'}</span>
+                                                </Link>
+                                            ) : (
+                                                <span className="text-sm text-slate-400">-</span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{task.assignee}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                            <div className="flex items-center gap-2">
+                                                <Calendar className={clsx("w-4 h-4", isOverdue(task) ? "text-red-500" : "text-slate-400")} />
+                                                <span className={isOverdue(task) ? "text-red-700 font-medium" : "text-slate-500"}>{task.dueDate}</span>
+                                                {isOverdue(task) && <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-red-700">Overdue</span>}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={clsx("px-2 inline-flex text-xs leading-5 font-semibold rounded-full", task.priority === 'High' ? "bg-red-100 text-red-800" : task.priority === 'Medium' ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800")}>{task.priority || 'Medium'}</span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={clsx("px-2 inline-flex text-xs leading-5 font-semibold rounded-full", task.status === 'Completed' ? "bg-green-100 text-green-800" : task.status === 'In Progress' ? "bg-blue-100 text-blue-800" : "bg-slate-100 text-slate-800")}>{task.status}</span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <div className="flex items-center justify-end space-x-2">
+                                                {task.status !== 'Completed' && <>
+                                                    {task.status === 'Pending' && <button onClick={() => handleStartTask(task)} className="text-emerald-600 hover:text-emerald-800 p-1" title="Start Task"><Play className="w-4 h-4" /></button>}
+                                                    <button onClick={() => handleEditTask(task)} className="text-blue-600 hover:text-blue-800 p-1" title="Edit Task"><Edit className="w-4 h-4" /></button>
+                                                    <button onClick={() => handleOpenCloseModal(task)} className="text-green-600 hover:text-green-800 p-1" title="Close Task"><CheckSquare className="w-4 h-4" /></button>
+                                                </>}
+                                                {task.driverId && <Link to={`/drivers/${task.driverId}`} className="text-slate-500 hover:text-slate-700 p-1" title="Go to Driver"><ArrowRight className="w-4 h-4" /></Link>}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3 text-sm text-slate-500">
+                            <span>Showing {tasks.length} of {taskCount} tasks</span>
+                            <div className="flex gap-2">
+                                <button type="button" disabled={taskPage === 1} onClick={() => { const nextPage = Math.max(1, taskPage - 1); setTaskPage(nextPage); loadTasks(nextPage); }} className="rounded-md border border-slate-300 px-3 py-1 disabled:opacity-50">Prev</button>
+                                <button type="button" disabled={taskPage * taskPageSize >= taskCount} onClick={() => { const nextPage = taskPage + 1; setTaskPage(nextPage); loadTasks(nextPage); }} className="rounded-md border border-slate-300 px-3 py-1 disabled:opacity-50">Next</button>
+                            </div>
+                        </div>
+                    </>
                 ) : (
                     <div className="p-12 text-center text-slate-500">
                         <CheckSquare className="w-12 h-12 mx-auto text-slate-300 mb-3" />

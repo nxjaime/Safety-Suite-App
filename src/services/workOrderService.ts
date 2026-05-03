@@ -62,17 +62,24 @@ const mapWorkOrder = (data: any): WorkOrder => ({
 
 export const workOrderService = {
     async getWorkOrders(): Promise<WorkOrder[]> {
+        const { data } = await this.getWorkOrdersPaginated(1, 1000);
+        return data;
+    },
+
+    async getWorkOrdersPaginated(page: number, pageSize: number): Promise<{ data: WorkOrder[]; count: number }> {
         const orgId = await getCurrentOrganization();
         let query = supabase
             .from('work_orders')
-            .select('*, line_items:work_order_line_items(*)');
+            .select('*, line_items:work_order_line_items(*)', { count: 'exact' });
         if (orgId) {
             query = query.eq('organization_id', orgId);
         }
-        const { data, error } = await query.order('created_at', { ascending: false });
+        const from = (page - 1) * pageSize;
+        const to = from + pageSize - 1;
+        const { data, count, error } = await query.order('created_at', { ascending: false }).range(from, to);
 
         if (error) throw error;
-        return (data || []).map(mapWorkOrder);
+        return { data: (data || []).map(mapWorkOrder), count: count || 0 };
     },
 
     async createWorkOrder(order: Omit<WorkOrder, 'id'>, lineItems: Omit<WorkOrderLineItem, 'id' | 'workOrderId'>[] = [], _role?: WorkOrderRole) {

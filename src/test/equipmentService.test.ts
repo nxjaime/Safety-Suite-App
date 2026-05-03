@@ -38,9 +38,9 @@ describe('equipmentService', () => {
   describe('getEquipment', () => {
     it('applies organization filter', async () => {
       const eqSpy = vi.fn().mockReturnThis();
-      const orderSpy = vi.fn().mockReturnValue({ data: [], error: null });
       const selectSpy = vi.fn().mockReturnThis();
-      const chain: any = { select: selectSpy, eq: eqSpy, order: orderSpy };
+      const chain: any = { select: selectSpy, eq: eqSpy, range: vi.fn().mockReturnValue({ data: [], count: 0, error: null }) };
+      chain.order = vi.fn().mockReturnValue(chain);
       (supa.supabase as any).from = vi.fn().mockReturnValue(chain);
 
       const { equipmentService } = await import('../services/equipmentService');
@@ -52,9 +52,9 @@ describe('equipmentService', () => {
 
     it('applies type filter when provided', async () => {
       const eqSpy = vi.fn().mockReturnThis();
-      const orderSpy = vi.fn().mockReturnValue({ data: [], error: null });
       const selectSpy = vi.fn().mockReturnThis();
-      const chain: any = { select: selectSpy, eq: eqSpy, order: orderSpy };
+      const chain: any = { select: selectSpy, eq: eqSpy, range: vi.fn().mockReturnValue({ data: [], count: 0, error: null }) };
+      chain.order = vi.fn().mockReturnValue(chain);
       (supa.supabase as any).from = vi.fn().mockReturnValue(chain);
 
       const { equipmentService } = await import('../services/equipmentService');
@@ -160,7 +160,7 @@ describe('equipmentService', () => {
           const updateSpy = vi.fn().mockReturnThis();
           const selectSpy = vi.fn().mockReturnThis();
           const singleSpy = vi.fn().mockReturnValue({ data: updatedAsset, error: null });
-          return { select: vi.fn().mockReturnThis(), eq: eqSpy, update: updateSpy, select: selectSpy, single: singleSpy };
+          return { eq: eqSpy, update: updateSpy, select: selectSpy, single: singleSpy };
         }
         if (table === 'equipment_status_history') {
           return { insert: historyInsertSpy };
@@ -231,9 +231,9 @@ describe('equipmentService', () => {
   describe('getLinkedWorkOrders', () => {
     it('queries work_orders table filtered by equipment_id', async () => {
       const eqSpy = vi.fn().mockReturnThis();
-      const orderSpy = vi.fn().mockReturnValue({ data: [], error: null });
       const selectSpy = vi.fn().mockReturnThis();
-      const chain: any = { select: selectSpy, eq: eqSpy, order: orderSpy };
+      const chain: any = { select: selectSpy, eq: eqSpy, range: vi.fn().mockReturnValue({ data: [], count: 0, error: null }) };
+      chain.order = vi.fn().mockReturnValue(chain);
       (supa.supabase as any).from = vi.fn().mockReturnValue(chain);
 
       const { equipmentService } = await import('../services/equipmentService');
@@ -248,9 +248,9 @@ describe('equipmentService', () => {
   describe('getLinkedDocuments', () => {
     it('queries documents table filtered by linked_equipment_id', async () => {
       const eqSpy = vi.fn().mockReturnThis();
-      const orderSpy = vi.fn().mockReturnValue({ data: [], error: null });
       const selectSpy = vi.fn().mockReturnThis();
-      const chain: any = { select: selectSpy, eq: eqSpy, order: orderSpy };
+      const chain: any = { select: selectSpy, eq: eqSpy, range: vi.fn().mockReturnValue({ data: [], count: 0, error: null }) };
+      chain.order = vi.fn().mockReturnValue(chain);
       (supa.supabase as any).from = vi.fn().mockReturnValue(chain);
 
       const { equipmentService } = await import('../services/equipmentService');

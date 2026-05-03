@@ -26,10 +26,9 @@ describe('workOrderService', () => {
 
   it('adds organization filter when fetching', async () => {
     const eqSpy = vi.fn().mockReturnThis();
-    const orderSpy = vi.fn().mockReturnThis();
     const selectSpy = vi.fn().mockReturnThis();
-    const chain: any = { select: selectSpy, eq: eqSpy, order: orderSpy };
-    orderSpy.mockReturnValue({ data: [], error: null });
+    const chain: any = { select: selectSpy, eq: eqSpy, range: vi.fn().mockReturnValue({ data: [], count: 0, error: null }) };
+    chain.order = vi.fn().mockReturnValue(chain);
 
     (supa.supabase as any).from = vi.fn().mockReturnValue(chain);
 

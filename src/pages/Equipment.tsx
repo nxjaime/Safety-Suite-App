@@ -106,6 +106,9 @@ const Equipment: React.FC = () => {
 
     const [vehicles, setVehicles] = useState<Equipment[]>([]);
     const [loadingVehicles, setLoadingVehicles] = useState(false);
+    const [equipmentPage, setEquipmentPage] = useState(1);
+    const [equipmentPageSize] = useState(10);
+    const [equipmentCount, setEquipmentCount] = useState(0);
     const [linkedInspections, setLinkedInspections] = useState<LinkedInspection[]>([]);
     const [linkedPMTemplates, setLinkedPMTemplates] = useState<LinkedTemplate[]>([]);
     const [linkedWorkOrders, setLinkedWorkOrders] = useState<LinkedWorkOrder[]>([]);
@@ -119,24 +122,29 @@ const Equipment: React.FC = () => {
     const [woSaving, setWoSaving] = useState(false);
 
     // Load equipment for the current category tab and status filter
-    const loadEquipment = useCallback(async () => {
+    const loadEquipment = useCallback(async (page = equipmentPage) => {
         setLoadingVehicles(true);
         try {
             const typeFilter = CATEGORY_TYPE_MAP[activeTab];
             const filters: { type?: string; status?: string } = { type: typeFilter };
             if (statusFilter && statusFilter !== 'all') filters.status = statusFilter;
-            const data = await equipmentService.getEquipment(filters);
+            const { data, count } = await equipmentService.getEquipmentPaginated(page, equipmentPageSize, filters);
             setVehicles(data);
+            setEquipmentCount(count);
         } catch (err) {
             console.error('Failed to load equipment', err);
             toast.error('Failed to load equipment');
         } finally {
             setLoadingVehicles(false);
         }
+    }, [activeTab, equipmentPage, equipmentPageSize, statusFilter]);
+
+    useEffect(() => {
+        setEquipmentPage(1);
     }, [activeTab, statusFilter]);
 
     useEffect(() => {
-        loadEquipment();
+        loadEquipment(equipmentPage);
     }, [loadEquipment]);
 
     // Load vehicle types from settings
