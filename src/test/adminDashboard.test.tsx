@@ -44,6 +44,50 @@ vi.mock('../services/retentionPolicyService', () => ({
     },
 }));
 
+vi.mock('../services/webhookService', () => ({
+    webhookService: {
+        listWebhooks: vi.fn().mockResolvedValue([
+            {
+                id: 'wh-1',
+                organizationId: 'org-1',
+                endpointUrl: 'https://example.com/hooks',
+                secret: 'secret',
+                eventTypes: ['inspection_failed'],
+                active: true,
+                createdBy: 'platform_admin',
+                createdAt: '2026-05-01T00:00:00.000Z',
+                updatedAt: '2026-05-01T00:00:00.000Z',
+            },
+        ]),
+        listDeliveryLog: vi.fn().mockResolvedValue([
+            {
+                id: 'log-1',
+                webhookId: 'wh-1',
+                organizationId: 'org-1',
+                eventType: 'inspection_failed',
+                payload: {},
+                attemptCount: 2,
+                status: 'failed',
+                responseStatus: 500,
+                failureReason: 'HTTP 500',
+                deliveredAt: null,
+                createdAt: '2026-05-01T00:00:00.000Z',
+            },
+        ]),
+        createWebhook: vi.fn().mockResolvedValue({
+            id: 'wh-new',
+            organizationId: 'org-1',
+            endpointUrl: 'https://example.com/webhooks/safety-suite',
+            secret: 'integration-secret',
+            eventTypes: ['inspection_failed'],
+            active: true,
+            createdBy: 'platform_admin',
+            createdAt: '2026-05-02T00:00:00.000Z',
+            updatedAt: '2026-05-02T00:00:00.000Z',
+        }),
+    },
+}));
+
 vi.mock('../services/telematicsService', () => ({
     telematicsService: {
         getIngestionHealthSummaries: vi.fn().mockResolvedValue([
@@ -92,7 +136,8 @@ describe('AdminDashboard — Enterprise Controls Hub', () => {
         expect(tabLabels).toContain('Support Tickets');
         expect(tabLabels).toContain('Telematics');
         expect(tabLabels).toContain('Data Retention');
-        expect(tabButtons).toHaveLength(7);
+        expect(tabLabels).toContain('Integrations');
+        expect(tabButtons).toHaveLength(8);
     });
 
     it('can switch to the Support Tickets tab', () => {
@@ -118,11 +163,14 @@ describe('AdminDashboard — Enterprise Controls Hub', () => {
         expect(screen.getByText('Deduplicated')).toBeInTheDocument();
     });
 
-    it('shows compliance report controls in the audit tab', async () => {
+    it('shows integrations controls and delivery health', async () => {
         render(<AdminDashboard />);
-        fireEvent.click(within(screen.getByRole('navigation')).getByText('Audit Log'));
-        expect(await screen.findByText(/Entity/i)).toBeInTheDocument();
-        expect(screen.getByText(/Export Report/i)).toBeInTheDocument();
+        fireEvent.click(within(screen.getByRole('navigation')).getByText('Integrations'));
+
+        expect(await screen.findByText(/Register webhook/i)).toBeInTheDocument();
+        expect(screen.getByText('https://example.com/hooks')).toBeInTheDocument();
+        expect(screen.getByText(/Delivery history/i)).toBeInTheDocument();
+        expect(screen.getByText(/HTTP 500/i)).toBeInTheDocument();
     });
 
     it('can switch to the Organization tab', () => {

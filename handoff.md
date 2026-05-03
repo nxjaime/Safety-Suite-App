@@ -449,7 +449,7 @@ Bug/notes:
 ---
 
 ### Sprint 45: Webhook and External Integration Framework
-Status: Planned
+Status: Complete
 
 User stories:
 - As an integration engineer, I can register an outbound webhook endpoint and have the app send real-time event payloads when key events occur (inspection failed, WO closed, risk score changed).
@@ -472,6 +472,12 @@ Exit criteria:
 - Outbound webhooks fire on inspection failure, WO closeout, and risk score change events
 - Webhook delivery failures are logged and retried without data loss
 - Integration health is visible to platform admins without raw DB access
+
+Progress note (2026-05-03):
+- Added `webhookService` with org-scoped fallback persistence, HMAC signing, retry-based delivery, and delivery-log tracking.
+- Added an Admin Dashboard Integrations tab for registering webhooks and reviewing delivery history.
+- Added regression coverage for webhook CRUD/delivery behavior and the new admin integrations UI.
+- Verified in the browser on `/admin` that the Integrations tab is visible and renders webhook registration plus delivery health cards.
 
 ---
 

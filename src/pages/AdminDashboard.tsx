@@ -28,6 +28,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { orgManagementService, type OrgConfig, type OrgUser } from '../services/orgManagementService';
 import { auditLogService, type AuditLogEntry, type AuditSeverity } from '../services/auditLogService';
 import { notificationRulesService, type NotificationRule } from '../services/notificationRulesService';
+import { webhookService, type WebhookDeliveryLog, type WebhookRegistration, type WebhookEventType } from '../services/webhookService';
 import {
   supportTicketService,
   type SupportTicket,
@@ -38,7 +39,7 @@ import { telematicsService, type TelematicsHealthSummary } from '../services/tel
 import type { ProfileRole } from '../services/authorizationService';
 import Modal from '../components/UI/Modal';
 
-type AdminTab = 'users' | 'org' | 'audit' | 'support' | 'telematics' | 'retention' | 'notifications';
+type AdminTab = 'users' | 'org' | 'audit' | 'support' | 'telematics' | 'retention' | 'notifications' | 'integrations';
 
 const SEVERITY_COLORS: Record<AuditSeverity, string> = {
   info: 'bg-blue-50 text-blue-700 border-blue-200',
@@ -128,6 +129,14 @@ const AdminDashboard: React.FC = () => {
   const [roleChangeTarget, setRoleChangeTarget] = useState<OrgUser | null>(null);
   const [selectedNewRole, setSelectedNewRole] = useState<ProfileRole>('readonly');
   const [notificationRules, setNotificationRules] = useState<NotificationRule[]>([]);
+  const [webhooks, setWebhooks] = useState<WebhookRegistration[]>([]);
+  const [deliveryLog, setDeliveryLog] = useState<WebhookDeliveryLog[]>([]);
+  const [integrationsLoading, setIntegrationsLoading] = useState(false);
+  const [webhookForm, setWebhookForm] = useState({
+    endpointUrl: 'https://example.com/webhooks/safety-suite',
+    secret: 'integration-secret',
+    eventTypes: ['inspection_failed', 'work_order_closed'] as WebhookEventType[],
+  });
 
   const loadUsers = async () => {
     setUsersLoading(true);
@@ -216,6 +225,23 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const loadIntegrations = async () => {
+    setIntegrationsLoading(true);
+    try {
+      const [registeredWebhooks, logs] = await Promise.all([
+        webhookService.listWebhooks(),
+        webhookService.listDeliveryLog(),
+      ]);
+      setWebhooks(registeredWebhooks);
+      setDeliveryLog(logs);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to load integrations');
+    } finally {
+      setIntegrationsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === 'users') loadUsers();
     else if (activeTab === 'org') loadOrgConfig();
@@ -224,6 +250,7 @@ const AdminDashboard: React.FC = () => {
     else if (activeTab === 'telematics') loadTelematicsHealth();
     else if (activeTab === 'retention') loadRetention();
     else if (activeTab === 'notifications') loadNotificationRules();
+    else if (activeTab === 'integrations') loadIntegrations();
   }, [activeTab, auditFilter, retentionDays]);
 
   // ── User actions ──
@@ -337,6 +364,7 @@ const AdminDashboard: React.FC = () => {
     { id: 'telematics', label: 'Telematics', icon: <Activity className="h-4 w-4" /> },
     { id: 'retention', label: 'Data Retention', icon: <FileText className="h-4 w-4" /> },
     { id: 'notifications', label: 'Notification Rules', icon: <Bell className="h-4 w-4" /> },
+    { id: 'integrations', label: 'Integrations', icon: <Globe className="h-4 w-4" /> },
   ];
 
   return (
@@ -826,6 +854,104 @@ const AdminDashboard: React.FC = () => {
               </div>
             ))}
             {notificationRules.length === 0 && <p className="text-sm text-slate-500">No rules configured yet.</p>}
+          </div>
+        </section>
+      )}
+
+      {activeTab === 'integrations' && (
+        <section className="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900">Integrations</h3>
+              <p className="text-sm text-slate-500">Register outbound webhooks and review recent delivery health.</p>
+            </div>
+            <button onClick={loadIntegrations} className="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+              <RefreshCw className="mr-2 h-4 w-4" /> Refresh
+            </button>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                try {
+                  const webhook = await webhookService.createWebhook(role, webhookForm);
+                  setWebhooks((prev) => [webhook, ...prev]);
+                  toast.success('Webhook registered');
+                } catch (err) {
+                  console.error(err);
+                  toast.error('Failed to register webhook');
+                }
+              }}
+              className="space-y-4 rounded-xl border border-slate-200 p-4"
+            >
+              <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Register webhook</h4>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Endpoint URL</label>
+                <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" value={webhookForm.endpointUrl} onChange={(e) => setWebhookForm({ ...webhookForm, endpointUrl: e.target.value })} />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Secret</label>
+                <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" value={webhookForm.secret} onChange={(e) => setWebhookForm({ ...webhookForm, secret: e.target.value })} />
+              </div>
+              <div>
+                <div className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Event types</div>
+                <div className="space-y-2 text-sm text-slate-700">
+                  {(['inspection_failed', 'work_order_closed', 'risk_score_changed'] as WebhookEventType[]).map((eventType) => (
+                    <label key={eventType} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={webhookForm.eventTypes.includes(eventType)}
+                        onChange={(e) => setWebhookForm({ ...webhookForm, eventTypes: e.target.checked ? [...webhookForm.eventTypes, eventType] : webhookForm.eventTypes.filter((value) => value !== eventType) })}
+                      />
+                      <span>{eventType.replace(/_/g, ' ')}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <button type="submit" className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">Register</button>
+            </form>
+
+            <div className="space-y-4">
+              <div className="rounded-xl border border-slate-200 p-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Registered webhooks</h4>
+                  <span className="text-xs text-slate-500">{webhooks.length} endpoint{webhooks.length === 1 ? '' : 's'}</span>
+                </div>
+                {integrationsLoading ? (
+                  <p className="py-6 text-sm text-slate-500">Loading integration health...</p>
+                ) : webhooks.length === 0 ? (
+                  <p className="py-6 text-sm text-slate-500">No webhooks configured yet.</p>
+                ) : (
+                  <div className="mt-3 space-y-3">
+                    {webhooks.map((webhook) => (
+                      <div key={webhook.id} className="rounded-lg border border-slate-200 p-3 text-sm">
+                        <div className="font-medium text-slate-900">{webhook.endpointUrl}</div>
+                        <div className="text-slate-500">Events: {webhook.eventTypes.join(', ')}</div>
+                        <div className="text-xs text-slate-400">{webhook.active ? 'Active' : 'Disabled'}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-slate-200 p-4">
+                <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Delivery history</h4>
+                {deliveryLog.length === 0 ? (
+                  <p className="py-6 text-sm text-slate-500">No deliveries recorded yet.</p>
+                ) : (
+                  <div className="mt-3 space-y-3">
+                    {deliveryLog.slice(0, 5).map((item) => (
+                      <div key={item.id} className="rounded-lg border border-slate-200 p-3 text-sm">
+                        <div className="font-medium text-slate-900">{item.eventType.replace(/_/g, ' ')}</div>
+                        <div className="text-slate-500">Status: {item.status} · Attempts: {item.attemptCount}</div>
+                        <div className="text-xs text-slate-400">{item.failureReason || 'Delivered successfully'}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </section>
       )}
