@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, User, Database, Trash2, Truck, Building, RefreshCw, Settings2, UserCheck, UserMinus, UserPlus } from 'lucide-react';
+import { Plus, User, Database, Trash2, Truck, Building, RefreshCw, Settings2, UserCheck, UserMinus, UserPlus, Bell } from 'lucide-react';
 import Modal from '../components/UI/Modal';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
@@ -10,6 +10,7 @@ import type { SystemOption } from '../services/settingsService';
 import { carrierService, type CarrierSettings } from '../services/carrierService';
 import type { ProfileRole } from '../services/authorizationService';
 import { canAccessPlatformAdmin, getRoleCapabilities } from '../services/authorizationService';
+import { notificationRulesService, type NotificationPreference, type NotificationRule, type NotificationRuleType } from '../services/notificationRulesService';
 
 const ROLE_LABELS: Record<string, string> = {
     platform_admin: 'Platform Admin',
@@ -42,7 +43,7 @@ const formatDate = (iso: string | null) => {
 const Settings: React.FC = () => {
     const { role } = useAuth();
     const isAdmin = canAccessPlatformAdmin(role) || getRoleCapabilities(role).canManageOrgSettings;
-    const [activeTab, setActiveTab] = useState<'users' | 'system' | 'carrier'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'system' | 'carrier' | 'notifications'>('users');
 
     // User Management State — from Supabase via orgManagementService
     const [users, setUsers] = useState<OrgUser[]>([]);
@@ -56,6 +57,9 @@ const Settings: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [isDataModalOpen, setIsDataModalOpen] = useState(false);
     const [newDataItem, setNewDataItem] = useState({ label: '', value: '' });
+    const [notificationRules, setNotificationRules] = useState<NotificationRule[]>([]);
+    const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreference[]>([]);
+    const [ruleForm, setRuleForm] = useState<{ type: NotificationRuleType; threshold: number }>({ type: 'risk_score', threshold: 75 });
 
     // Carrier Settings State
     const [carrierSettings, setCarrierSettings] = useState<CarrierSettings>({
@@ -90,6 +94,9 @@ const Settings: React.FC = () => {
         if (activeTab === 'carrier') {
             loadCarrierSettings();
         }
+        if (activeTab === 'notifications') {
+            loadNotificationRules();
+        }
     }, [activeTab, systemDataType]);
 
     const fetchOptions = async () => {
@@ -115,7 +122,49 @@ const Settings: React.FC = () => {
         }
     };
 
-    // User Handlers
+    const loadNotificationRules = async () => {
+        try {
+            const [rules, preferences] = await Promise.all([
+                notificationRulesService.listRules(),
+                notificationRulesService.listPreferences(),
+            ]);
+            setNotificationRules(rules);
+            setNotificationPreferences(preferences);
+        } catch (error) {
+            console.error('Failed to load notification rules', error);
+        }
+    };
+
+    const handleAddNotificationRule = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const rule = await notificationRulesService.createRule(role, ruleForm);
+            setNotificationRules((current) => [rule, ...current]);
+            toast.success('Notification rule created');
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to create notification rule');
+        }
+    };
+
+    const handleDeleteNotificationRule = async (id: string) => {
+        try {
+            await notificationRulesService.deleteRule(id);
+            setNotificationRules((current) => current.filter((rule) => rule.id !== id));
+            toast.success('Notification rule deleted');
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to delete notification rule');
+        }
+    };
+
+    const handlePreferenceChange = async (category: NotificationRuleType, deliveryMode: NotificationPreference['deliveryMode']) => {
+        const next = notificationPreferences.map((pref) => pref.category === category ? { ...pref, deliveryMode } : pref);
+        setNotificationPreferences(next);
+        await notificationRulesService.savePreferences(next);
+        toast.success('Notification preferences saved');
+    };
+
     const handleRoleChange = async () => {
         if (!roleChangeTarget) return;
         try {
@@ -242,6 +291,18 @@ const Settings: React.FC = () => {
                     >
                         <Truck className="w-4 h-4 mr-2" />
                         Carrier Settings
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('notifications')}
+                        className={clsx(
+                            "whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center",
+                            activeTab === 'notifications'
+                                ? "border-green-500 text-green-600"
+                                : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+                        )}
+                    >
+                        <Bell className="w-4 h-4 mr-2" />
+                        Notifications
                     </button>
                 </nav>
             </div>
@@ -420,6 +481,58 @@ const Settings: React.FC = () => {
                                 )}
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            )}
+
+            {/* Notifications Tab */}
+            {activeTab === 'notifications' && (
+                <div className="space-y-6">
+                    <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 className="text-lg font-semibold text-slate-800">Notification Rules</h3>
+                                <p className="text-sm text-slate-500">Create simple thresholds for risk and overdue workflows.</p>
+                            </div>
+                            <span className="text-sm text-slate-500">{notificationRules.length} rules</span>
+                        </div>
+                        <form onSubmit={handleAddNotificationRule} className="grid gap-3 md:grid-cols-3">
+                            <select className="border border-slate-300 rounded-md px-3 py-2" value={ruleForm.type} onChange={(e) => setRuleForm({ ...ruleForm, type: e.target.value as NotificationRuleType })}>
+                                <option value="risk_score">Risk score</option>
+                                <option value="overdue_task">Overdue task</option>
+                                <option value="pending_checkin">Pending check-in</option>
+                                <option value="expiring_document">Expiring document</option>
+                            </select>
+                            <input type="number" className="border border-slate-300 rounded-md px-3 py-2" value={ruleForm.threshold} onChange={(e) => setRuleForm({ ...ruleForm, threshold: Number(e.target.value) })} />
+                            <button className="rounded-md bg-green-600 px-4 py-2 text-white font-medium">Add Rule</button>
+                        </form>
+                        <div className="mt-4 space-y-2">
+                            {notificationRules.map((rule) => (
+                                <div key={rule.id} className="flex items-center justify-between rounded-md border border-slate-200 px-3 py-2">
+                                    <div>
+                                        <div className="font-medium text-slate-800">{rule.type.replace('_', ' ')}</div>
+                                        <div className="text-sm text-slate-500">Threshold {rule.threshold} • {rule.active ? 'Active' : 'Disabled'}</div>
+                                    </div>
+                                    <button type="button" className="text-red-600 text-sm" onClick={() => handleDeleteNotificationRule(rule.id)}>Delete</button>
+                                </div>
+                            ))}
+                            {notificationRules.length === 0 && <p className="text-sm text-slate-500">No rules configured yet.</p>}
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+                        <h3 className="text-lg font-semibold text-slate-800 mb-3">Delivery Preferences</h3>
+                        <div className="space-y-3">
+                            {notificationPreferences.map((pref) => (
+                                <label key={pref.category} className="flex items-center justify-between rounded-md border border-slate-200 px-3 py-2">
+                                    <span className="text-sm text-slate-700 capitalize">{pref.category.replace('_', ' ')}</span>
+                                    <select className="border border-slate-300 rounded-md px-2 py-1" value={pref.deliveryMode} onChange={(e) => handlePreferenceChange(pref.category, e.target.value as NotificationPreference['deliveryMode'])}>
+                                        <option value="in_app">In-app only</option>
+                                        <option value="email_digest">Email digest</option>
+                                        <option value="both">Both</option>
+                                    </select>
+                                </label>
+                            ))}
+                        </div>
                     </div>
                 </div>
             )}

@@ -380,7 +380,7 @@ Progress note (2026-05-02):
 ---
 
 ### Sprint 43: Notification Rules, Escalation, and Delivery Preferences
-Status: Planned
+Status: Complete
 
 User stories:
 - As a safety manager, I can configure which events trigger notifications and at what thresholds (e.g., alert me when a driver's risk score exceeds 75).
@@ -403,6 +403,14 @@ Exit criteria:
 - Custom notification rules can be created, edited, and deleted by org admins
 - Email digest Edge Function sends correctly batched notification summaries
 - Overdue items escalate after the configured grace period without manual intervention
+
+Progress note (2026-05-02):
+- Added a new `notificationRulesService` with org-scoped CRUD, fallback local persistence, rule evaluation, preference storage, and digest batching helpers.
+- Added a Notifications tab to Settings for rule creation and delivery preference editing, plus an Admin Dashboard notification-rules panel for org admins.
+- Verified the new workflow in the browser on `/settings` and `/admin`, and added unit coverage for rule CRUD/evaluation/digest behavior.
+
+Bug/notes:
+- `npm test` still emits existing React `act(...)` warnings in the Admin Dashboard test file when loading tab content; the assertions pass and build remains green.
 
 ---
 

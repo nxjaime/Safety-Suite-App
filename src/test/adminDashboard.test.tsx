@@ -92,7 +92,7 @@ describe('AdminDashboard — Enterprise Controls Hub', () => {
         expect(tabLabels).toContain('Support Tickets');
         expect(tabLabels).toContain('Telematics');
         expect(tabLabels).toContain('Data Retention');
-        expect(tabButtons).toHaveLength(6);
+        expect(tabButtons).toHaveLength(7);
     });
 
     it('can switch to the Support Tickets tab', () => {

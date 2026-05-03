@@ -20,12 +20,14 @@ import {
   UserMinus,
   UserPlus,
   Users,
+  Bell,
 } from 'lucide-react';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { orgManagementService, type OrgConfig, type OrgUser } from '../services/orgManagementService';
 import { auditLogService, type AuditLogEntry, type AuditSeverity } from '../services/auditLogService';
+import { notificationRulesService, type NotificationRule } from '../services/notificationRulesService';
 import {
   supportTicketService,
   type SupportTicket,
@@ -36,7 +38,7 @@ import { telematicsService, type TelematicsHealthSummary } from '../services/tel
 import type { ProfileRole } from '../services/authorizationService';
 import Modal from '../components/UI/Modal';
 
-type AdminTab = 'users' | 'org' | 'audit' | 'support' | 'telematics' | 'retention';
+type AdminTab = 'users' | 'org' | 'audit' | 'support' | 'telematics' | 'retention' | 'notifications';
 
 const SEVERITY_COLORS: Record<AuditSeverity, string> = {
   info: 'bg-blue-50 text-blue-700 border-blue-200',
@@ -121,6 +123,7 @@ const AdminDashboard: React.FC = () => {
   // Role change modal
   const [roleChangeTarget, setRoleChangeTarget] = useState<OrgUser | null>(null);
   const [selectedNewRole, setSelectedNewRole] = useState<ProfileRole>('readonly');
+  const [notificationRules, setNotificationRules] = useState<NotificationRule[]>([]);
 
   const loadUsers = async () => {
     setUsersLoading(true);
@@ -200,6 +203,15 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const loadNotificationRules = async () => {
+    try {
+      const rules = await notificationRulesService.listRules();
+      setNotificationRules(rules);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === 'users') loadUsers();
     else if (activeTab === 'org') loadOrgConfig();
@@ -207,6 +219,7 @@ const AdminDashboard: React.FC = () => {
     else if (activeTab === 'support') loadTickets();
     else if (activeTab === 'telematics') loadTelematicsHealth();
     else if (activeTab === 'retention') loadRetention();
+    else if (activeTab === 'notifications') loadNotificationRules();
   }, [activeTab, auditFilter, retentionDays]);
 
   // ── User actions ──
@@ -312,6 +325,7 @@ const AdminDashboard: React.FC = () => {
     { id: 'support', label: 'Support Tickets', icon: <Ticket className="h-4 w-4" /> },
     { id: 'telematics', label: 'Telematics', icon: <Activity className="h-4 w-4" /> },
     { id: 'retention', label: 'Data Retention', icon: <FileText className="h-4 w-4" /> },
+    { id: 'notifications', label: 'Notification Rules', icon: <Bell className="h-4 w-4" /> },
   ];
 
   return (
@@ -764,6 +778,28 @@ const AdminDashboard: React.FC = () => {
       )}
 
       {/* ═══ RETENTION TAB ═══ */}
+      {activeTab === 'notifications' && (
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900">Notification Rules</h3>
+              <p className="text-sm text-slate-500">Review the org's active alert thresholds without leaving admin.</p>
+            </div>
+            <span className="text-sm text-slate-500">{notificationRules.length} active rule{notificationRules.length === 1 ? '' : 's'}</span>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {notificationRules.map((rule) => (
+              <div key={rule.id} className="rounded-xl border border-slate-200 p-4">
+                <div className="text-sm font-semibold text-slate-900">{rule.type.replace('_', ' ')}</div>
+                <div className="text-sm text-slate-500">Threshold {rule.threshold}</div>
+                <div className="mt-2 text-xs uppercase tracking-wide text-slate-400">{rule.active ? 'Active' : 'Disabled'}</div>
+              </div>
+            ))}
+            {notificationRules.length === 0 && <p className="text-sm text-slate-500">No rules configured yet.</p>}
+          </div>
+        </section>
+      )}
+
       {activeTab === 'retention' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
