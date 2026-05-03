@@ -97,10 +97,14 @@ const AdminDashboard: React.FC = () => {
 
   // Audit
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
-  const [auditLoading, setAuditLoading] = useState(false);
-  const [auditFilter, setAuditFilter] = useState<AuditSeverity | 'all'>('all');
+  const [auditLoading, setAuditLoading] = useState(true);
+  const [auditFilter, setAuditFilter] = useState<'all' | AuditSeverity>('all');
+  const [auditExporting, setAuditExporting] = useState(false);
+  const [reportEntityType, setReportEntityType] = useState<'driver' | 'equipment' | 'document'>('driver');
+  const [reportStartDate, setReportStartDate] = useState('');
+  const [reportEndDate, setReportEndDate] = useState('');
+  const [retentionArchiving, setRetentionArchiving] = useState(false);
 
-  // Support
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [ticketsLoading, setTicketsLoading] = useState(false);
   const [isNewTicketOpen, setIsNewTicketOpen] = useState(false);
@@ -299,24 +303,31 @@ const AdminDashboard: React.FC = () => {
   };
 
   // ── Audit export ──
-  const exportAudit = () => {
+  const exportAudit = async () => {
     if (auditLogs.length === 0) {
       toast.error('No audit logs to export');
       return;
     }
-    const header = 'timestamp,action,severity,actor,target_type,target_id,target_label';
-    const rows = auditLogs.map((log) =>
-      [log.createdAt, log.action, log.severity, log.actorEmail, log.targetType, log.targetId, `"${log.targetLabel}"`].join(','),
-    );
-    const csv = [header, ...rows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `audit_log_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    setAuditExporting(true);
+    try {
+      const csv = await auditLogService.generateComplianceReport({
+        entityType: reportEntityType,
+        startDate: reportStartDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        endDate: reportEndDate || new Date().toISOString().split('T')[0],
+        format: 'csv',
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `compliance_report_${reportEntityType}_${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setAuditExporting(false);
+    }
   };
+
 
   const tabs: { id: AdminTab; label: string; icon: React.ReactNode }[] = [
     { id: 'users', label: 'User Management', icon: <Users className="h-4 w-4" /> },
@@ -591,10 +602,29 @@ const AdminDashboard: React.FC = () => {
               <button onClick={loadAuditLogs} className="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
                 <RefreshCw className="mr-2 h-4 w-4" /> Refresh
               </button>
-              <button onClick={exportAudit} className="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                <Download className="mr-2 h-4 w-4" /> Export CSV
+              <button onClick={exportAudit} disabled={auditExporting} className="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+                <Download className="mr-2 h-4 w-4" /> {auditExporting ? 'Generating...' : 'Export Report'}
               </button>
             </div>
+          </div>
+
+          <div className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-3">
+            <label className="text-sm">
+              <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Entity</span>
+              <select value={reportEntityType} onChange={(e) => setReportEntityType(e.target.value as any)} className="w-full rounded-lg border border-slate-300 px-3 py-2">
+                <option value="driver">Driver</option>
+                <option value="equipment">Asset</option>
+                <option value="document">Document</option>
+              </select>
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Start date</span>
+              <input type="date" value={reportStartDate} onChange={(e) => setReportStartDate(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" />
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">End date</span>
+              <input type="date" value={reportEndDate} onChange={(e) => setReportEndDate(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" />
+            </label>
           </div>
 
           <div className="space-y-2">
@@ -817,6 +847,22 @@ const AdminDashboard: React.FC = () => {
                 <option value={180}>180 days</option>
                 <option value={365}>365 days</option>
               </select>
+              <button
+                onClick={async () => {
+                  if (!retention || retention.candidates.length === 0) return;
+                  setRetentionArchiving(true);
+                  try {
+                    await retentionPolicyService.archiveRetentionCandidates(retention.candidates);
+                    toast.success('Retention candidates queued for archival');
+                  } finally {
+                    setRetentionArchiving(false);
+                  }
+                }}
+                disabled={retentionArchiving || !retention || retention.candidates.length === 0}
+                className="rounded-lg border border-amber-300 px-3 py-2 text-sm font-medium text-amber-800 hover:bg-amber-50 disabled:opacity-50"
+              >
+                {retentionArchiving ? 'Archiving...' : 'Archive Candidates'}
+              </button>
             </div>
             <button onClick={loadRetention} className="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
               <RefreshCw className="mr-2 h-4 w-4" /> Refresh

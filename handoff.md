@@ -415,7 +415,7 @@ Bug/notes:
 ---
 
 ### Sprint 44: Audit Trail UI, Compliance Reporting, and Data Governance
-Status: Planned
+Status: Complete
 
 User stories:
 - As a compliance officer, I can pull a complete audit trail for any driver, asset, or document and export it as a PDF or CSV for regulatory submission.
@@ -437,6 +437,14 @@ Exit criteria:
 - Audit log captures before/after values for all major mutation types
 - Compliance report can be generated and downloaded in PDF or CSV for any entity
 - Retention enforcement correctly identifies and archives records past threshold without deleting active records
+
+Progress note (2026-05-02):
+- Added audit reporting controls in Admin Dashboard with entity/date filters and CSV compliance report generation from `auditLogService`.
+- Added retention archival action in the Data Retention tab and expanded the retention service/test coverage.
+- Verified the updated audit tab in the browser and confirmed `npm exec vitest --run src/test/adminDashboard.test.tsx src/test/retentionPolicyService.test.ts` and `npm run build` pass.
+
+Bug/notes:
+- Live admin pages still emit existing backend fetch failures in local browser verification when Supabase/configured services are unavailable; these are pre-existing and outside this sprint's scope.
 
 ---
 

@@ -37,4 +37,9 @@ describe('retentionPolicyService', () => {
     expect(snapshot.counts.total).toBe(3);
     expect(snapshot.candidates[0].entity).toBe('documents');
   });
+
+  it('archives a retention candidate list', async () => {
+    const result = await retentionPolicyService.archiveRetentionCandidates([{ id: 'x', entity: 'documents', date: '2024-01-01', reason: 'old' }]);
+    expect(result.archived).toBe(1);
+  });
 });

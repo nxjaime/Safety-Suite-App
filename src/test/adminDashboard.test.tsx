@@ -118,6 +118,13 @@ describe('AdminDashboard — Enterprise Controls Hub', () => {
         expect(screen.getByText('Deduplicated')).toBeInTheDocument();
     });
 
+    it('shows compliance report controls in the audit tab', async () => {
+        render(<AdminDashboard />);
+        fireEvent.click(within(screen.getByRole('navigation')).getByText('Audit Log'));
+        expect(await screen.findByText(/Entity/i)).toBeInTheDocument();
+        expect(screen.getByText(/Export Report/i)).toBeInTheDocument();
+    });
+
     it('can switch to the Organization tab', () => {
         render(<AdminDashboard />);
 
