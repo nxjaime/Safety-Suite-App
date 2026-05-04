@@ -86,6 +86,7 @@ function App() {
       <Toaster position="top-right" />
       <Routes>
         <Route path="/welcome" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Landing /></Suspense></ErrorBoundary>} />
+        <Route path="/onboarding" element={<Navigate to="/" replace />} />
         <Route path="/login" element={<Navigate to="/" replace />} />
         <Route path="/driver-portal" element={<ProtectedRoute />}>
           <Route index element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><DriverPortal /></Suspense></ErrorBoundary>} />

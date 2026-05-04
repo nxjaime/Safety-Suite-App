@@ -40,6 +40,7 @@ import { createDashboardService } from '../services/dashboardService';
 import type { DashboardSnapshot, DashboardKpiCard } from '../services/dashboardService';
 import type { ReportingWindow, ReportingTrendPoint } from '../services/reportingService';
 import { buildBacklog } from '../services/backlogPrioritizationService';
+import OnboardingWizard from '../components/Onboarding/OnboardingWizard';
 import type { BacklogItem } from '../services/backlogPrioritizationService';
 
 const dashboardService = createDashboardService({
@@ -166,6 +167,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-8" data-testid="dashboard-page">
+      <OnboardingWizard />
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
           <div>

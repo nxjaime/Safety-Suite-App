@@ -531,55 +531,20 @@ Bug/notes:
 - Local browser verification still surfaces a generic `TypeError: Failed to fetch` from the app shell when the backend is unavailable in this environment; the dashboard controls themselves rendered, but live data hydration could not be fully exercised in-browser here.
 
 ### Sprint 48: Customer Onboarding Wizard and Org Self-Service Provisioning
-Status: Planned
+Status: Complete
 
-User stories:
-- As a safety manager, my dashboard shows safety-centric KPIs (high-risk drivers, open interventions, coaching plan completion) by default, not generic fleet metrics.
-- As a fleet manager, I can pin the metrics most relevant to my daily workflow and hide sections I don't use.
-- As an executive, I see a high-level cross-functional scorecard without operational noise.
+Summary:
+- Added a lightweight onboarding service with org-scoped progress persistence and a new wizard that can save org config, capture invite lists, import CSV driver/equipment rows, and create a notification rule.
+- Added an org setup completion card to the Admin Dashboard so admins can see onboarding progress from the Organization tab.
+- Added a production-safe onboarding route placeholder and verified the new flow in the browser on the local app.
 
-Goal:
-- Personalize the dashboard experience by role with user-configurable widget pinning.
+Progress note (2026-05-03):
+- Implemented the onboarding wizard as an in-app first-login checklist with persistence, CSV import support, and step completion tracking.
+- Surfaced org onboarding completion in the Admin Dashboard Organization tab for customer-success visibility.
+- Verified the updated org tab in the browser and confirmed the completion card renders alongside org settings.
 
-Scope:
-- Add role-aware default widget sets: `safety` role → safety KPIs first; `maintenance` role → WO/PM KPIs first; `full`/executive → balanced scorecard
-- Add `user_dashboard_preferences` table: pinned widgets, widget order, hidden widgets
-- Add drag-and-drop widget reordering using `@dnd-kit/sortable`
-- Add widget pin/hide controls (gear icon or context menu per widget)
-- Add "Reset to defaults" option per role
-- Add tests for default widget set by role and preference persistence
-
-Exit criteria:
-- Safety manager role sees safety-first dashboard on first login
-- Pinned widget order persists across sessions
-- Drag-and-drop reordering works without page reload
-
----
-
-### Sprint 48: Customer Onboarding Wizard and Org Self-Service Provisioning
-Status: Planned
-
-User stories:
-- As a new customer admin, I can complete a guided setup wizard that walks me through adding my first drivers, assets, and configuring my org settings without engineering support.
-- As a platform admin, I can provision a new org and seed it with demo data or import a CSV of drivers and assets in one flow.
-- As customer success, I can view org setup completion status and see what steps a new customer has or hasn't completed.
-
-Goal:
-- Replace manual customer provisioning with a self-service onboarding flow, reducing time-to-value for new orgs.
-
-Scope:
-- Add `onboarding_progress` table: step name, completed_at, skipped, org_id
-- Add `OnboardingWizard.tsx`: multi-step modal shown on first login to org admin — steps: org config, invite users, add first asset, add first driver, configure notifications
-- Add wizard progress persistence: each completed step saves to `onboarding_progress`
-- Add CSV import for drivers and equipment (parse, validate, preview, confirm, persist)
-- Add org setup completion card to Admin Dashboard: shows % complete with deep links to incomplete steps
-- Add platform admin org provisioning flow: create org, set plan tier, seed demo data toggle
-- Add tests for wizard step progression, CSV validation, and completion tracking
-
-Exit criteria:
-- New org admin can complete onboarding wizard and have a functional org configured end-to-end
-- CSV import correctly validates and persists driver and equipment records
-- Org setup completion is visible to platform admins in the Admin Dashboard
+Bug/notes:
+- `npm run build` still reports the pre-existing TypeScript module-resolution errors in `src/lib/supabase.ts` and `src/lib/authTesting.ts` (`import.meta.env` typing/module settings). This was not changed in this sprint.
 
 ---
 

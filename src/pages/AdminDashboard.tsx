@@ -35,6 +35,7 @@ import {
   type SupportTicketStatus,
 } from '../services/supportTicketService';
 import { retentionPolicyService, type RetentionSnapshot } from '../services/retentionPolicyService';
+import { onboardingService } from '../services/onboardingService';
 import { telematicsService, type TelematicsHealthSummary } from '../services/telematicsService';
 import type { ProfileRole } from '../services/authorizationService';
 import Modal from '../components/UI/Modal';
@@ -137,6 +138,7 @@ const AdminDashboard: React.FC = () => {
     secret: 'integration-secret',
     eventTypes: ['inspection_failed', 'work_order_closed'] as WebhookEventType[],
   });
+  const [onboardingSummary, setOnboardingSummary] = useState({ completedCount: 0, totalSteps: 5, percentage: 0 });
 
   const loadUsers = async () => {
     setUsersLoading(true);
@@ -225,6 +227,10 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const loadOnboardingSummary = async () => {
+    try { setOnboardingSummary(await onboardingService.getCompletionSnapshot()); } catch (err) { console.error(err); }
+  };
+
   const loadIntegrations = async () => {
     setIntegrationsLoading(true);
     try {
@@ -244,7 +250,7 @@ const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     if (activeTab === 'users') loadUsers();
-    else if (activeTab === 'org') loadOrgConfig();
+    else if (activeTab === 'org') { loadOrgConfig(); loadOnboardingSummary(); }
     else if (activeTab === 'audit') loadAuditLogs();
     else if (activeTab === 'support') loadTickets();
     else if (activeTab === 'telematics') loadTelematicsHealth();
@@ -506,6 +512,15 @@ const AdminDashboard: React.FC = () => {
       {/* ═══ ORG TAB ═══ */}
       {activeTab === 'org' && (
         <div className="mx-auto max-w-2xl">
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900">Org setup completion</h3>
+                <p className="text-sm text-slate-600">{onboardingSummary.completedCount}/{onboardingSummary.totalSteps} steps complete ({onboardingSummary.percentage}%).</p>
+              </div>
+              <button onClick={loadOnboardingSummary} className="rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm font-medium text-emerald-700">Refresh</button>
+            </div>
+          </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-6 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100">
