@@ -108,7 +108,6 @@ const Equipment: React.FC = () => {
     const [loadingVehicles, setLoadingVehicles] = useState(false);
     const [equipmentPage, setEquipmentPage] = useState(1);
     const [equipmentPageSize] = useState(10);
-    const [equipmentCount, setEquipmentCount] = useState(0);
     const [linkedInspections, setLinkedInspections] = useState<LinkedInspection[]>([]);
     const [linkedPMTemplates, setLinkedPMTemplates] = useState<LinkedTemplate[]>([]);
     const [linkedWorkOrders, setLinkedWorkOrders] = useState<LinkedWorkOrder[]>([]);
@@ -128,9 +127,8 @@ const Equipment: React.FC = () => {
             const typeFilter = CATEGORY_TYPE_MAP[activeTab];
             const filters: { type?: string; status?: string } = { type: typeFilter };
             if (statusFilter && statusFilter !== 'all') filters.status = statusFilter;
-            const { data, count } = await equipmentService.getEquipmentPaginated(page, equipmentPageSize, filters);
+            const { data } = await equipmentService.getEquipmentPaginated(page, equipmentPageSize, filters);
             setVehicles(data);
-            setEquipmentCount(count);
         } catch (err) {
             console.error('Failed to load equipment', err);
             toast.error('Failed to load equipment');

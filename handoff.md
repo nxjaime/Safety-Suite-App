@@ -516,6 +516,21 @@ Bug/notes:
 ---
 
 ### Sprint 47: Role-Based Dashboard Personalization and Pinned KPIs
+Status: Complete
+
+Summary:
+- Added role-aware dashboard widget defaults, user-local persistence for widget order/hidden/pinned state, and dashboard controls for reset/reorder/pin/hide.
+- Reworked the dashboard into movable sections and added regression coverage for the personalization workflow.
+- Verification passed with `npm exec vitest --run src/test/dashboardService.test.ts src/test/dashboard.test.tsx` and `npm run build`.
+
+Progress note (2026-05-03):
+- Implemented the smallest production-safe personalization layer using localStorage-backed preferences and controls for reordering, pinning, hiding, and resetting dashboard widgets.
+- Verified the updated dashboard loads in the browser and the control surface is visible in the local app shell.
+
+Bug/notes:
+- Local browser verification still surfaces a generic `TypeError: Failed to fetch` from the app shell when the backend is unavailable in this environment; the dashboard controls themselves rendered, but live data hydration could not be fully exercised in-browser here.
+
+### Sprint 48: Customer Onboarding Wizard and Org Self-Service Provisioning
 Status: Planned
 
 User stories:
