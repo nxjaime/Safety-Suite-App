@@ -4,23 +4,30 @@
  * When VITE_USE_EDGE_CRYPTO=true, delegates encrypt/decrypt to a deployed Supabase
  * Edge Function (`encrypt-pii`), which holds the key server-side.
  *
- * When VITE_USE_EDGE_CRYPTO is unset or false (RC1 default), falls back to client-side
- * AES-GCM via crypto.ts. This is acceptable at RC1 provided RLS is the primary access
- * barrier (see docs/sprint-30/README.md — Known Risk #1).
+ * Production requires Edge crypto. Local/test environments may use the client fallback
+ * only when VITE_API_SECRET_KEY is explicitly configured.
  *
  * Migration path:
  * 1. Deploy supabase/functions/encrypt-pii (already stubbed).
  * 2. Set VITE_USE_EDGE_CRYPTO=true in the Vercel environment.
- * 3. Rotate VITE_API_SECRET_KEY; re-encrypt any stored SSNs.
+ * 3. Re-encrypt any stored SSNs that were created by the older client-side path.
  */
 
 import { encryptData as clientEncrypt, decryptData as clientDecrypt } from '../utils/crypto';
 import { supabase } from '../lib/supabase';
 
 const useEdgeCrypto = import.meta.env.VITE_USE_EDGE_CRYPTO === 'true';
+const canUseClientFallback = import.meta.env.MODE !== 'production';
+
+const assertCryptoMode = () => {
+  if (!useEdgeCrypto && !canUseClientFallback) {
+    throw new Error('Server-side PII encryption is required in production');
+  }
+};
 
 export async function encryptPII(plaintext: string): Promise<string> {
   if (!plaintext) return '';
+  assertCryptoMode();
   if (useEdgeCrypto) {
     const { data, error } = await supabase.functions.invoke('encrypt-pii', {
       body: { action: 'encrypt', payload: plaintext },
@@ -33,6 +40,7 @@ export async function encryptPII(plaintext: string): Promise<string> {
 
 export async function decryptPII(ciphertext: string): Promise<string> {
   if (!ciphertext) return '';
+  assertCryptoMode();
   if (useEdgeCrypto) {
     const { data, error } = await supabase.functions.invoke('encrypt-pii', {
       body: { action: 'decrypt', payload: ciphertext },

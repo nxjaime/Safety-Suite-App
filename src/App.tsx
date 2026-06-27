@@ -26,6 +26,7 @@ const FMCSA = lazy(() => import('./pages/FMCSA'));
 const Settings = lazy(() => import('./pages/Settings'));
 const UserProfile = lazy(() => import('./pages/UserProfile'));
 const Landing = lazy(() => import('./pages/Landing'));
+const Login = lazy(() => import('./pages/Login'));
 const HelpFeedback = lazy(() => import('./pages/HelpFeedback'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const DriverPortal = lazy(() => import('./pages/DriverPortal'));
@@ -87,7 +88,7 @@ function App() {
       <Routes>
         <Route path="/welcome" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Landing /></Suspense></ErrorBoundary>} />
         <Route path="/onboarding" element={<Navigate to="/" replace />} />
-        <Route path="/login" element={<Navigate to="/" replace />} />
+        <Route path="/login" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Login /></Suspense></ErrorBoundary>} />
         <Route path="/driver-portal" element={<ProtectedRoute />}>
           <Route index element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><DriverPortal /></Suspense></ErrorBoundary>} />
         </Route>

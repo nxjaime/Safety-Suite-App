@@ -5,14 +5,18 @@
  * Client-side crypto using environment variables is inherently exposed to users 
  * holding the source payload. For true data-at-rest security against compromised clients:
  * 1. Sensitive data encryption/decryption keys must eventually move to Supabase Edge Functions.
- * 2. VITE_API_SECRET_KEY serves only as a temporary symmetric key for obfuscation at this phase.
+ * 2. VITE_API_SECRET_KEY serves only as a local/test symmetric key for obfuscation.
  * 
  * For RC1/Launch: This is considered an acceptable "known risk" provided PII is minimized
  * and strict Role-Level Security (RLS) is maintained as the primary access barrier.
  */
 
 const getKey = async () => {
-    const secret = import.meta.env.VITE_API_SECRET_KEY || 'default-secret-do-not-use-in-prod';
+    const secret = import.meta.env.VITE_API_SECRET_KEY;
+    if (!secret) {
+        throw new Error('Client PII crypto key is not configured');
+    }
+
     const enc = new TextEncoder();
     const keyMaterial = await window.crypto.subtle.importKey(
         'raw',

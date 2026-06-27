@@ -1,7 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { z } from 'zod';
 
 const SAFER_SNAPSHOT_URL = 'https://safer.fmcsa.dot.gov/query.asp';
 const DOT_NUMBER_RE = /^\d{1,8}$/;
+
+export const querySchema = z.object({
+    dot: z.string({
+        required_error: 'DOT number is required'
+    }).regex(DOT_NUMBER_RE, 'DOT number must be numeric')
+});
 
 const decodeHtml = (value: string) => value
     .replace(/&nbsp;/gi, ' ')
@@ -21,21 +28,8 @@ const decodeHtml = (value: string) => value
     .replace(/&deg;/gi, '°');
 
 const stripTags = (value: string) => decodeHtml(value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim());
-const cleanNumber = (value: string) => Number.parseFloat(value.replace(/[^\d.-]/g, ''));
 const cleanInt = (value: string) => Number.parseInt(value.replace(/[^\d-]/g, ''), 10);
-const cleanPercent = (value: string) => Number.parseFloat(value.replace(/[^\d.]/g, ''));
 const clamp = (value: number, min = 0, max = 100) => Math.max(min, Math.min(max, value));
-
-const extractBetween = (html: string, startPattern: RegExp, endPattern: RegExp) => {
-    const startMatch = html.match(startPattern);
-    if (!startMatch || startMatch.index === undefined) return null;
-
-    const slice = html.slice(startMatch.index);
-    const endMatch = slice.match(endPattern);
-    if (!endMatch || endMatch.index === undefined) return null;
-
-    return slice.slice(0, endMatch.index + endMatch[0].length);
-};
 
 const extractLabelValue = (html: string, label: string) => {
     const labelPattern = new RegExp(`${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}:?<\\/A>?<\\/TH>\\s*<TD[^>]*>([\\s\\S]*?)<\\/TD>`, 'i');
@@ -81,8 +75,6 @@ const parseInspectionSummary = (html: string) => {
     const crashCells = extractRowCells(crashSection ?? html, 'Crashes');
 
     const sumCells = (cells: string[]) => cells.reduce((acc, cell) => acc + (Number.isFinite(cleanInt(cell)) ? cleanInt(cell) : 0), 0);
-    const sumDecimalCells = (cells: string[]) => cells.reduce((acc, cell) => acc + (Number.isFinite(cleanPercent(cell)) ? cleanPercent(cell) : 0), 0);
-
     const usInspections = sumCells(usInspectionCells);
     const usOutOfService = sumCells(usOutOfServiceCells);
     const caInspections = sumCells(caInspectionCells);
