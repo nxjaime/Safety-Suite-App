@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import { driverService } from '../services/driverService';
 import type { Driver } from '../types';
 import { DriverImportModal } from '../components/drivers/DriverImportModal';
-import { motiveService } from '../services/motiveService';
+import { MOTIVE_UNSUPPORTED_MESSAGE } from '../services/motiveService';
 
 const Drivers: React.FC = () => {
     const navigate = useNavigate();
@@ -67,7 +67,7 @@ const Drivers: React.FC = () => {
             });
             setDrivers(data);
             setTotalCount(count);
-        } catch (error) {
+        } catch {
             toast.error('Failed to load drivers');
         } finally {
             setLoading(false);
@@ -203,7 +203,7 @@ const Drivers: React.FC = () => {
                 toast.success('Driver deleted successfully');
                 setOpenActionMenuId(null);
                 loadDrivers();
-            } catch (err) {
+            } catch {
                 toast.error('Failed to delete driver');
             }
         }
@@ -262,57 +262,13 @@ const Drivers: React.FC = () => {
             link.download = `drivers_export_${new Date().toISOString().split('T')[0]}.csv`;
             link.click();
             toast.success("Drivers exported to CSV");
-        } catch (e) {
+        } catch {
             toast.error("Failed to export");
         }
     };
 
     const handleSyncMotive = async () => {
-        try {
-            toast.loading('Syncing with Motive...', { id: 'sync-motive' });
-
-            // 1. Fetch drivers from Motive
-            const { drivers: motiveDrivers } = await motiveService.getDrivers(1, 100);
-
-            // 2. Fetch scores for the last 30 days
-            const endDate = new Date().toISOString().split('T')[0];
-            const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            let scoreMap = new Map();
-            try {
-                const { users: scores } = await motiveService.getScores(startDate, endDate);
-                if (scores) {
-                    scores.forEach((s: any) => {
-                        if (s.driver && s.driver.id) {
-                            scoreMap.set(s.driver.id, s.safety_score);
-                        }
-                    });
-                }
-            } catch (scoreErr) {
-                console.warn('Failed to fetch scores during sync', scoreErr);
-            }
-
-            // 3. Map to local Driver format
-            const mappedDrivers: Partial<Driver>[] = motiveDrivers.map((md: any) => ({
-                motive_id: md.id.toString(),
-                name: `${md.first_name} ${md.last_name}`,
-                email: md.email,
-                phone: md.phone,
-                employeeId: md.username,
-                status: md.status === 'active' ? 'Active' : 'Inactive',
-                terminal: 'Detroit',
-                riskScore: scoreMap.get(md.id) !== undefined ? scoreMap.get(md.id) : 20
-            }));
-
-            // 3. Upsert into Supabase
-            await driverService.upsertDrivers(mappedDrivers);
-
-            // 4. Reload
-            await loadDrivers();
-            toast.success('Synced successfully!', { id: 'sync-motive' });
-        } catch (err) {
-            console.error(err);
-            toast.error('Failed to sync with Motive', { id: 'sync-motive' });
-        }
+        toast(MOTIVE_UNSUPPORTED_MESSAGE, { id: 'sync-motive' });
     };
 
     const totalPages = Math.ceil(totalCount / pageSize);
@@ -366,10 +322,11 @@ const Drivers: React.FC = () => {
                     </button>
                     <button
                         onClick={handleSyncMotive}
-                        className="flex items-center px-4 py-2 border border-slate-300 bg-white rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        className="flex items-center px-4 py-2 border border-slate-300 bg-slate-50 rounded-xl text-sm font-medium text-slate-500 hover:bg-slate-100"
+                        title={MOTIVE_UNSUPPORTED_MESSAGE}
                     >
                         <Upload className="w-4 h-4 mr-2" />
-                        Sync Motive
+                        Motive Disabled
                     </button>
                     <button
                         onClick={handleExportCSV}

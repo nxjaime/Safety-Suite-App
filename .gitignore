@@ -27,6 +27,12 @@ dist-ssr
 # Worktrees
 .worktrees/
 
+# Local assistant/tooling artifacts
+.agent/
+.agents/
+.[c]laude/
+.codex/
+
 # Playwright
 playwright-report/
 test-results/

@@ -36,56 +36,40 @@ export interface MotiveEvent {
     severity?: string;
 }
 
-const requestJson = async <T>(url: string, fallback: T): Promise<T> => {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 9000);
+export const MOTIVE_UNSUPPORTED_MESSAGE = 'Motive integration is not enabled for this product.';
 
-    try {
-        const response = await fetch(url, {
-            signal: controller.signal
-        });
-
-        if (!response.ok) {
-            const details = await response.text();
-            throw new Error(`HTTP ${response.status}: ${details.slice(0, 200)}`);
-        }
-
-        return (await response.json()) as T;
-    } catch (error) {
-        console.warn(`Motive request failed for ${url}`, error);
-        return fallback;
-    } finally {
-        clearTimeout(timer);
-    }
-};
+const unsupported = <T extends Record<string, unknown>>(payload: T) => ({
+    ...payload,
+    unsupported: true,
+    degraded: true,
+    message: MOTIVE_UNSUPPORTED_MESSAGE
+});
 
 export const motiveService = {
-    async getDrivers(page = 1, perPage = 100) {
-        return requestJson(`/api/motive/drivers?page=${page}&per_page=${perPage}`, {
-            drivers: [],
-            degraded: true
-        });
+    async getDrivers() {
+        return unsupported({ drivers: [] as MotiveDriver[] });
     },
 
-    async getScores(startDate: string, endDate: string) {
-        return requestJson(`/api/motive/scores?start_date=${startDate}&end_date=${endDate}`, {
-            users: [],
-            degraded: true
-        });
+    async getScores() {
+        return unsupported({ users: [] as MotiveScore[] });
     },
 
-    async getEvents(startTime: string, endTime: string, page = 1, perPage = 100) {
-        return requestJson(`/api/motive/events?start_time=${startTime}&end_time=${endTime}&page=${page}&per_page=${perPage}`, {
-            events: [],
-            degraded: true
-        });
+    async getEvents() {
+        return unsupported({ events: [] as MotiveEvent[] });
     },
 
     async getIntegrationHealth() {
-        return requestJson('/api/integrations/health', {
-            status: 'down',
-            integrations: [],
+        return {
+            status: 'disabled',
+            integrations: [
+                {
+                    name: 'motive',
+                    status: 'disabled',
+                    message: MOTIVE_UNSUPPORTED_MESSAGE,
+                    checkedAt: new Date().toISOString()
+                }
+            ],
             checkedAt: new Date().toISOString()
-        });
+        };
     }
 };

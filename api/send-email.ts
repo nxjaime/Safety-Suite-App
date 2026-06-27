@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { z } from 'zod';
 import { applyCors, fetchWithRetry, normalizeIntegrationError, sendNormalizedError } from './lib/http';
 import { enforceRateLimit } from './lib/rateLimit';
+import { requireSupabaseUser } from './lib/auth';
 
 export const bodySchema = z.object({
   to: z.string().email('Invalid recipient email'),
@@ -22,12 +23,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const authHeader = req.headers.authorization;
-  const apiSecret = process.env.API_SECRET_KEY;
-
-  if (!apiSecret || authHeader !== `Bearer ${apiSecret}`) {
+  const { user, error: authError } = await requireSupabaseUser(req);
+  if (!user) {
     return res.status(401).json({
-      error: 'Unauthorized',
+      error: authError || 'Unauthorized',
       code: 'UNAUTHORIZED',
       retryable: false
     });

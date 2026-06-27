@@ -28,14 +28,14 @@ Sprint 30 marks the final hardening sprint before deploying the application as a
 - [x] End-to-end testing fully passes (176 total passing tests).
 - [x] RLS explicitly scopes queries for organizations across all queries.
 - [x] Platform admin isolation tested heavily.
-- [x] Environment Variables configured on Prod (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_SECRET_KEY`).
+- [ ] Environment Variables configured on Prod (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_USE_EDGE_CRYPTO=true`, `SUPABASE_ENCRYPT_SECRET`, email provider secrets).
 - [x] External FMCSA, Compliance, and integration mocks fully decoupled from main logic.
 - [x] Audit trail successfully storing actions properly linked to users and timestamps.
 
 ### ⚠️ Known Risk Register
-1. **Frontend Envelope Encryption Strategy:** Client-side WebCrypto continues to present a decryption exposure surface *if* a malicious actor successfully bypassed RLS constraints (documented in `crypto.ts`). **Mitigation strategy post-launch:** Transition core decryption tasks to Supabase Edge Functions.
+1. **Server-Side PII Encryption Required:** Sprint 49 made Edge crypto mandatory for production. Production must set `VITE_USE_EDGE_CRYPTO=true` and `SUPABASE_ENCRYPT_SECRET`; client-side fallback is only acceptable for local/test workflows.
 2. **Offline Mode Capability:** Currently, the system lacks strong offline caching mechanisms for maintenance technicians performing site visits offline. **Mitigation strategy post-launch:** Evaluate IndexedDB architectures or PWA implementation for `ServiceHistory` offline syncing in v1.1.
 3. **External Sync Latency:** Synchronizing telematics / fleet positions can result in race conditions. **Mitigation:** A buffer is baked into logic allowing an asset to exist in out-of-sync states without corrupting assignment data.
 
-### 🚀 Go-Live Recommendation
-**Proceed to Cohort Rollout.** The application is stable, end-to-end functionality verifies reliably, and security postures are defensible for an enterprise launch environment. The "Safety Suite" successfully marries Fleetio-style mechanics with Idelic-style safety workflows. Proceed with the designated Wave 1 users via the Sprint 20 Rollout Cohort tracking panel.
+### Go-Live Recommendation
+Do not proceed to cohort rollout until the Sprint 49-51 exit checks in `handoff.md` pass.

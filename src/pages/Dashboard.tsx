@@ -161,7 +161,26 @@ const Dashboard: React.FC = () => {
   }, [data, backlog, fleetPieData]);
 
   if (loading) return <div className="flex h-64 items-center justify-center" data-testid="dashboard-loading"><Loader2 className="h-8 w-8 animate-spin text-emerald-600" /><span className="ml-3 text-sm text-slate-500">Loading dashboard…</span></div>;
-  if (!data) return <div className="flex h-64 items-center justify-center text-slate-400" data-testid="dashboard-empty">No data available.</div>;
+  if (!data) return (
+    <div className="space-y-8" data-testid="dashboard-empty">
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold text-slate-900">Operations Pulse</h2>
+            <p className="mt-1 text-sm text-slate-500">Dashboard data is unavailable. Check backend connectivity or try refreshing.</p>
+          </div>
+          <button onClick={handleRefresh} className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 shadow-sm hover:bg-slate-50 transition-colors" title="Refresh dashboard">
+            <RefreshCw className="h-3.5 w-3.5" />
+            Refresh
+          </button>
+        </div>
+      </section>
+      <section className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
+        <p className="text-sm font-medium text-slate-700">No dashboard data available.</p>
+        <p className="mt-2 text-sm text-slate-500">Once Supabase and reporting services are reachable, KPIs and operational trends will appear here.</p>
+      </section>
+    </div>
+  );
 
   const visibleWidgets = prefs.order.filter((id) => !prefs.hidden.includes(id)).filter((id) => widgetNodes[id]);
 

@@ -11,52 +11,6 @@ interface IntegrationHealth {
   checkedAt: string;
 }
 
-const probeMotive = async (): Promise<IntegrationHealth> => {
-  const apiKey = process.env.MOTIVE_API_KEY;
-  const checkedAt = new Date().toISOString();
-
-  if (!apiKey) {
-    return {
-      name: 'motive',
-      status: 'down',
-      message: 'MOTIVE_API_KEY is missing',
-      checkedAt
-    };
-  }
-
-  try {
-    const response = await fetchWithRetry('https://api.gomotive.com/v1/drivers?page_no=1&per_page=1', {
-      headers: { 'X-Api-Key': apiKey }
-    }, {
-      retries: 1,
-      timeoutMs: 5_000
-    });
-
-    if (!response.ok) {
-      return {
-        name: 'motive',
-        status: 'degraded',
-        message: `Motive responded with status ${response.status}`,
-        checkedAt
-      };
-    }
-
-    return {
-      name: 'motive',
-      status: 'healthy',
-      message: 'Motive API reachable',
-      checkedAt
-    };
-  } catch {
-    return {
-      name: 'motive',
-      status: 'degraded',
-      message: 'Motive probe timed out or failed',
-      checkedAt
-    };
-  }
-};
-
 const probeResend = async (): Promise<IntegrationHealth> => {
   const apiKey = process.env.RESEND_API_KEY;
   const checkedAt = new Date().toISOString();
@@ -128,7 +82,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const checks = await Promise.all([
-    probeMotive(),
     probeResend(),
     probeFmcsa()
   ]);

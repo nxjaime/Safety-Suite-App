@@ -1,8 +1,7 @@
 // Temporary testing switch: disables the login/auth gate while the app is being tested.
-// Set this back to false when authentication is ready to be re-enabled.
-export const TEMP_AUTH_DISABLED_FOR_TESTING = true;
+// Production and local development must use the real auth gate by default.
+export const TEMP_AUTH_DISABLED_FOR_TESTING = false;
 
 export const isAuthBypassEnabled = () =>
-    TEMP_AUTH_DISABLED_FOR_TESTING ||
-    import.meta.env.VITE_DISABLE_AUTH === 'true' ||
+    (import.meta.env.MODE === 'test' && TEMP_AUTH_DISABLED_FOR_TESTING) ||
     import.meta.env.VITE_E2E_AUTH_BYPASS === 'true';

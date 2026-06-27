@@ -12,7 +12,6 @@ import { applyCheckInTransition, type CheckInStatus } from '../services/checkInW
 import { buildCoachingOutcomeInsights, evaluateCoachingOutcome } from '../services/coachingOutcomeService';
 import { generateCheckIns } from '../utils/riskLogic';
 import type { Driver, TrainingAssignment } from '../types';
-import { motiveService } from '../services/motiveService'; // Import Service
 import toast from 'react-hot-toast';
 import DriverSafetyTab from '../components/drivers/DriverSafetyTab';
 import DriverDocumentsTab from '../components/drivers/DriverDocumentsTab';
@@ -98,9 +97,6 @@ const DriverProfile: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'overview' | 'safety' | 'documents' | 'training' | 'timeline'>('overview');
     const [trainingAssignments, setTrainingAssignments] = useState<TrainingAssignment[]>([]);
 
-    // Motive Events State
-    const [motiveEvents, setMotiveEvents] = useState<any[]>([]);
-    const [loadingMotiveEvents, setLoadingMotiveEvents] = useState(false);
     const [riskHistory, setRiskHistory] = useState<any[]>([]);
     const [riskEvents, setRiskEvents] = useState<any[]>([]);
     const canManageDriverCoaching = capabilities?.canManageCoaching ?? canManageCoaching(role);
@@ -138,14 +134,8 @@ const DriverProfile: React.FC = () => {
                 entries.push({ id: `doc-${doc.id}`, date, kind: 'document', title: doc.name || 'Document', detail: doc.type || 'File' });
             }
         }
-        for (const e of motiveEvents) {
-            const date = e.start_time || e.occurred_at;
-            if (date) {
-                entries.push({ id: `motive-${e.id || Math.random()}`, date, kind: 'telematics', title: e.type_label || e.event_type || 'Telematics Event', detail: 'Motive' });
-            }
-        }
         return entries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [riskEvents, trainingAssignments, driverDocuments, motiveEvents, driver]);
+    }, [riskEvents, trainingAssignments, driverDocuments, driver]);
 
     useEffect(() => {
         if (driver) {
@@ -188,27 +178,6 @@ const DriverProfile: React.FC = () => {
                     setRiskHistory(historyRows || []);
                     setRiskEvents(riskEventRows || []);
 
-                    // Fetch Motive Events if linked
-                    if (driverData.motiveId) {
-                        setLoadingMotiveEvents(true);
-                        const endDate = new Date().toISOString().split('T')[0];
-                        const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-                        try {
-                            const data = await motiveService.getEvents(startDate, endDate);
-                            // Filter for this driver (API might return all if not proxied correctly, but proxy calls /v2/driver_performance_events which usually takes driver_id filter? 
-                            // Wait, my proxy doesn't take driver_id. It returns ALL events.
-                            // I should probably filter here or update proxy. 
-                            // For now, I'll filter here.
-                            if (data && data.events) {
-                                const driverEvents = data.events.filter((e: any) => e.driver_id.toString() === driverData.motiveId);
-                                setMotiveEvents(driverEvents);
-                            }
-                        } catch (e) {
-                            console.warn('Failed to fetch motive events');
-                        } finally {
-                            setLoadingMotiveEvents(false);
-                        }
-                    }
                 }
 
                 // Fetch documents separately (non-critical - can fail silently)
@@ -943,7 +912,7 @@ const DriverProfile: React.FC = () => {
                                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Risk Score Trend</h3>
                                 {scoreParts && (
                                     <div className="mb-3 text-xs text-slate-600">
-                                        Motive: <span className="font-semibold">{scoreParts.motive}</span> | Local: <span className="font-semibold">{scoreParts.local}</span>
+                                        External baseline: <span className="font-semibold">{scoreParts.motive}</span> | Local: <span className="font-semibold">{scoreParts.local}</span>
                                     </div>
                                 )}
                                 <div className="h-64">
@@ -995,8 +964,6 @@ const DriverProfile: React.FC = () => {
                 activeTab === 'safety' && (
                     <DriverSafetyTab
                         driver={driver}
-                        motiveEvents={motiveEvents}
-                        loadingMotiveEvents={loadingMotiveEvents}
                     />
                 )
             }

@@ -3,6 +3,8 @@
 // For Vite frontend, we'll create API endpoints or use Supabase Edge Functions
 // The actual API key is stored in environment variables on the server side
 
+import { supabase } from '../lib/supabase';
+
 
 interface EmailOptions {
     to: string;
@@ -52,6 +54,11 @@ export const emailService = {
         }
 
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.access_token) {
+                throw new Error('You must be signed in to send email notifications.');
+            }
+
             const controller = new AbortController();
             const timer = setTimeout(() => controller.abort(), 10000);
             let response: Response;
@@ -61,7 +68,7 @@ export const emailService = {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${import.meta.env.VITE_API_SECRET_KEY}`
+                        'Authorization': `Bearer ${session.access_token}`
                     },
                     signal: controller.signal,
                     body: JSON.stringify({
