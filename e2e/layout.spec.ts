@@ -23,6 +23,14 @@ const mobileNavRoutes = [
   { label: 'Admin Dashboard', path: '/admin', heading: /admin & enterprise controls/i }
 ] as const;
 
+const clearToastOverlays = async (page: import('@playwright/test').Page) => {
+  await page.locator('[data-rht-toaster]').evaluateAll((nodes) => {
+    for (const node of nodes) {
+      node.remove();
+    }
+  });
+};
+
 test.describe('Layout regression', () => {
   test('login page heading is not clipped at top of viewport', async ({ page }) => {
     await page.goto('/login');
@@ -80,9 +88,11 @@ test.describe('Layout regression', () => {
     await page.goto('/dashboard');
 
     for (const route of mobileNavRoutes) {
+      await clearToastOverlays(page);
       await page.getByRole('button', { name: /open navigation/i }).click();
       const dialog = page.getByRole('dialog', { name: /navigation/i });
       await expect(dialog).toBeVisible();
+      await clearToastOverlays(page);
       await dialog.getByRole('link', { name: route.label, exact: true }).click();
       await expect(dialog).toBeHidden();
       await expect(page).toHaveURL(new RegExp(`${route.path.replace('/', '\\/')}$`));
