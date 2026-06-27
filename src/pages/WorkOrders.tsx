@@ -6,6 +6,7 @@ import { equipmentService } from '../services/equipmentService';
 import type { WorkOrder, Equipment } from '../types';
 import toast from 'react-hot-toast';
 import { useOfflineSync } from '../contexts/OfflineSyncContext';
+import { getLoadErrorMessage } from '../utils/loadErrorMessage';
 
 export const workOrderStatusPipeline = ['Draft', 'Approved', 'In Progress', 'Completed', 'Closed', 'Cancelled'] as const;
 
@@ -44,7 +45,7 @@ const WorkOrders: React.FC = () => {
       setWorkOrderCount(count);
     } catch (e) {
       console.error('Failed to load work orders', e);
-      toast.error('Failed to load work orders');
+      toast.error(getLoadErrorMessage(e, 'Work orders'));
     }
   };
 

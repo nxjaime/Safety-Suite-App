@@ -95,8 +95,9 @@ function App() {
 
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Dashboard /></Suspense></ErrorBoundary>} />
+            <Route path="/" element={<Layout />}>
+              <Route index element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Dashboard /></Suspense></ErrorBoundary>} />
+            <Route path="dashboard" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Dashboard /></Suspense></ErrorBoundary>} />
             <Route path="drivers" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Drivers /></Suspense></ErrorBoundary>} />
             <Route path="drivers/:id" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><DriverProfile /></Suspense></ErrorBoundary>} />
             <Route path="tasks" element={<ErrorBoundary><Suspense fallback={<div className="p-10 text-center">Loading...</div>}><Tasks /></Suspense></ErrorBoundary>} />

@@ -3,6 +3,7 @@ import { Download, FileText, Filter, Search, Trash2, Upload, AlertTriangle } fro
 import Modal from '../components/UI/Modal';
 import toast from 'react-hot-toast';
 import { documentService, type AppDocument } from '../services/documentService';
+import { getLoadErrorMessage } from '../utils/loadErrorMessage';
 
 const Documents: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,8 +44,9 @@ const Documents: React.FC = () => {
             setDocuments(data);
         } catch (error) {
             console.error('Failed to load documents', error);
-            setLoadError('Failed to load documents. Please retry.');
-            toast.error('Failed to load documents');
+            const message = getLoadErrorMessage(error, 'Documents');
+            setLoadError(message);
+            toast.error(message);
         } finally {
             setLoading(false);
         }

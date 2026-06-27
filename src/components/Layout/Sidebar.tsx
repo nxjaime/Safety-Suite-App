@@ -15,7 +15,8 @@ import {
     ShieldAlert,
     Truck,
     Users,
-    Wrench
+    Wrench,
+    X
 } from 'lucide-react';
 import clsx from 'clsx';
 import CarrierHealthWidget from './CarrierHealthWidget';
@@ -143,38 +144,47 @@ export const getVisibleMenuGroups = (role: ProfileRole): MenuGroup[] => {
     ];
 };
 
-const Sidebar: React.FC = () => {
-    const { capabilities, role } = useAuth();
-    const { notifications } = useNotifications();
-    const badgeCounts = useMemo(() => getNavBadgeCounts(notifications), [notifications]);
-    const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-        quick: true,
-        operations: true,
-        safety: true,
-        reporting: true,
-        administration: true
-    });
+type SidebarProps = {
+    mobileOpen?: boolean;
+    onMobileClose?: () => void;
+};
 
-    const visibleGroups = useMemo<MenuGroup[]>(() => {
-        const hasPlatformAdminAccess = capabilities?.canAccessPlatformAdmin ?? canAccessPlatformAdmin(role);
-        return getVisibleMenuGroups(hasPlatformAdminAccess ? 'platform_admin' : role);
-    }, [capabilities, role]);
+type SidebarContentProps = {
+    visibleGroups: MenuGroup[];
+    openGroups: Record<string, boolean>;
+    badgeCounts: ReturnType<typeof getNavBadgeCounts>;
+    onToggleGroup: (groupId: string) => void;
+    onNavigate?: () => void;
+    showCloseButton?: boolean;
+};
 
-    const toggleGroup = (groupId: string) => {
-        setOpenGroups((prev) => ({
-            ...prev,
-            [groupId]: !prev[groupId]
-        }));
-    };
-
+const SidebarContent: React.FC<SidebarContentProps> = ({
+    visibleGroups,
+    openGroups,
+    badgeCounts,
+    onToggleGroup,
+    onNavigate,
+    showCloseButton = false
+}) => {
     return (
-        <div className="fixed left-0 top-0 hidden h-screen w-64 flex-col overflow-y-auto border-r border-slate-800 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900 text-white shadow-[4px_0_24px_rgba(15,23,42,0.25)] md:flex">
+        <>
             <div className="border-b border-slate-800 p-4">
                 <div className="flex items-center gap-3">
                     <img src="/logo.png" alt="SafetyHub Logo" className="h-8 w-8 object-contain" />
                     <div className="text-lg font-bold tracking-tight">
                         <span className="text-white">SafetyHub</span> <span className="font-light text-slate-300">Connect</span>
                     </div>
+                    {showCloseButton && (
+                        <button
+                            type="button"
+                            onClick={onNavigate}
+                            className="ml-auto inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
+                            aria-label="Close navigation"
+                            title="Close navigation"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -184,7 +194,7 @@ const Sidebar: React.FC = () => {
                         <li key={group.id} className="rounded-xl border border-slate-800/80 bg-slate-900/50">
                             <button
                                 type="button"
-                                onClick={() => toggleGroup(group.id)}
+                                onClick={() => onToggleGroup(group.id)}
                                 className="flex w-full items-center justify-between px-3 py-2 text-left"
                             >
                                 <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{group.label}</span>
@@ -210,6 +220,7 @@ const Sidebar: React.FC = () => {
                                             <li key={item.name}>
                                                 <NavLink
                                                     to={item.path}
+                                                    onClick={onNavigate}
                                                     className={({ isActive }) =>
                                                         clsx(
                                                             'flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors',
@@ -240,6 +251,7 @@ const Sidebar: React.FC = () => {
             <div className="border-t border-slate-800 p-3">
                 <NavLink
                     to="/help"
+                    onClick={onNavigate}
                     className={({ isActive }) =>
                         clsx(
                             'flex w-full items-center rounded-xl px-4 py-3 text-sm font-medium transition-colors',
@@ -261,6 +273,7 @@ const Sidebar: React.FC = () => {
             <div className="border-t border-slate-800 p-4">
                 <NavLink
                     to="/settings"
+                    onClick={onNavigate}
                     className={({ isActive }) =>
                         clsx(
                             'flex w-full items-center rounded-xl px-4 py-3 text-sm font-medium transition-colors',
@@ -276,7 +289,66 @@ const Sidebar: React.FC = () => {
             </div>
 
             <div className="border-t border-slate-800 p-4 text-xs text-slate-400">&copy; 2026 SafetyHub Connect</div>
-        </div>
+        </>
+    );
+};
+
+const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileClose }) => {
+    const { capabilities, role } = useAuth();
+    const { notifications } = useNotifications();
+    const badgeCounts = useMemo(() => getNavBadgeCounts(notifications), [notifications]);
+    const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
+        quick: true,
+        operations: true,
+        safety: true,
+        reporting: true,
+        administration: true
+    });
+
+    const visibleGroups = useMemo<MenuGroup[]>(() => {
+        const hasPlatformAdminAccess = capabilities?.canAccessPlatformAdmin ?? canAccessPlatformAdmin(role);
+        return getVisibleMenuGroups(hasPlatformAdminAccess ? 'platform_admin' : role);
+    }, [capabilities, role]);
+
+    const toggleGroup = (groupId: string) => {
+        setOpenGroups((prev) => ({
+            ...prev,
+            [groupId]: !prev[groupId]
+        }));
+    };
+
+    return (
+        <>
+            <div className="fixed left-0 top-0 hidden h-screen w-64 flex-col overflow-y-auto border-r border-slate-800 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900 text-white shadow-[4px_0_24px_rgba(15,23,42,0.25)] md:flex">
+                <SidebarContent
+                    visibleGroups={visibleGroups}
+                    openGroups={openGroups}
+                    badgeCounts={badgeCounts}
+                    onToggleGroup={toggleGroup}
+                />
+            </div>
+
+            {mobileOpen && (
+                <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true" aria-label="Navigation">
+                    <button
+                        type="button"
+                        className="absolute inset-0 bg-slate-950/60"
+                        aria-label="Close navigation"
+                        onClick={onMobileClose}
+                    />
+                    <aside className="relative flex h-full w-[min(20rem,88vw)] flex-col overflow-y-auto border-r border-slate-800 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900 text-white shadow-2xl">
+                        <SidebarContent
+                            visibleGroups={visibleGroups}
+                            openGroups={openGroups}
+                            badgeCounts={badgeCounts}
+                            onToggleGroup={toggleGroup}
+                            onNavigate={onMobileClose}
+                            showCloseButton
+                        />
+                    </aside>
+                </div>
+            )}
+        </>
     );
 };
 
