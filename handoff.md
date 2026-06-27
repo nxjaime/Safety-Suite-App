@@ -42,6 +42,7 @@ A release candidate is functioning when:
 - Frontend: React + Vite + TypeScript
 - Backend/data: Supabase auth, Postgres, storage, migrations
 - Hosting: Vercel-style frontend deployment model
+- Production deploy source: Vercel deploys from GitHub `main`; deployment-ready changes must be merged and pushed to `main`, not only a feature or sprint branch.
 - App shell and route surface exist in `src/App.tsx` and `src/components/Layout/*`
 - Domain services exist in `src/services/*`
 
