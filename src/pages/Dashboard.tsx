@@ -42,6 +42,7 @@ import type { ReportingWindow, ReportingTrendPoint } from '../services/reporting
 import { buildBacklog } from '../services/backlogPrioritizationService';
 import OnboardingWizard from '../components/Onboarding/OnboardingWizard';
 import type { BacklogItem } from '../services/backlogPrioritizationService';
+import { getLoadErrorMessage } from '../utils/loadErrorMessage';
 
 const dashboardService = createDashboardService({
   getReportingSnapshot: (w) => reportingService.getSnapshot(w),
@@ -125,8 +126,8 @@ const Dashboard: React.FC = () => {
           setTrendData(reporting.trends);
           setRefreshedAt(new Date());
         }
-      } catch (err: any) {
-        if (!cancelled) toast.error(err.message || 'Failed to load dashboard data');
+      } catch (err) {
+        if (!cancelled) toast.error(getLoadErrorMessage(err, 'Dashboard data'));
       } finally {
         if (!cancelled) setLoading(false);
       }

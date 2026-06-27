@@ -11,6 +11,7 @@ import { workOrderService } from '../services/workOrderService';
 import { useAuth } from '../contexts/AuthContext';
 import type { Equipment, EquipmentStatus, OwnershipType, MaintenanceTemplate } from '../types';
 import { equipmentProfileTabs, type EquipmentProfileTab } from './equipmentConstants';
+import { getLoadErrorMessage } from '../utils/loadErrorMessage';
 
 type CategoryTab = 'Trucks' | 'Trailers' | 'Forklifts' | 'Pallet Jacks' | 'Sales Vehicles';
 
@@ -131,7 +132,7 @@ const Equipment: React.FC = () => {
             setVehicles(data);
         } catch (err) {
             console.error('Failed to load equipment', err);
-            toast.error('Failed to load equipment');
+            toast.error(getLoadErrorMessage(err, 'Equipment'));
         } finally {
             setLoadingVehicles(false);
         }

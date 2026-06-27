@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Search, User } from 'lucide-react';
+import { Bell, Menu, Search, User } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../../contexts/AuthContext';
@@ -9,7 +9,11 @@ import NotificationPanel from '../NotificationPanel';
 import { formatBadgeCount } from '../../services/notificationService';
 import SearchPanel from '../SearchPanel';
 
-const Header: React.FC = () => {
+type HeaderProps = {
+    onMenuClick: () => void;
+};
+
+const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const { user, signOut } = useAuth();
@@ -73,7 +77,7 @@ const Header: React.FC = () => {
 
     const getBreadcrumbs = () => {
         const path = location.pathname;
-        if (path === '/') return { title: 'Status Board', path: 'Operations > Status Board' };
+        if (path === '/' || path === '/dashboard') return { title: 'Status Board', path: 'Operations > Status Board' };
         if (path.startsWith('/drivers')) return path.includes('/') && path.split('/').length > 2
             ? { title: 'Driver Profile', path: 'Drivers > Profile' }
             : { title: 'Drivers', path: 'Safety > Drivers' };
@@ -100,22 +104,33 @@ const Header: React.FC = () => {
     const { title, path } = getBreadcrumbs();
 
     return (
-        <header className="h-20 bg-white/90 backdrop-blur border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 md:px-8 fixed top-0 left-0 md:left-64 right-0 z-10">
-            <div className="flex flex-col">
-                <h1 className="text-lg md:text-xl font-semibold text-slate-900">{title}</h1>
-                <span className="text-xs md:text-sm text-slate-500">{path}</span>
+        <header className="min-h-20 bg-white/90 backdrop-blur border-b border-slate-200 flex items-center justify-between gap-3 px-3 py-3 sm:px-6 md:px-8 fixed top-0 left-0 md:left-64 right-0 z-10">
+            <div className="flex min-w-0 items-center gap-3">
+                <button
+                    type="button"
+                    onClick={onMenuClick}
+                    className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm transition-colors hover:bg-slate-100 md:hidden"
+                    aria-label="Open navigation"
+                    title="Open navigation"
+                >
+                    <Menu className="h-5 w-5" />
+                </button>
+                <div className="flex min-w-0 flex-col">
+                    <h1 className="truncate text-base font-semibold text-slate-900 sm:text-lg md:text-xl">{title}</h1>
+                    <span className="truncate text-[11px] text-slate-500 sm:text-xs md:text-sm">{path}</span>
+                </div>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
                 <button
                     onClick={() => setSearchOpen(true)}
-                    className="relative flex items-center bg-slate-100 hover:bg-slate-200 text-slate-500 pl-9 pr-4 py-2 rounded-full text-sm transition-colors w-52"
+                    className="relative flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 lg:w-52 lg:justify-start lg:pl-9 lg:pr-4"
                     aria-label="Search (Ctrl+K)"
                     title="Search (⌘K)"
                 >
-                    <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                    <span className="text-slate-400">Search…</span>
-                    <kbd className="ml-auto text-[10px] font-mono bg-slate-200 text-slate-400 px-1.5 py-0.5 rounded">⌘K</kbd>
+                    <Search className="h-4 w-4 text-slate-400 lg:absolute lg:left-3 lg:top-1/2 lg:-translate-y-1/2" />
+                    <span className="hidden text-sm text-slate-400 lg:inline">Search…</span>
+                    <kbd className="ml-auto hidden rounded bg-slate-200 px-1.5 py-0.5 font-mono text-[10px] text-slate-400 lg:inline">⌘K</kbd>
                 </button>
                 <SearchPanel isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
@@ -144,7 +159,7 @@ const Header: React.FC = () => {
                 <div
                     onClick={handleSignOut}
                     onKeyDown={handleSignOutKey}
-                    className="flex items-center space-x-2 pl-4 border-l border-slate-200 cursor-pointer hover:bg-slate-100 p-2 rounded-md transition-colors"
+                    className="flex items-center gap-2 border-l border-slate-200 pl-2 sm:pl-3 cursor-pointer hover:bg-slate-100 p-2 rounded-md transition-colors"
                     role="button"
                     tabIndex={0}
                     aria-label="Sign out"
@@ -163,7 +178,7 @@ const Header: React.FC = () => {
                             <User className="w-4 h-4 text-slate-500" />
                         </div>
                     )}
-                    <div className="text-sm hidden md:block">
+                    <div className="hidden text-sm lg:block">
                         <div className="font-medium text-slate-900">{profileState.name}</div>
                         <div className="text-xs text-slate-500">{profileState.title}</div>
                     </div>

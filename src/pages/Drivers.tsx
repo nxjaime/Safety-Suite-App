@@ -8,6 +8,7 @@ import { driverService } from '../services/driverService';
 import type { Driver } from '../types';
 import { DriverImportModal } from '../components/drivers/DriverImportModal';
 import { MOTIVE_UNSUPPORTED_MESSAGE } from '../services/motiveService';
+import { getLoadErrorMessage } from '../utils/loadErrorMessage';
 
 const Drivers: React.FC = () => {
     const navigate = useNavigate();
@@ -67,8 +68,8 @@ const Drivers: React.FC = () => {
             });
             setDrivers(data);
             setTotalCount(count);
-        } catch {
-            toast.error('Failed to load drivers');
+        } catch (error) {
+            toast.error(getLoadErrorMessage(error, 'Drivers'));
         } finally {
             setLoading(false);
         }

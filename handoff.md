@@ -605,7 +605,7 @@ Verification (2026-06-27):
 ---
 
 ### Sprint 50: Mobile Shell, Navigation, and Runtime Error UX
-Status: Planned
+Status: Complete
 
 User stories:
 - As a mobile user, I can navigate every primary area of the app from a phone-width viewport.
@@ -628,6 +628,19 @@ Exit criteria:
 - Header content does not overlap or clip at mobile, tablet, or desktop viewport sizes.
 - Layout E2E tests cover mobile shell behavior and pass.
 - Failed data states show actionable copy and do not leave users on a blank command center.
+
+Completion note (2026-06-27):
+- Added a mobile navigation drawer that reuses the authorized sidebar menu groups and closes after navigation.
+- Made the header wrap-safe across phone, tablet, and desktop widths by compacting search/profile controls on constrained breakpoints.
+- Added an explicit `/dashboard` route so Status Board navigation no longer falls through to the wildcard redirect.
+- Added contextual load-error messaging for Dashboard, Drivers, Equipment, Work Orders, and Documents so offline, auth, backend config, and network failures are distinguishable.
+- Expanded layout E2E coverage for mobile navigation, 390px/768px/desktop header checks, Admin, Training, Tasks, Dashboard, and Driver Portal.
+
+Verification (2026-06-27):
+- Passed: `npm run build`.
+- Passed: `npm run test:layout`, 16 Playwright checks.
+- Passed: `npm run test:unit`, 243 tests.
+- Passed: `git diff --check`.
 
 ---
 
