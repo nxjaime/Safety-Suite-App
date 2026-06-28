@@ -1,1 +1,0 @@
-ALTER TABLE drivers ADD COLUMN IF NOT EXISTS driver_manager TEXT;

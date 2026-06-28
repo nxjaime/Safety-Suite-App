@@ -35,7 +35,9 @@ CREATE INDEX IF NOT EXISTS equipment_status_history_org_idx
 
 ALTER TABLE public.equipment_status_history ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Org members can manage equipment status history"
+DROP POLICY IF EXISTS "Org members can manage equipment status history"
+    ON public.equipment_status_history;
+CREATE POLICY "Org members can manage equipment status history"
     ON public.equipment_status_history
     FOR ALL
     USING (

@@ -80,11 +80,15 @@ ALTER TABLE public.pm_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.work_orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.work_order_line_items ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Enable read/write for all users" ON public.equipment
+DROP POLICY IF EXISTS "Enable read/write for all users" ON public.equipment;
+CREATE POLICY "Enable read/write for all users" ON public.equipment
     FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "Enable read/write for all users" ON public.pm_templates
+DROP POLICY IF EXISTS "Enable read/write for all users" ON public.pm_templates;
+CREATE POLICY "Enable read/write for all users" ON public.pm_templates
     FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "Enable read/write for all users" ON public.work_orders
+DROP POLICY IF EXISTS "Enable read/write for all users" ON public.work_orders;
+CREATE POLICY "Enable read/write for all users" ON public.work_orders
     FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "Enable read/write for all users" ON public.work_order_line_items
+DROP POLICY IF EXISTS "Enable read/write for all users" ON public.work_order_line_items;
+CREATE POLICY "Enable read/write for all users" ON public.work_order_line_items
     FOR ALL USING (true) WITH CHECK (true);

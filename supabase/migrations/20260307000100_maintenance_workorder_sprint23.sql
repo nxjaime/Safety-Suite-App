@@ -23,7 +23,9 @@ CREATE INDEX IF NOT EXISTS maintenance_history_org_idx
     ON public.maintenance_history (organization_id);
 
 ALTER TABLE public.maintenance_history ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Org members can manage maintenance history"
+DROP POLICY IF EXISTS "Org members can manage maintenance history"
+    ON public.maintenance_history;
+CREATE POLICY "Org members can manage maintenance history"
     ON public.maintenance_history FOR ALL
     USING (
         organization_id IN (
@@ -67,7 +69,9 @@ CREATE INDEX IF NOT EXISTS parts_org_idx
     ON public.parts (organization_id);
 
 ALTER TABLE public.parts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Org members can manage parts"
+DROP POLICY IF EXISTS "Org members can manage parts"
+    ON public.parts;
+CREATE POLICY "Org members can manage parts"
     ON public.parts FOR ALL
     USING (
         organization_id IN (
