@@ -234,6 +234,11 @@ Exit checks:
 - Saved views, filters, bulk actions, and exports respect current filters and tenant scope.
 - No P0/P1 reporting/search/notification findings remain open.
 
+Progress notes:
+- Production Browser QA verified `/dashboard`, `/reporting`, `/reporting/hypercare`, and `/reporting/csa-predictor` render and settle with no fresh console errors.
+- Production Browser QA verified `/settings` at 390px mobile width after `df19d50` deployment; document and body widths remain stable with wide Settings tabs/tables contained in local scroll regions.
+- Continue Sprint 59 with global search, notification panel interactions, reporting exports, saved views, and settings preference changes.
+
 ### Sprint 60: Driver, Driver Portal, Safety, Watchlist, and Coaching Browser QA
 Goal:
 - Prove driver safety lifecycle workflows work from manager and driver perspectives.
@@ -396,7 +401,7 @@ Use this table once browser QA begins.
 | S58-001 | 58 | P2 | Login password recovery | Signed-out visitor | User clicks Forgot your password after entering an email | Link used `href="#"` and did not start a recovery flow | Send Supabase reset email or remove the control until recovery is available | 58 | Fixed, browser-verified locally and on production, pushed to `main` |
 | S58-002 | 58 | P2 | Login/signup mode switch | Signed-out visitor | Invalid login fails, then user switches to create account | Stale invalid-login toast and entered password carry into signup mode | Switching modes should clear stale auth feedback and password-only fields | 58 | Fixed, browser-verified locally and on production, pushed to `main` |
 | S58-003 | 58 | P2 | Login keyboard navigation | Signed-out visitor | User navigates the login form by keyboard only | Browser automation could focus the controls individually, but Tab traversal stayed on the email field in the in-app Browser; code review found no login focus trap | Human keyboard-only pass should confirm focus order reaches back link, email, password, remember me, forgot password, sign in, and signup toggle | 59 | Scheduled follow-up; no P0/P1 blocker |
-| S59-001 | 59 | P2 | Settings layout | Platform admin | User opens Settings at a narrow desktop/mobile width | User management table and tab bar forced page-level horizontal overflow | Settings should keep the page viewport stable and use local horizontal scrolling only where wide tabular data requires it | 59 | Fixed locally; build passed; browser-verified at 390px and 657px |
+| S59-001 | 59 | P2 | Settings layout | Platform admin | User opens Settings at a narrow desktop/mobile width | User management table and tab bar forced page-level horizontal overflow | Settings should keep the page viewport stable and use local horizontal scrolling only where wide tabular data requires it | 59 | Fixed, pushed to `main`, Vercel production READY, browser-verified on production at 390px |
 
 ## Edge Case Inventory
 Use this section as the source pool for later QA scenarios. Each item should eventually become one or more test cases with role, setup data, action, expected result, and severity.
