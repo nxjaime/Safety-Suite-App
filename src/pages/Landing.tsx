@@ -1,11 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CalendarCheck, ShieldCheck, Truck, Sparkles, BarChart3, Users, FileText } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
 
 const Landing: React.FC = () => {
-  const { session } = useAuth();
-
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 selection:bg-emerald-500/30">
       {/* Background Gradients */}
@@ -25,26 +22,15 @@ const Landing: React.FC = () => {
               <span className="text-lg font-bold tracking-tight text-white">SafetyHub Connect</span>
             </div>
             <div className="flex items-center gap-4">
-              {session ? (
-                  <Link
-                    to="/dashboard"
-                    className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-400 transition-colors"
-                  >
-                    Go to Dashboard
-                  </Link>
-              ) : (
-                  <>
-                      <Link to="/login" className="hidden text-sm font-medium text-slate-300 hover:text-white sm:block">
-                        Sign In
-                      </Link>
-                      <Link
-                        to="/login"
-                        className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-400 transition-colors"
-                      >
-                        Get Started
-                      </Link>
-                  </>
-              )}
+              <Link to="/login" className="hidden text-sm font-medium text-slate-300 hover:text-white sm:block">
+                Sign In
+              </Link>
+              <Link
+                to="/login"
+                className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-400 transition-colors"
+              >
+                Get Started
+              </Link>
             </div>
           </div>
         </header>

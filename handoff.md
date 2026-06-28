@@ -840,6 +840,38 @@ Completion note (2026-06-28):
 
 ---
 
+### Sprint 56: Public Landing Performance and Auth Bundle Isolation
+Status: Complete
+
+User stories:
+- As a prospect, I can open the public landing page quickly without waiting for authenticated workspace services.
+- As a returning user, I can still sign in and reach protected workspace routes with real Supabase auth.
+- As launch support, public-page performance improvements do not weaken auth or route protection.
+
+Goal:
+- Remove unnecessary authenticated app initialization from public routes and improve first-load performance.
+
+Scope:
+- Move notification and offline-sync providers from global app bootstrap into the authenticated app shell.
+- Move the protected route tree and login route into lazy modules so public `/welcome` does not eagerly import workspace routes, Supabase auth, sidebar/header, or offline sync code.
+- Keep `/login`, `/dashboard`, `/driver-portal`, and admin protection behavior unchanged under an auth provider.
+- Separate Supabase environment-config checks from Supabase client creation so the client is not loaded for the public landing page.
+
+Exit criteria:
+- Public landing route renders without initializing notification polling or offline sync.
+- Supabase auth client is lazy-loaded only when login or protected routes are requested.
+- Production build shows a materially smaller public entry bundle.
+- Release gate remains green and hosted smoke checks pass after deployment.
+
+Completion note (2026-06-28):
+- Added lazy `LoginRoute` and `AuthenticatedRoutes` modules to isolate real auth and protected workspace routing from the public landing page.
+- Added `AuthenticatedLayout` so notifications and offline queue behavior are available only inside the authenticated workspace shell.
+- Split Supabase config checks into `supabaseConfig` to avoid creating the Supabase client during public landing bootstrap.
+- Production build reduced the main public entry from roughly `125 kB` gzip to `77 kB` gzip; Supabase auth now ships as a separate lazy `AuthContext` chunk.
+- Verification passed: focused auth/navigation/provider tests and production build.
+
+---
+
 ## QA Bug Backlog
 
 ### Bug: Production auth gate is bypassed in code
@@ -880,11 +912,12 @@ Completion note (2026-06-28):
 - Resolution (2026-06-27): lazy route imports now detect chunk-load failures and perform a one-time reload to recover stale clients onto the current deployment.
 
 ### Bug: Main landing page is slow to load
-- Severity: Medium
+- Severity: Resolved
 - Category: UX / Performance
 - Environment: https://safetyhubconnect.vercel.app/
 - Observation: the main page takes a noticeable amount of time to render and become usable.
 - Impact: creates a poor first impression and may reduce successful entry into the app.
+- Resolution (2026-06-28): public landing bootstrap was split away from authenticated workspace providers and Supabase auth; the public entry bundle is materially smaller and no longer starts notification polling or offline queue sync.
 
 ## Final Project Status
 **Wave 1 launch-ready as of 2026-06-28 for a controlled production rollout.**
@@ -893,4 +926,5 @@ Sprints 49-54 are complete: auth/security restoration, disabled integration plac
 Current launch posture:
 - Go for controlled Wave 1 after a final same-day hosted login check.
 - Carrier settings are now org-scoped in code; continue monitoring for route-specific fetch failures during Wave 1.
+- Public landing performance has been hardened by isolating authenticated workspace code from the public route.
 - Do not enable Motive during Wave 1; the shipped API behavior is a disabled placeholder.

@@ -1,22 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
-import { isAuthBypassEnabled } from './authTesting';
+import { getSupabaseAnonKey, getSupabaseBaseUrl, isSupabaseConfigured } from './supabaseConfig';
 
-const SUPABASE_PLACEHOLDER_URL = 'https://placeholder.supabase.co';
-const SUPABASE_PLACEHOLDER_ANON_KEY = 'placeholder';
-
-export const getSupabaseBaseUrl = (): string =>
-    import.meta.env.VITE_SUPABASE_URL || SUPABASE_PLACEHOLDER_URL;
+export { getSupabaseBaseUrl, isSupabaseConfigured } from './supabaseConfig';
 
 const supabaseUrl = getSupabaseBaseUrl();
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || SUPABASE_PLACEHOLDER_ANON_KEY;
-
-export const isSupabaseConfigured = isAuthBypassEnabled() || Boolean(
-    supabaseUrl &&
-    supabaseAnonKey &&
-    supabaseUrl !== SUPABASE_PLACEHOLDER_URL &&
-    supabaseAnonKey !== SUPABASE_PLACEHOLDER_ANON_KEY &&
-    supabaseAnonKey !== 'INSERT_YOUR_ANON_KEY_HERE'
-);
+const supabaseAnonKey = getSupabaseAnonKey();
 
 if (!isSupabaseConfigured) {
     console.warn('Supabase URL or Anon Key is missing. Please check your environment variables.');

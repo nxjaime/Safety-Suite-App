@@ -2,10 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
-import { AuthProvider } from './contexts/AuthContext'
-import { NotificationProvider } from './contexts/NotificationContext'
-import { OfflineSyncProvider } from './contexts/OfflineSyncContext'
-import { isSupabaseConfigured } from './lib/supabase'
+import { isSupabaseConfigured } from './lib/supabaseConfig'
 
 const rootElement = document.getElementById('root');
 
@@ -40,13 +37,7 @@ if (!isSupabaseConfigured) {
 } else {
   createRoot(rootElement).render(
     <StrictMode>
-      <AuthProvider>
-        <NotificationProvider>
-          <OfflineSyncProvider>
-            <App />
-          </OfflineSyncProvider>
-        </NotificationProvider>
-      </AuthProvider>
+      <App />
     </StrictMode>,
   );
 }
