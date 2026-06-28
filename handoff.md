@@ -108,11 +108,267 @@ Known warning backlog:
 - Motive references in historical docs/tests are archival only; no live Motive proxy behavior should return.
 
 ## Next Work Queue
-1. Convert the edge-case inventory below into prioritized test scenarios.
-2. Add hosted smoke tests for the highest-risk edge cases.
-3. Continue reducing lint warnings in shared services and long-lived page components.
-4. Expand RLS regression checks for every tenant-scoped table.
-5. Add stronger monitoring around auth, RLS denials, Edge crypto, carrier-health API, and route-level console errors.
+1. Execute the browser-based edge-case QA sprints below.
+2. Add every discovered issue to the sprint backlog with severity, route, role, reproduction steps, expected behavior, and fix owner.
+3. Fix discovered issues in priority order: security/data loss first, core workflow blockers second, UX/recovery issues third, polish last.
+4. Continue reducing lint warnings in shared services and long-lived page components.
+5. Expand RLS regression checks for every tenant-scoped table.
+6. Add stronger monitoring around auth, RLS denials, Edge crypto, carrier-health API, and route-level console errors.
+
+## Edge Case QA Sprint Plan
+This plan converts the edge-case inventory into execution sprints. These sprints are planning-complete and should not begin until explicitly ordered.
+
+Testing rule:
+- Primary verification must be done in the real browser against the hosted app, matching how an end user uses the platform.
+- Do not treat Playwright as the primary evidence for these sprints.
+- Automated checks can support release confidence after a browser finding is fixed, but each sprint exit requires manual/browser verification on the deployed site.
+- Browser verification must capture route, user role, setup data, action taken, expected result, actual result, console/network errors, and screenshot notes when relevant.
+
+Issue triage:
+- `P0`: cross-tenant data exposure, auth bypass, data loss/corruption, secret exposure, production login outage.
+- `P1`: core fleet/safety/admin workflow blocked, PII crypto failure, RLS denial on valid workflow, repeatable save/reload failure.
+- `P2`: confusing UX, missing recovery messaging, partial workflow failure with workaround, mobile layout issue.
+- `P3`: polish, copy, low-risk accessibility or browser-specific issue with workaround.
+
+Backlog handling:
+- Every failed edge case becomes an item in `Sprint Issue Backlog` below.
+- Fixes must be ordered by severity, then launch workflow importance.
+- A sprint is not successful until all P0/P1 findings from that sprint are fixed, committed, pushed to `main`, deployed, and rechecked in the browser.
+- P2/P3 findings can roll forward only if documented with owner, impact, and acceptance criteria.
+
+### Sprint 57: Auth, Session, RBAC, and Tenant Isolation Browser QA
+Goal:
+- Prove users can only access the correct routes, roles, and tenant data through normal browser behavior.
+
+Edge-case groups covered:
+- Auth and Session Edge Cases
+- Authorization and RBAC Edge Cases
+- Tenant Isolation and Data Integrity Edge Cases
+
+Browser test roles:
+- Signed-out visitor
+- Platform admin
+- Org admin
+- Manager/full user
+- Safety user
+- Readonly user
+- Driver user
+
+Exit checks:
+- Signed-out users cannot reach protected routes.
+- Driver users are constrained to driver portal behavior.
+- Non-admin users cannot reach admin controls.
+- Cross-org URL tampering and payload tampering fail safely.
+- Valid role changes are reflected after refresh/sign-in.
+- No P0/P1 auth, RLS, or tenant-isolation findings remain open.
+
+### Sprint 58: Public Landing, Login UX, Navigation, Layout, and Accessibility Browser QA
+Goal:
+- Prove the unauthenticated and shell experience is usable across realistic devices and assistive workflows.
+
+Edge-case groups covered:
+- Public Landing and Login UX Edge Cases
+- Navigation and Layout Edge Cases
+- Accessibility Edge Cases
+- Browser and Device Edge Cases
+
+Browser test surfaces:
+- Desktop Chrome/Edge baseline
+- Mobile-width browser verification
+- Keyboard-only workflows
+- Browser zoom/text scaling checks
+
+Exit checks:
+- `/welcome` and `/login` are fast, stable, and recover gracefully.
+- Mobile navigation reaches all primary app areas.
+- Header, sidebar, modals, and toasts do not block or overlap core workflows.
+- Keyboard and screen-reader-facing labels are sufficient for primary forms/actions.
+- No P0/P1 layout or access findings remain open.
+
+### Sprint 59: Dashboard, Reporting, Search, Notifications, and Preferences Browser QA
+Goal:
+- Prove command-center workflows display accurate information and recover cleanly from empty/error states.
+
+Edge-case groups covered:
+- Dashboard and Reporting Edge Cases
+- Search Edge Cases
+- Notifications and Escalations Edge Cases
+- Saved Views, Filters, Bulk Actions, and Exports
+
+Browser test surfaces:
+- Dashboard
+- Reporting
+- CSA Predictor
+- Hypercare
+- Global Search
+- Notification panel
+- Saved views and CSV exports
+
+Exit checks:
+- Empty states are actionable.
+- Failed service calls do not break the whole page.
+- Search excludes unauthorized data.
+- Notifications link to correct records or recovery states.
+- Saved views, filters, bulk actions, and exports respect current filters and tenant scope.
+- No P0/P1 reporting/search/notification findings remain open.
+
+### Sprint 60: Driver, Driver Portal, Safety, Watchlist, and Coaching Browser QA
+Goal:
+- Prove driver safety lifecycle workflows work from manager and driver perspectives.
+
+Edge-case groups covered:
+- Driver Management Edge Cases
+- Driver Portal Edge Cases
+- Safety, Watchlist, and Coaching Edge Cases
+
+Browser test surfaces:
+- Drivers
+- Driver profile
+- Driver import
+- Driver portal
+- Safety
+- Watchlist
+- Coaching/check-ins
+
+Exit checks:
+- Driver create/edit/archive/reload flows persist.
+- PII handling works through production Edge crypto.
+- Driver portal exposes only the current driver's data.
+- Watchlist and coaching actions are role-correct.
+- Risk/coaching state changes survive refresh.
+- No P0/P1 driver or safety findings remain open.
+
+### Sprint 61: Training, Compliance, Inspections, and Corrective Action Browser QA
+Goal:
+- Prove training and compliance workflows close the loop from assignment or inspection through remediation.
+
+Edge-case groups covered:
+- Training Edge Cases
+- Compliance and Inspection Edge Cases
+
+Browser test surfaces:
+- Training templates
+- Training assignments
+- Driver completion/attestation
+- Compliance
+- Inspections
+- Remediation tasks
+
+Exit checks:
+- Training assignment and completion persist for admins and drivers.
+- Overdue/review states are correct.
+- Inspection with violations creates the expected remediation path.
+- Offline inspection behavior queues and syncs where supported.
+- Compliance exports and filters are tenant-scoped.
+- No P0/P1 training/compliance findings remain open.
+
+### Sprint 62: Equipment, Maintenance, PM, Work Orders, and Offline Queue Browser QA
+Goal:
+- Prove the fleet operations lifecycle works from asset creation through work-order closeout.
+
+Edge-case groups covered:
+- Equipment and Asset Edge Cases
+- Maintenance and PM Edge Cases
+- Work Order Edge Cases
+- Offline and PWA Edge Cases
+
+Browser test surfaces:
+- Equipment
+- Maintenance
+- Work Orders
+- Inspection-to-work-order flow
+- Offline banner and pending sync
+
+Exit checks:
+- Equipment create/edit/archive/reload flows persist.
+- PM and maintenance records link correctly.
+- Work-order status transitions enforce role and state rules.
+- Closeout notes and costs persist after refresh.
+- Supported offline actions queue and sync correctly.
+- No P0/P1 fleet operations findings remain open.
+
+### Sprint 63: Documents, FMCSA, Carrier Health, API, and Integration Browser QA
+Goal:
+- Prove document/storage and external-data workflows fail safely and remain tenant-safe.
+
+Edge-case groups covered:
+- Documents and Storage Edge Cases
+- FMCSA and Carrier Health Edge Cases
+- API, Edge Function, and Integration Edge Cases
+
+Browser test surfaces:
+- Documents
+- FMCSA
+- Carrier Health widget
+- Settings carrier configuration
+- Disabled Motive endpoints
+- Email/integration health flows where exposed
+
+Exit checks:
+- Document upload/download/archive paths work or fail with actionable messages.
+- Carrier settings save/reload remains org-scoped.
+- FMCSA lookup handles invalid, timeout, empty, and high-risk responses.
+- Motive endpoints and UI remain disabled placeholders.
+- API errors do not leak secrets.
+- No P0/P1 document/integration findings remain open.
+
+### Sprint 64: Admin, Customer Operations, Audit, Retention, Webhooks, and Launch Recovery Browser QA
+Goal:
+- Prove admin/customer-ops workflows are safe enough for non-engineers and launch support.
+
+Edge-case groups covered:
+- Admin and Customer Operations Edge Cases
+- Data Quality and Migration Edge Cases
+- Launch, Monitoring, and Recovery Edge Cases
+
+Browser test surfaces:
+- Admin Dashboard
+- Users/org settings
+- Audit logs
+- Retention
+- Support tickets
+- Webhooks/integration health
+- Launch and rollback runbook checks
+
+Exit checks:
+- Admin mutations are role-gated and auditable.
+- Audit/report exports work.
+- Retention actions are safe and reversible where intended.
+- Support tickets and webhook panels handle failures.
+- Migration/legacy-data issues have documented repair paths.
+- No P0/P1 admin/ops findings remain open.
+
+### Sprint 65: Security, Abuse, Performance, Scale, and Final Regression Browser QA
+Goal:
+- Stress the full hosted product for malicious input, scale behavior, and final Wave 1 readiness.
+
+Edge-case groups covered:
+- Security and Abuse Edge Cases
+- Performance and Scale Edge Cases
+- Any rolled-forward P2/P3 findings from Sprints 57-64
+
+Browser test surfaces:
+- All high-traffic pages
+- All mutation-heavy forms
+- CSV exports
+- Large list views
+- Route navigation across lazy chunks
+
+Exit checks:
+- XSS-like input renders safely.
+- CSV exports are protected against formula injection.
+- Secrets do not appear in client-visible output.
+- Large lists remain usable with pagination/filtering.
+- Final browser smoke pass covers all primary routes.
+- No open P0/P1 findings remain.
+- P2/P3 backlog is reviewed and accepted or scheduled.
+
+## Sprint Issue Backlog
+Use this table once browser QA begins.
+
+| ID | Sprint Found | Severity | Route/Area | Role | Edge Case | Actual Result | Expected Result | Fix Sprint | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Not started |
 
 ## Edge Case Inventory
 Use this section as the source pool for later QA scenarios. Each item should eventually become one or more test cases with role, setup data, action, expected result, and severity.
@@ -773,4 +1029,3 @@ Use this section as the source pool for later QA scenarios. Each item should eve
 - Customer reports missing data after import.
 - Customer reports slow landing page.
 - Customer reports failed offline sync.
-
