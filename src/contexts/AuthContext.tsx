@@ -73,17 +73,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
 
             const metadataRole = normalizeRole(String(nextUser.user_metadata?.role || '').toLowerCase() as ProfileRole);
-            const summary = await profileService.getCurrentProfileSummary();
             const isEmailAdmin = profileService.isEmailAdmin(nextUser.email || '');
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role, organization_id')
+                .eq('id', nextUser.id)
+                .single();
+
+            const profileRole = normalizeRole((profile?.role || 'readonly') as ProfileRole);
+            const profileOrganizationId = profile?.organization_id || null;
 
             if (metadataRole === 'platform_admin' || isEmailAdmin) {
-                setOrganizationId(summary?.organizationId || null);
+                setOrganizationId(profileOrganizationId);
                 setRole('platform_admin');
                 return;
             }
 
-            setOrganizationId(summary?.organizationId || null);
-            setRole(summary?.role || 'readonly');
+            setOrganizationId(profileOrganizationId);
+            setRole(profileRole);
         };
 
         // Get initial session
