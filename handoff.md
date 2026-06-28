@@ -783,7 +783,7 @@ Accepted residual observation:
 - A non-blocking `carrier settings` fetch error can appear during hosted browser navigation. It did not block login, Tasks, Work Orders, Driver creation, or Training completion. Treat as Sprint 54 monitoring/backlog unless it becomes user-visible or repeatable on a single route.
 
 ### Sprint 54: Wave 1 Launch Operations and Support Handoff
-Status: Planned
+Status: Complete
 
 User stories:
 - As customer success, we have a concise Wave 1 onboarding checklist and known-issues list.
@@ -804,6 +804,11 @@ Exit criteria:
 - Wave 1 launch runbook exists and covers top failure modes.
 - Go/no-go checklist has owners and current pass/fail status.
 - Handoff final status matches verified hosted-app reality.
+
+Completion note (2026-06-28):
+- Created `/docs/sprint-54/wave-1-launch-runbook.md` with Wave 1 launch scope, onboarding checklist, monitoring checks, rollback checklist, go/no-go ownership, and known residual risks.
+- Launch recommendation is Go for controlled Wave 1 after a final production login check immediately before inviting users.
+- Required operating posture: keep Motive disabled, keep production PII on Supabase Edge crypto, and treat any route-specific `Failed to fetch` or RLS failure as launch-support triage.
 
 ---
 
@@ -854,5 +859,10 @@ Exit criteria:
 - Impact: creates a poor first impression and may reduce successful entry into the app.
 
 ## Final Project Status
-**Hosted auth/routing verification passed as of 2026-06-27; not launch ready until Sprint 53 workflow persistence QA and Sprint 54 launch operations pass.**
-Sprints 49-52 are complete: auth/security restoration, disabled integration placeholders, mobile shell repair, contextual load errors, release gates, production dependency audit, deployed Supabase/Vercel environment repair, hosted login, direct-route refresh, and stale-chunk recovery are verified from GitHub `main`. The next priority is Sprint 53 hosted workflow persistence QA across fleet and safety operations.
+**Wave 1 launch-ready as of 2026-06-28 for a controlled production rollout.**
+Sprints 49-54 are complete: auth/security restoration, disabled integration placeholders, mobile shell repair, contextual load errors, release gates, production dependency audit, deployed Supabase/Vercel environment repair, hosted login, direct-route refresh, stale-chunk recovery, hosted task/work-order/training workflow persistence, production Edge crypto for PII, and Wave 1 launch operations are verified from GitHub `main`.
+
+Current launch posture:
+- Go for controlled Wave 1 after a final same-day hosted login check.
+- Continue monitoring the non-blocking carrier settings fetch error during navigation.
+- Do not enable Motive during Wave 1; the shipped API behavior is a disabled placeholder.
