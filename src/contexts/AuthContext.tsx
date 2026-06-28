@@ -95,7 +95,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 return;
             }
 
-            const metadataRole = normalizeRole(String(nextUser.user_metadata?.role || '').toLowerCase() as ProfileRole);
             const isEmailAdmin = profileService.isEmailAdmin(nextUser.email || '');
             const profileResult = await withTimeout(supabase
                 .from('profiles')
@@ -107,7 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const profileRole = normalizeRole((profile?.role || 'readonly') as ProfileRole);
             const profileOrganizationId = profile?.organization_id || null;
 
-            if (metadataRole === 'platform_admin' || isEmailAdmin) {
+            if (isEmailAdmin) {
                 setOrganizationId(profileOrganizationId);
                 setRole('platform_admin');
                 return;

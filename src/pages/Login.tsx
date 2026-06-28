@@ -13,11 +13,19 @@ const Login: React.FC = () => {
     const [password, setPassword] = useState('');
     const [fullName, setFullName] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isResettingPassword, setIsResettingPassword] = useState(false);
     const [isSignUp, setIsSignUp] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const clearFormState = () => {
+        setPassword('');
+        setFullName('');
+        toast.dismiss();
+        toast.remove();
+    };
 
     const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault();
+        toast.dismiss();
         setIsLoading(true);
 
         try {
@@ -39,6 +47,29 @@ const Login: React.FC = () => {
             toast.error(error.message || 'Authentication failed');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handlePasswordReset = async () => {
+        toast.dismiss();
+
+        if (!email) {
+            toast.error('Enter your email address first.');
+            return;
+        }
+
+        setIsResettingPassword(true);
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: `${window.location.origin}/login`,
+            });
+            if (error) throw error;
+            toast.success('Password reset email sent.');
+        } catch (error: any) {
+            console.error('Password reset error:', error.message);
+            toast.error(error.message || 'Unable to send reset email.');
+        } finally {
+            setIsResettingPassword(false);
         }
     };
 
@@ -160,9 +191,14 @@ const Login: React.FC = () => {
                                             </div>
 
                                             <div className="text-sm">
-                                                <a href="#" className="font-medium text-green-600 hover:text-green-500">
-                                                    Forgot your password?
-                                                </a>
+                                                <button
+                                                    type="button"
+                                                    onClick={handlePasswordReset}
+                                                    disabled={isResettingPassword}
+                                                    className="font-medium text-green-600 hover:text-green-500 disabled:cursor-not-allowed disabled:opacity-60"
+                                                >
+                                                    {isResettingPassword ? 'Sending reset...' : 'Forgot your password?'}
+                                                </button>
                                             </div>
                                         </div>
                                     )}
@@ -182,7 +218,8 @@ const Login: React.FC = () => {
                                         <button
                                             type="button"
                                             onClick={() => {
-                                                setIsSignUp(!isSignUp);
+                                                clearFormState();
+                                                setIsSignUp((value) => !value);
                                                 setIsSuccess(false);
                                             }}
                                             className="text-sm font-medium text-green-600 hover:text-green-500"

@@ -173,7 +173,7 @@ Progress notes:
 - Do not mark role, tenant-isolation, or data-integrity browser QA complete until the production migration has been applied and verified.
 
 ### Sprint 58: Public Landing, Login UX, Navigation, Layout, and Accessibility Browser QA
-Status: Ready for public/login/shell QA; authenticated route assertions can proceed now that Sprint 57 production migration is applied
+Status: In progress
 
 Goal:
 - Prove the unauthenticated and shell experience is usable across realistic devices and assistive workflows.
@@ -383,6 +383,9 @@ Use this table once browser QA begins.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | S57-001 | 57 | P0 | Supabase `profiles` RLS / AuthZ | Authenticated user | User attempts a direct Supabase write not allowed by UI; user tampers with request payload `organization_id` or `role` | Existing policy `Users can manage own profile` authorizes all self profile mutations with only `id = auth.uid()`, allowing self-service role/org/status writes by policy shape | Users may edit safe profile fields only; only authorized admin workflows can change role, org, or status | 57 | Fixed in repo and production migration applied through Supabase Dashboard SQL Editor |
 | S57-002 | 57 | P1 | Protected route driver role check | Authenticated user | User metadata role conflicts with profile role; driver-role user attempts to access full dashboard | Route guard trusted `user.user_metadata.role === 'driver'`, which is user-editable metadata and unsafe for authorization | Route guard must use canonical profile role from `profiles.role` | 57 | Fixed in repo and pushed to `main` |
+| S57-003 | 58 | P1 | AuthContext role resolution | Authenticated user | User metadata role conflicts with profile role; user metadata says `platform_admin` | AuthContext still elevated platform admin from user-editable metadata | AuthContext must derive admin from trusted profile data or explicit admin allowlist only | 58 | Fixed in repo; build/focused tests passed; pending push |
+| S58-001 | 58 | P2 | Login password recovery | Signed-out visitor | User clicks Forgot your password after entering an email | Link used `href="#"` and did not start a recovery flow | Send Supabase reset email or remove the control until recovery is available | 58 | Fixed and browser-verified locally; pending push |
+| S58-002 | 58 | P2 | Login/signup mode switch | Signed-out visitor | Invalid login fails, then user switches to create account | Stale invalid-login toast and entered password carry into signup mode | Switching modes should clear stale auth feedback and password-only fields | 58 | Fixed and browser-verified locally; pending push |
 
 ## Edge Case Inventory
 Use this section as the source pool for later QA scenarios. Each item should eventually become one or more test cases with role, setup data, action, expected result, and severity.
