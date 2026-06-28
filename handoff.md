@@ -705,7 +705,7 @@ Execution order:
 3. Sprint 54 prepares Wave 1 launch operations, monitoring, and support handoff.
 
 ### Sprint 52: Hosted Routing, Auth, and Environment Verification
-Status: Planned
+Status: Complete
 
 User stories:
 - As a user, I can open public routes directly, sign in, refresh, and stay in the correct app state.
@@ -729,8 +729,21 @@ Exit criteria:
 - Sign-in/sign-out works in the hosted environment
 - Missing config fails closed with actionable user/operator messaging
 
+Completion note (2026-06-27):
+- Added Vercel SPA route fallback and no-store headers for shell/service-worker files so direct route loads and refreshes resolve to the app instead of 404s.
+- Rebuilt production Supabase on a fresh project after the prior project was unrecoverable, applied the full migration set, and updated Vercel environment variables for the deployed app.
+- Created a platform-admin test account and verified hosted login against `https://safetyhubconnect.vercel.app`.
+- Fixed protected-route reload behavior so saved Supabase sessions recover instead of leaving users on an indefinite spinner.
+- Added stale lazy-chunk recovery so clients with an older shell auto-refresh once when a deleted hashed route chunk is requested after deployment.
+
+Verification (2026-06-27):
+- Passed: `npm run release:check`.
+- Passed: hosted login with `admin@safetyhubconnect.test`.
+- Passed: direct hosted route checks for `/login`, `/dashboard`, `/admin`, `/drivers`, `/reporting/hypercare`, and `/driver-portal`.
+- Passed: latest Vercel production deployment from GitHub `main` reached Ready.
+
 ### Sprint 53: Critical Workflow Hosted QA
-Status: Planned
+Status: In progress
 
 User stories:
 - As a fleet manager, I can complete the equipment, maintenance, and work-order workflows in the hosted app.
@@ -751,6 +764,16 @@ Exit criteria:
 - No untriaged P0/P1 console or workflow failures remain.
 - Critical fleet and safety workflows persist correctly in Supabase.
 - Motive placeholder is visible where relevant and no Motive network calls occur.
+
+Progress note (2026-06-27):
+- Hosted smoke QA now confirms login, dashboard, admin, drivers, hypercare, and driver portal render on the production domain with no console errors on the representative final check.
+- The first production browser pass exposed a stale lazy-chunk failure after deployment; the app now refreshes once on dynamic import chunk failures so users recover to the current build.
+- Broad section-level route coverage has rendered successfully for Dashboard, Drivers, Tasks, Safety, Watchlist, Equipment, Maintenance, Work Orders, Training, Compliance, Documents, FMCSA, Reporting, Hypercare, CSA Predictor, Settings, Help, Driver Portal, and Admin.
+
+Remaining Sprint 53 work:
+- Exercise create/edit/archive/closeout persistence for highest-risk hosted workflows, not just route rendering.
+- Confirm Motive placeholders with network capture in the hosted app.
+- Add hosted smoke coverage for at least one fleet workflow and one safety workflow.
 
 ### Sprint 54: Wave 1 Launch Operations and Support Handoff
 Status: Planned
@@ -801,11 +824,20 @@ Exit criteria:
 - Impact: any live Motive proxy behavior would increase security and maintenance risk for an unused integration.
 
 ### Bug: Login submit returns a network error in production
-- Severity: Critical
+- Severity: Resolved
 - Category: Functional / Console
 - Environment: https://safetyhubconnect.vercel.app/
 - Observation: submitting the login form surfaces a generic "Network Error" / "Failed to fetch" state instead of authenticating or showing a recovery-friendly message.
 - Impact: blocks sign-in and prevents access to the authenticated app.
+- Resolution (2026-06-27): production Supabase was recreated, Vercel env vars were updated, migrations were applied, and hosted admin login now succeeds.
+
+### Bug: Stale deployed shell can request deleted lazy route chunks
+- Severity: Resolved
+- Category: Functional / Deployment UX
+- Environment: https://safetyhubconnect.vercel.app/
+- Observation: after a production deployment, the browser could hold an older app shell and request a now-deleted hashed chunk such as `Dashboard-u3ErBg8Q.js`, causing the route error boundary to render.
+- Impact: users could see "Something went wrong" after deployment until manually reloading onto the newest app shell.
+- Resolution (2026-06-27): lazy route imports now detect chunk-load failures and perform a one-time reload to recover stale clients onto the current deployment.
 
 ### Bug: Main landing page is slow to load
 - Severity: Medium
@@ -815,5 +847,5 @@ Exit criteria:
 - Impact: creates a poor first impression and may reduce successful entry into the app.
 
 ## Final Project Status
-**Ready for hosted verification as of 2026-06-27; not launch ready until Sprints 52-54 pass.**
-Sprints 49-51 are complete locally: auth/security restoration, disabled integration placeholders, mobile shell repair, contextual load errors, release gates, and production dependency audit are green. The next priority is Sprint 52 hosted routing/auth/environment verification against the deployed Vercel environment from GitHub `main`.
+**Hosted auth/routing verification passed as of 2026-06-27; not launch ready until Sprint 53 workflow persistence QA and Sprint 54 launch operations pass.**
+Sprints 49-52 are complete: auth/security restoration, disabled integration placeholders, mobile shell repair, contextual load errors, release gates, production dependency audit, deployed Supabase/Vercel environment repair, hosted login, direct-route refresh, and stale-chunk recovery are verified from GitHub `main`. The next priority is Sprint 53 hosted workflow persistence QA across fleet and safety operations.
