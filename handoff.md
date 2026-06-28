@@ -810,6 +810,34 @@ Completion note (2026-06-28):
 - Launch recommendation is Go for controlled Wave 1 after a final production login check immediately before inviting users.
 - Required operating posture: keep Motive disabled, keep production PII on Supabase Edge crypto, and treat any route-specific `Failed to fetch` or RLS failure as launch-support triage.
 
+### Sprint 55: Carrier Settings Tenant Scope and Launch Noise Cleanup
+Status: Complete
+
+User stories:
+- As an admin, I can save carrier configuration under the current organization without raw DB access.
+- As security, carrier settings and cached FMCSA snapshots cannot collide across organizations.
+- As launch support, known carrier settings noise is reduced to actionable failures.
+
+Goal:
+- Remove the highest-priority Wave 1 residual risk around carrier settings persistence and tenant scoping.
+
+Scope:
+- Make carrier settings reads and writes organization-aware under RLS.
+- Use the current organization id as the stable settings row id instead of a global `default` row when an org exists.
+- Namespace carrier health cache rows by organization while preserving the real DOT number inside the cached payload.
+- Add focused regression coverage for carrier settings and cache scoping.
+
+Exit criteria:
+- Carrier settings save payload includes `organization_id`.
+- Carrier settings reads filter by the current organization.
+- Carrier health cache cannot be overwritten by another org using the same DOT number.
+- Release gate remains green.
+
+Completion note (2026-06-28):
+- Updated `carrierService` to resolve the current organization for carrier settings and carrier health cache operations.
+- Added carrier service tests covering org-scoped settings save/read and org-namespaced cache save/read.
+- Verification passed: focused carrier service tests and full `npm run release:check` with 248 unit tests.
+
 ---
 
 ## QA Bug Backlog
@@ -864,5 +892,5 @@ Sprints 49-54 are complete: auth/security restoration, disabled integration plac
 
 Current launch posture:
 - Go for controlled Wave 1 after a final same-day hosted login check.
-- Continue monitoring the non-blocking carrier settings fetch error during navigation.
+- Carrier settings are now org-scoped in code; continue monitoring for route-specific fetch failures during Wave 1.
 - Do not enable Motive during Wave 1; the shipped API behavior is a disabled placeholder.

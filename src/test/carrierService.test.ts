@@ -1,6 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { carrierService, type CarrierHealth } from '../services/carrierService';
 
+const currentOrganizationMock = vi.hoisted(() => vi.fn());
+const fromMock = vi.hoisted(() => vi.fn());
+
+vi.mock('../lib/supabase', () => ({
+  getCurrentOrganization: currentOrganizationMock,
+  supabase: {
+    from: fromMock,
+  },
+}));
+
 const sampleHealth: CarrierHealth = {
   dotNumber: '3114665',
   legalName: 'AERO TRUCKING INC',
@@ -38,6 +48,9 @@ describe('carrierService FMCSA integration', () => {
     vi.restoreAllMocks();
     carrierService.resetCarrierLookupCircuit();
     fetchSpy.mockReset();
+    currentOrganizationMock.mockReset();
+    currentOrganizationMock.mockResolvedValue('org-123');
+    fromMock.mockReset();
     vi.stubGlobal('fetch', fetchSpy);
     vi.spyOn(carrierService, 'cacheCarrierHealth').mockResolvedValue(undefined);
     vi.spyOn(carrierService, 'getCachedCarrierHealth').mockResolvedValue(null);
@@ -89,5 +102,97 @@ describe('carrierService FMCSA integration', () => {
     expect(second.source).toBe('circuit-breaker');
     expect(second.health?.saferRating).toBe('UNSATISFACTORY');
     expect(fetchSpy).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('carrierService carrier settings persistence', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    currentOrganizationMock.mockReset();
+    currentOrganizationMock.mockResolvedValue('org-123');
+    fromMock.mockReset();
+  });
+
+  it('saves carrier settings with the current organization id as the settings row id', async () => {
+    const upsert = vi.fn().mockResolvedValue({ error: null });
+    fromMock.mockReturnValue({ upsert });
+
+    await carrierService.saveCarrierSettings({
+      dotNumber: '3114665',
+      mcNumber: 'MC-123',
+      companyName: 'SafetyHub Test Carrier',
+    });
+
+    expect(fromMock).toHaveBeenCalledWith('carrier_settings');
+    expect(upsert).toHaveBeenCalledWith([expect.objectContaining({
+      id: 'org-123',
+      organization_id: 'org-123',
+      dot_number: '3114665',
+      mc_number: 'MC-123',
+      company_name: 'SafetyHub Test Carrier',
+    })], { onConflict: 'id' });
+  });
+
+  it('reads carrier settings through the current organization scope', async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: {
+        id: 'org-123',
+        organization_id: 'org-123',
+        dot_number: '3114665',
+        mc_number: 'MC-123',
+        company_name: 'SafetyHub Test Carrier',
+      },
+      error: null,
+    });
+    const eq = vi.fn(function eq() {
+      return chain;
+    });
+    const chain = {
+      select: vi.fn(() => chain),
+      eq,
+      maybeSingle,
+    };
+    fromMock.mockReturnValue(chain);
+
+    const settings = await carrierService.getCarrierSettings();
+
+    expect(settings).toEqual({
+      id: 'org-123',
+      dotNumber: '3114665',
+      mcNumber: 'MC-123',
+      companyName: 'SafetyHub Test Carrier',
+    });
+    expect(eq).toHaveBeenCalledWith('id', 'org-123');
+    expect(eq).toHaveBeenCalledWith('organization_id', 'org-123');
+  });
+
+  it('scopes carrier health cache writes and reads by organization', async () => {
+    const upsert = vi.fn().mockResolvedValue({ error: null });
+    fromMock.mockReturnValueOnce({ upsert });
+
+    await carrierService.cacheCarrierHealth(sampleHealth);
+
+    expect(upsert).toHaveBeenCalledWith([expect.objectContaining({
+      organization_id: 'org-123',
+      dot_number: 'org-123:3114665',
+      data: sampleHealth,
+    })], { onConflict: 'dot_number' });
+
+    const single = vi.fn().mockResolvedValue({ data: { data: sampleHealth }, error: null });
+    const eq = vi.fn(function eq() {
+      return chain;
+    });
+    const chain = {
+      select: vi.fn(() => chain),
+      eq,
+      single,
+    };
+    fromMock.mockReturnValueOnce(chain);
+
+    const cached = await carrierService.getCachedCarrierHealth('3114665');
+
+    expect(cached).toEqual(sampleHealth);
+    expect(eq).toHaveBeenCalledWith('dot_number', 'org-123:3114665');
+    expect(eq).toHaveBeenCalledWith('organization_id', 'org-123');
   });
 });

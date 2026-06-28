@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { getCurrentOrganization, supabase } from '../lib/supabase';
 
 export interface CarrierInspectionSummary {
     usInspections: number;
@@ -134,10 +134,15 @@ const buildRequestUrl = (dotNumber: string, endpointUrl?: string) => {
     return `${base}${separator}dot=${encodeURIComponent(dotNumber)}`;
 };
 
+const buildCacheKey = (dotNumber: string, orgId: string | null) => orgId ? `${orgId}:${dotNumber}` : dotNumber;
+
 export const carrierService = {
     async saveCarrierSettings(settings: CarrierSettings): Promise<void> {
+        const orgId = await getCurrentOrganization();
+        const settingsId = settings.id || orgId || 'default';
         const payload = {
-            id: settings.id || 'default',
+            id: settingsId,
+            organization_id: orgId,
             dot_number: settings.dotNumber || null,
             mc_number: settings.mcNumber || null,
             company_name: settings.companyName || null,
@@ -162,11 +167,18 @@ export const carrierService = {
 
     async getCarrierSettings(): Promise<CarrierSettings | null> {
         try {
-            const { data, error } = await supabase
+            const orgId = await getCurrentOrganization();
+            const settingsId = orgId || 'default';
+            let query = supabase
                 .from('carrier_settings')
                 .select('*')
-                .eq('id', 'default')
-                .maybeSingle();
+                .eq('id', settingsId);
+
+            if (orgId) {
+                query = query.eq('organization_id', orgId);
+            }
+
+            const { data, error } = await query.maybeSingle();
 
             if (error) {
                 if (error.code === 'PGRST116' || error.code === 'PGRST205' || error.code === '42P01') {
@@ -301,10 +313,13 @@ export const carrierService = {
     },
 
     async cacheCarrierHealth(health: CarrierHealth): Promise<void> {
+        const orgId = await getCurrentOrganization();
+        const cacheKey = buildCacheKey(health.dotNumber, orgId);
         const { error } = await supabase
             .from('carrier_health_cache')
             .upsert([{
-                dot_number: health.dotNumber,
+                organization_id: orgId,
+                dot_number: cacheKey,
                 data: health,
                 updated_at: new Date().toISOString()
             }], { onConflict: 'dot_number' });
@@ -313,11 +328,18 @@ export const carrierService = {
     },
 
     async getCachedCarrierHealth(dotNumber: string): Promise<CarrierHealth | null> {
-        const { data, error } = await supabase
+        const orgId = await getCurrentOrganization();
+        const cacheKey = buildCacheKey(dotNumber, orgId);
+        let query = supabase
             .from('carrier_health_cache')
             .select('data')
-            .eq('dot_number', dotNumber)
-            .single();
+            .eq('dot_number', cacheKey);
+
+        if (orgId) {
+            query = query.eq('organization_id', orgId);
+        }
+
+        const { data, error } = await query.single();
 
         if (error) return null;
         return data?.data || null;
