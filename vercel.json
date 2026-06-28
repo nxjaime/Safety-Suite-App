@@ -1,4 +1,15 @@
 {
+  "headers": [
+    {
+      "source": "/(index.html|sw.js|registerSW.js|manifest.webmanifest|workbox-.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/((?!api/.*|assets/.*|logo.png|manifest.webmanifest|registerSW.js|sw.js|workbox-.*).*)",
