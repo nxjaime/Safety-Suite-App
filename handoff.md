@@ -173,7 +173,7 @@ Progress notes:
 - Do not mark role, tenant-isolation, or data-integrity browser QA complete until the production migration has been applied and verified.
 
 ### Sprint 58: Public Landing, Login UX, Navigation, Layout, and Accessibility Browser QA
-Status: In progress
+Status: Complete with P2 follow-up
 
 Goal:
 - Prove the unauthenticated and shell experience is usable across realistic devices and assistive workflows.
@@ -198,7 +198,16 @@ Exit checks:
 - Authenticated navigation checks may proceed now that Sprint 57's production Supabase migration is applied.
 - No P0/P1 layout or access findings remain open.
 
+Progress notes:
+- Production Browser QA verified `/welcome` and `/login` on desktop and mobile widths with no horizontal overflow and no app-level console errors.
+- Production Browser QA verified login password recovery is a real button, missing-email recovery shows actionable feedback, signup mode clears stale reset/login feedback, and password-only state is not carried into signup.
+- Production Browser QA verified the authenticated dashboard shell renders and settles after route load.
+- Screen-reader-facing labels and focusable controls are present on the login form.
+- Browser automation could not advance focus with Tab from the email field despite no code-level focus trap in `Login.tsx`; a human keyboard-only pass remains scheduled as P2 follow-up `S58-003`.
+
 ### Sprint 59: Dashboard, Reporting, Search, Notifications, and Preferences Browser QA
+Status: In progress
+
 Goal:
 - Prove command-center workflows display accurate information and recover cleanly from empty/error states.
 
@@ -384,8 +393,9 @@ Use this table once browser QA begins.
 | S57-001 | 57 | P0 | Supabase `profiles` RLS / AuthZ | Authenticated user | User attempts a direct Supabase write not allowed by UI; user tampers with request payload `organization_id` or `role` | Existing policy `Users can manage own profile` authorizes all self profile mutations with only `id = auth.uid()`, allowing self-service role/org/status writes by policy shape | Users may edit safe profile fields only; only authorized admin workflows can change role, org, or status | 57 | Fixed in repo and production migration applied through Supabase Dashboard SQL Editor |
 | S57-002 | 57 | P1 | Protected route driver role check | Authenticated user | User metadata role conflicts with profile role; driver-role user attempts to access full dashboard | Route guard trusted `user.user_metadata.role === 'driver'`, which is user-editable metadata and unsafe for authorization | Route guard must use canonical profile role from `profiles.role` | 57 | Fixed in repo and pushed to `main` |
 | S57-003 | 58 | P1 | AuthContext role resolution | Authenticated user | User metadata role conflicts with profile role; user metadata says `platform_admin` | AuthContext still elevated platform admin from user-editable metadata | AuthContext must derive admin from trusted profile data or explicit admin allowlist only | 58 | Fixed, pushed to `main`, build/focused tests passed |
-| S58-001 | 58 | P2 | Login password recovery | Signed-out visitor | User clicks Forgot your password after entering an email | Link used `href="#"` and did not start a recovery flow | Send Supabase reset email or remove the control until recovery is available | 58 | Fixed, browser-verified locally, pushed to `main`, production asset verified |
-| S58-002 | 58 | P2 | Login/signup mode switch | Signed-out visitor | Invalid login fails, then user switches to create account | Stale invalid-login toast and entered password carry into signup mode | Switching modes should clear stale auth feedback and password-only fields | 58 | Fixed, browser-verified locally, pushed to `main`, production asset verified |
+| S58-001 | 58 | P2 | Login password recovery | Signed-out visitor | User clicks Forgot your password after entering an email | Link used `href="#"` and did not start a recovery flow | Send Supabase reset email or remove the control until recovery is available | 58 | Fixed, browser-verified locally and on production, pushed to `main` |
+| S58-002 | 58 | P2 | Login/signup mode switch | Signed-out visitor | Invalid login fails, then user switches to create account | Stale invalid-login toast and entered password carry into signup mode | Switching modes should clear stale auth feedback and password-only fields | 58 | Fixed, browser-verified locally and on production, pushed to `main` |
+| S58-003 | 58 | P2 | Login keyboard navigation | Signed-out visitor | User navigates the login form by keyboard only | Browser automation could focus the controls individually, but Tab traversal stayed on the email field in the in-app Browser; code review found no login focus trap | Human keyboard-only pass should confirm focus order reaches back link, email, password, remember me, forgot password, sign in, and signup toggle | 59 | Scheduled follow-up; no P0/P1 blocker |
 
 ## Edge Case Inventory
 Use this section as the source pool for later QA scenarios. Each item should eventually become one or more test cases with role, setup data, action, expected result, and severity.
