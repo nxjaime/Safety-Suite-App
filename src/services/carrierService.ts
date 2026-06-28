@@ -166,7 +166,7 @@ export const carrierService = {
                 .from('carrier_settings')
                 .select('*')
                 .eq('id', 'default')
-                .single();
+                .maybeSingle();
 
             if (error) {
                 if (error.code === 'PGRST116' || error.code === 'PGRST205' || error.code === '42P01') {
