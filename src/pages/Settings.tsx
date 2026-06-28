@@ -245,17 +245,17 @@ const Settings: React.FC = () => {
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <div>
+        <div className="min-w-0 space-y-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
                     <h2 className="text-2xl font-bold text-slate-800">Settings</h2>
                     <p className="text-slate-500 text-sm mt-1">Manage application users, system data, and carrier configuration</p>
                 </div>
             </div>
 
             {/* Tabs */}
-            <div className="border-b border-slate-200">
-                <nav className="-mb-px flex space-x-8">
+            <div className="overflow-x-auto border-b border-slate-200">
+                <nav className="-mb-px flex min-w-max space-x-6 sm:space-x-8">
                     <button
                         onClick={() => setActiveTab('users')}
                         className={clsx(
@@ -321,8 +321,8 @@ const Settings: React.FC = () => {
                         </button>
                     </div>
 
-                    <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-                        <table className="min-w-full divide-y divide-gray-200">
+                    <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
+                        <table className="min-w-[760px] divide-y divide-gray-200">
                             <thead className="bg-slate-50">
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">User</th>
@@ -437,8 +437,8 @@ const Settings: React.FC = () => {
                         </button>
                     </div>
 
-                    <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-                        <table className="min-w-full divide-y divide-gray-200">
+                    <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
+                        <table className="min-w-[560px] divide-y divide-gray-200">
                             <thead className="bg-slate-50">
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Label</th>
