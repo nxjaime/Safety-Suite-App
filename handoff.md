@@ -772,10 +772,12 @@ Progress note (2026-06-27):
 - Consolidated Motive API routes onto one disabled placeholder response and removed the public landing-page claim that Motive is supported.
 - Fixed Tasks hosted workflow filtering so the default Active view includes both Pending and In Progress tasks, and the Overdue view queries incomplete tasks by due date instead of a non-existent `Overdue` status.
 - Verified the hosted Tasks workflow on production: created a task, started it, reloaded the page, searched by title, and confirmed the In Progress task remained visible in the default Active list.
+- Fixed Work Orders hosted workflow access by adding org-scoped RLS policies for `work_orders` and `work_order_line_items`, and by passing the authenticated role into the Work Orders status-transition guard.
+- Verified the hosted Work Orders fleet workflow on production: created a work order, approved it, started it, completed it, closed it with closeout notes, reloaded the page, and confirmed the Closed state persisted.
 
 Remaining Sprint 53 work:
-- Exercise additional create/edit/archive/closeout persistence for fleet and safety workflows beyond Tasks.
-- Add hosted smoke coverage for at least one fleet workflow and one safety workflow.
+- Exercise safety workflow persistence beyond Tasks.
+- Add hosted smoke coverage for at least one safety workflow.
 
 ### Sprint 54: Wave 1 Launch Operations and Support Handoff
 Status: Planned
