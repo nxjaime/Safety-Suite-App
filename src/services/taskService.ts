@@ -53,7 +53,17 @@ export const taskService = {
             query = query.or(`title.ilike.%${safeSearch}%,driver_name.ilike.%${safeSearch}%`);
         }
         if (filters?.priority && filters.priority !== 'All') query = query.eq('priority', filters.priority);
-        if (filters?.status && filters.status !== 'All') query = query.eq('status', filters.status);
+        if (filters?.status && filters.status !== 'All') {
+            if (filters.status === 'Pending') {
+                query = query.in('status', ['Pending', 'In Progress']);
+            } else if (filters.status === 'Overdue') {
+                query = query
+                    .neq('status', 'Completed')
+                    .lt('due_date', new Date().toISOString().split('T')[0]);
+            } else {
+                query = query.eq('status', filters.status);
+            }
+        }
 
         const from = (page - 1) * pageSize;
         const to = from + pageSize - 1;

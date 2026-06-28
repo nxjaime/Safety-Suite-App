@@ -65,4 +65,39 @@ describe('taskService', () => {
       })
     ]);
   });
+
+  it('fetches active paginated tasks as pending or in-progress', async () => {
+    vi.spyOn(supa, 'getCurrentOrganization').mockResolvedValue('org-1');
+
+    const inSpy = vi.fn().mockReturnThis();
+    const eqSpy = vi.fn().mockReturnThis();
+    const selectSpy = vi.fn().mockReturnThis();
+    const orderSpy = vi.fn().mockReturnThis();
+    const rangeSpy = vi.fn().mockResolvedValue({ data: [], count: 0, error: null });
+    const chain: any = { select: selectSpy, eq: eqSpy, in: inSpy, order: orderSpy, range: rangeSpy };
+    vi.spyOn(supa, 'supabase', 'get').mockReturnValue({ from: vi.fn().mockReturnValue(chain) } as any);
+
+    await taskService.fetchTasksPaginated(1, 12, { status: 'Pending' });
+
+    expect(inSpy).toHaveBeenCalledWith('status', ['Pending', 'In Progress']);
+    expect(rangeSpy).toHaveBeenCalledWith(0, 11);
+  });
+
+  it('fetches overdue paginated tasks by due date and incomplete status', async () => {
+    vi.spyOn(supa, 'getCurrentOrganization').mockResolvedValue('org-1');
+
+    const neqSpy = vi.fn().mockReturnThis();
+    const ltSpy = vi.fn().mockReturnThis();
+    const eqSpy = vi.fn().mockReturnThis();
+    const selectSpy = vi.fn().mockReturnThis();
+    const orderSpy = vi.fn().mockReturnThis();
+    const rangeSpy = vi.fn().mockResolvedValue({ data: [], count: 0, error: null });
+    const chain: any = { select: selectSpy, eq: eqSpy, neq: neqSpy, lt: ltSpy, order: orderSpy, range: rangeSpy };
+    vi.spyOn(supa, 'supabase', 'get').mockReturnValue({ from: vi.fn().mockReturnValue(chain) } as any);
+
+    await taskService.fetchTasksPaginated(1, 12, { status: 'Overdue' });
+
+    expect(neqSpy).toHaveBeenCalledWith('status', 'Completed');
+    expect(ltSpy).toHaveBeenCalledWith('due_date', expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/));
+  });
 });

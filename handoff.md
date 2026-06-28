@@ -770,6 +770,7 @@ Progress note (2026-06-27):
 - The first production browser pass exposed a stale lazy-chunk failure after deployment; the app now refreshes once on dynamic import chunk failures so users recover to the current build.
 - Broad section-level route coverage has rendered successfully for Dashboard, Drivers, Tasks, Safety, Watchlist, Equipment, Maintenance, Work Orders, Training, Compliance, Documents, FMCSA, Reporting, Hypercare, CSA Predictor, Settings, Help, Driver Portal, and Admin.
 - Consolidated Motive API routes onto one disabled placeholder response and removed the public landing-page claim that Motive is supported.
+- Fixed Tasks hosted workflow filtering so the default Active view includes both Pending and In Progress tasks, and the Overdue view queries incomplete tasks by due date instead of a non-existent `Overdue` status.
 
 Remaining Sprint 53 work:
 - Exercise create/edit/archive/closeout persistence for highest-risk hosted workflows, not just route rendering.
