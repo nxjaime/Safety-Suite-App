@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { z } from 'zod';
-import { applyCors, fetchWithRetry, normalizeIntegrationError, sendNormalizedError } from './lib/http';
-import { enforceRateLimit } from './lib/rateLimit';
-import { requireSupabaseUser } from './lib/auth';
+import { applyCors, fetchWithRetry, normalizeIntegrationError, sendNormalizedError } from './lib/http.js';
+import { enforceRateLimit } from './lib/rateLimit.js';
+import { requireSupabaseUser } from './lib/auth.js';
 
 export const bodySchema = z.object({
   to: z.string().email('Invalid recipient email'),

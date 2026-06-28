@@ -5,9 +5,7 @@ const SAFER_SNAPSHOT_URL = 'https://safer.fmcsa.dot.gov/query.asp';
 const DOT_NUMBER_RE = /^\d{1,8}$/;
 
 export const querySchema = z.object({
-    dot: z.string({
-        required_error: 'DOT number is required'
-    }).regex(DOT_NUMBER_RE, 'DOT number must be numeric')
+    dot: z.string().min(1, 'DOT number is required').regex(DOT_NUMBER_RE, 'DOT number must be numeric')
 });
 
 const decodeHtml = (value: string) => value

@@ -1,22 +1,22 @@
 /**
  * PII Encryption Service — abstraction layer over client-side and server-side crypto.
  *
- * When VITE_USE_EDGE_CRYPTO=true, delegates encrypt/decrypt to a deployed Supabase
+ * In production, delegates encrypt/decrypt to a deployed Supabase
  * Edge Function (`encrypt-pii`), which holds the key server-side.
  *
  * Production requires Edge crypto. Local/test environments may use the client fallback
- * only when VITE_API_SECRET_KEY is explicitly configured.
+ * unless VITE_USE_EDGE_CRYPTO=true is explicitly configured.
  *
  * Migration path:
  * 1. Deploy supabase/functions/encrypt-pii (already stubbed).
- * 2. Set VITE_USE_EDGE_CRYPTO=true in the Vercel environment.
+ * 2. Keep supabase/functions/encrypt-pii deployed with PII_ENCRYPTION_SECRET set.
  * 3. Re-encrypt any stored SSNs that were created by the older client-side path.
  */
 
 import { encryptData as clientEncrypt, decryptData as clientDecrypt } from '../utils/crypto';
 import { supabase } from '../lib/supabase';
 
-const useEdgeCrypto = import.meta.env.VITE_USE_EDGE_CRYPTO === 'true';
+const useEdgeCrypto = import.meta.env.MODE === 'production' || import.meta.env.VITE_USE_EDGE_CRYPTO === 'true';
 const canUseClientFallback = import.meta.env.MODE !== 'production';
 
 const assertCryptoMode = () => {

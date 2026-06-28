@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { applyCors, fetchWithRetry } from '../lib/http';
-import { enforceRateLimit } from '../lib/rateLimit';
+import { applyCors, fetchWithRetry } from '../lib/http.js';
+import { enforceRateLimit } from '../lib/rateLimit.js';
 
 type HealthStatus = 'healthy' | 'degraded' | 'down';
 
