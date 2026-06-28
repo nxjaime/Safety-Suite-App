@@ -118,6 +118,7 @@ describe('carrierService carrier settings persistence', () => {
     fromMock.mockReturnValue({ upsert });
 
     await carrierService.saveCarrierSettings({
+      id: 'default',
       dotNumber: '3114665',
       mcNumber: 'MC-123',
       companyName: 'SafetyHub Test Carrier',

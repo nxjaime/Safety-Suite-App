@@ -139,7 +139,7 @@ const buildCacheKey = (dotNumber: string, orgId: string | null) => orgId ? `${or
 export const carrierService = {
     async saveCarrierSettings(settings: CarrierSettings): Promise<void> {
         const orgId = await getCurrentOrganization();
-        const settingsId = settings.id || orgId || 'default';
+        const settingsId = orgId || settings.id || 'default';
         const payload = {
             id: settingsId,
             organization_id: orgId,
