@@ -5,7 +5,7 @@
  * The encryption key never leaves the server environment.
  *
  * Deploy: supabase functions deploy encrypt-pii
- * Requires: SUPABASE_ENCRYPT_SECRET set in Supabase Dashboard → Settings → Edge Functions.
+ * Requires: PII_ENCRYPTION_SECRET set in Supabase Dashboard -> Settings -> Edge Functions.
  *
  * Usage:
  *   POST /functions/v1/encrypt-pii
@@ -35,10 +35,10 @@ serve(async (req: Request) => {
       });
     }
 
-    const secret = Deno.env.get('SUPABASE_ENCRYPT_SECRET');
+    const secret = Deno.env.get('PII_ENCRYPTION_SECRET');
     if (!secret) {
       return new Response(
-        JSON.stringify({ error: 'SUPABASE_ENCRYPT_SECRET is not configured' }),
+        JSON.stringify({ error: 'PII_ENCRYPTION_SECRET is not configured' }),
         { status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
       );
     }
