@@ -25,6 +25,29 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const AUTH_TIMEOUT_MS = 2500;
+
+const withTimeout = async <T,>(promise: PromiseLike<T>, timeoutMs = AUTH_TIMEOUT_MS): Promise<T | null> => {
+    return Promise.race([
+        Promise.resolve(promise),
+        new Promise<null>((resolve) => window.setTimeout(() => resolve(null), timeoutMs)),
+    ]);
+};
+
+const getStoredSession = (): Session | null => {
+    if (typeof window === 'undefined') return null;
+
+    const authKey = Object.keys(window.localStorage).find((key) => key.startsWith('sb-') && key.endsWith('-auth-token'));
+    if (!authKey) return null;
+
+    try {
+        const stored = JSON.parse(window.localStorage.getItem(authKey) || 'null');
+        return stored?.access_token && stored?.user ? stored as Session : null;
+    } catch {
+        return null;
+    }
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [session, setSession] = useState<Session | null>(null);
     const [user, setUser] = useState<User | null>(null);
@@ -74,11 +97,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             const metadataRole = normalizeRole(String(nextUser.user_metadata?.role || '').toLowerCase() as ProfileRole);
             const isEmailAdmin = profileService.isEmailAdmin(nextUser.email || '');
-            const { data: profile } = await supabase
+            const profileResult = await withTimeout(supabase
                 .from('profiles')
                 .select('role, organization_id')
                 .eq('id', nextUser.id)
-                .single();
+                .single());
+            const profile = profileResult?.data;
 
             const profileRole = normalizeRole((profile?.role || 'readonly') as ProfileRole);
             const profileOrganizationId = profile?.organization_id || null;
@@ -94,12 +118,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
 
         // Get initial session
-        supabase.auth.getSession().then(async ({ data: { session } }) => {
-            setSession(session);
-            setUser(session?.user ?? null);
-            await resolveRole(session?.user ?? null);
+        const initializeSession = async () => {
+            const sessionResult = await withTimeout(supabase.auth.getSession());
+            const nextSession = sessionResult?.data.session ?? getStoredSession();
+            setSession(nextSession);
+            setUser(nextSession?.user ?? null);
+            await resolveRole(nextSession?.user ?? null);
             setLoading(false);
-        });
+        };
+
+        initializeSession();
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
