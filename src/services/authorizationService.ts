@@ -4,7 +4,8 @@ export type CanonicalRole =
   | 'safety'
   | 'coaching'
   | 'maintenance'
-  | 'readonly';
+  | 'readonly'
+  | 'driver';
 
 export type LegacyRole = 'admin' | 'manager' | 'viewer';
 export type ProfileRole = CanonicalRole | LegacyRole;
@@ -94,6 +95,18 @@ const ROLE_CAPABILITIES: Record<CanonicalRole, RoleCapabilities> = {
     canManageSafety: false,
     canManageTraining: false,
     canReadOrgData: true
+  },
+  driver: {
+    canAccessPlatformAdmin: false,
+    canCrossOrganization: false,
+    canManageCoaching: false,
+    canManageFleet: false,
+    canManageHypercare: false,
+    canManageOrgSettings: false,
+    canManageReportingPreferences: false,
+    canManageSafety: false,
+    canManageTraining: false,
+    canReadOrgData: false
   }
 };
 
@@ -105,6 +118,7 @@ export const normalizeRole = (role: ProfileRole | null | undefined): CanonicalRo
     case 'coaching':
     case 'maintenance':
     case 'readonly':
+    case 'driver':
       return role;
     case 'admin':
       return 'platform_admin';

@@ -62,6 +62,7 @@ const DEFAULT_ORDER: Record<CanonicalRole, WidgetId[]> = {
   coaching: ['kpis', 'activity', 'trends', 'backlog', 'fleet'],
   maintenance: ['kpis', 'backlog', 'fleet', 'trends', 'activity'],
   readonly: ['kpis', 'activity', 'trends', 'fleet', 'backlog'],
+  driver: ['kpis', 'activity', 'trends', 'fleet', 'backlog'],
 };
 
 const defaultPrefs = (role: CanonicalRole): Prefs => ({ order: DEFAULT_ORDER[role], hidden: [], pinned: ['kpis'] });

@@ -137,6 +137,8 @@ Backlog handling:
 - P2/P3 findings can roll forward only if documented with owner, impact, and acceptance criteria.
 
 ### Sprint 57: Auth, Session, RBAC, and Tenant Isolation Browser QA
+Status: In progress
+
 Goal:
 - Prove users can only access the correct routes, roles, and tenant data through normal browser behavior.
 
@@ -161,6 +163,13 @@ Exit checks:
 - Cross-org URL tampering and payload tampering fail safely.
 - Valid role changes are reflected after refresh/sign-in.
 - No P0/P1 auth, RLS, or tenant-isolation findings remain open.
+
+Progress notes:
+- Browser automation through the in-app browser and Chrome extension was unavailable during the first execution attempt; a local Chrome fallback also exited in the container X11 environment before repeatable route evidence could be captured.
+- Static RLS review found a P0 profile self-management policy issue and a related app-side driver-role trust issue.
+- Repo fix prepared: `20260628002000_harden_profile_self_management.sql` locks self-profile inserts/updates and adds a trigger blocking self-service changes to `role`, `organization_id`, and `status`.
+- Repo fix prepared: authenticated route logic now uses profile role `driver`, not user-editable `user_metadata.role`.
+- Production migration application is currently blocked because available Supabase connector access does not permit SQL/migration execution for project `mnxcorsldepaigilbkju`.
 
 ### Sprint 58: Public Landing, Login UX, Navigation, Layout, and Accessibility Browser QA
 Goal:
@@ -368,7 +377,8 @@ Use this table once browser QA begins.
 
 | ID | Sprint Found | Severity | Route/Area | Role | Edge Case | Actual Result | Expected Result | Fix Sprint | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Not started |
+| S57-001 | 57 | P0 | Supabase `profiles` RLS / AuthZ | Authenticated user | User attempts a direct Supabase write not allowed by UI; user tampers with request payload `organization_id` or `role` | Existing policy `Users can manage own profile` authorizes all self profile mutations with only `id = auth.uid()`, allowing self-service role/org/status writes by policy shape | Users may edit safe profile fields only; only authorized admin workflows can change role, org, or status | 57 | Fix prepared in repo; production migration blocked by missing Supabase SQL permission |
+| S57-002 | 57 | P1 | Protected route driver role check | Authenticated user | User metadata role conflicts with profile role; driver-role user attempts to access full dashboard | Route guard trusted `user.user_metadata.role === 'driver'`, which is user-editable metadata and unsafe for authorization | Route guard must use canonical profile role from `profiles.role` | 57 | Fix prepared in repo |
 
 ## Edge Case Inventory
 Use this section as the source pool for later QA scenarios. Each item should eventually become one or more test cases with role, setup data, action, expected result, and severity.
