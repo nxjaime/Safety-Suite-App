@@ -137,7 +137,7 @@ Backlog handling:
 - P2/P3 findings can roll forward only if documented with owner, impact, and acceptance criteria.
 
 ### Sprint 57: Auth, Session, RBAC, and Tenant Isolation Browser QA
-Status: In progress
+Status: Blocked on production Supabase migration and browser access
 
 Goal:
 - Prove users can only access the correct routes, roles, and tenant data through normal browser behavior.
@@ -170,8 +170,11 @@ Progress notes:
 - Repo fix prepared: `20260628002000_harden_profile_self_management.sql` locks self-profile inserts/updates and adds a trigger blocking self-service changes to `role`, `organization_id`, and `status`.
 - Repo fix prepared: authenticated route logic now uses profile role `driver`, not user-editable `user_metadata.role`.
 - Production migration application is currently blocked because available Supabase connector access does not permit SQL/migration execution for project `mnxcorsldepaigilbkju`.
+- Do not mark role, tenant-isolation, or data-integrity browser QA complete until the production migration has been applied and verified.
 
 ### Sprint 58: Public Landing, Login UX, Navigation, Layout, and Accessibility Browser QA
+Status: Ready for public/login/shell QA; authenticated route assertions gated by Sprint 57 backend unblocker
+
 Goal:
 - Prove the unauthenticated and shell experience is usable across realistic devices and assistive workflows.
 
@@ -192,6 +195,7 @@ Exit checks:
 - Mobile navigation reaches all primary app areas.
 - Header, sidebar, modals, and toasts do not block or overlap core workflows.
 - Keyboard and screen-reader-facing labels are sufficient for primary forms/actions.
+- Any authenticated navigation checks are informational only until Sprint 57's production Supabase migration is applied.
 - No P0/P1 layout or access findings remain open.
 
 ### Sprint 59: Dashboard, Reporting, Search, Notifications, and Preferences Browser QA
@@ -377,8 +381,8 @@ Use this table once browser QA begins.
 
 | ID | Sprint Found | Severity | Route/Area | Role | Edge Case | Actual Result | Expected Result | Fix Sprint | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| S57-001 | 57 | P0 | Supabase `profiles` RLS / AuthZ | Authenticated user | User attempts a direct Supabase write not allowed by UI; user tampers with request payload `organization_id` or `role` | Existing policy `Users can manage own profile` authorizes all self profile mutations with only `id = auth.uid()`, allowing self-service role/org/status writes by policy shape | Users may edit safe profile fields only; only authorized admin workflows can change role, org, or status | 57 | Fix prepared in repo; production migration blocked by missing Supabase SQL permission |
-| S57-002 | 57 | P1 | Protected route driver role check | Authenticated user | User metadata role conflicts with profile role; driver-role user attempts to access full dashboard | Route guard trusted `user.user_metadata.role === 'driver'`, which is user-editable metadata and unsafe for authorization | Route guard must use canonical profile role from `profiles.role` | 57 | Fix prepared in repo |
+| S57-001 | 57 | P0 | Supabase `profiles` RLS / AuthZ | Authenticated user | User attempts a direct Supabase write not allowed by UI; user tampers with request payload `organization_id` or `role` | Existing policy `Users can manage own profile` authorizes all self profile mutations with only `id = auth.uid()`, allowing self-service role/org/status writes by policy shape | Users may edit safe profile fields only; only authorized admin workflows can change role, org, or status | 57 | Repo fix pushed; production migration blocked by missing Supabase SQL permission |
+| S57-002 | 57 | P1 | Protected route driver role check | Authenticated user | User metadata role conflicts with profile role; driver-role user attempts to access full dashboard | Route guard trusted `user.user_metadata.role === 'driver'`, which is user-editable metadata and unsafe for authorization | Route guard must use canonical profile role from `profiles.role` | 57 | Fixed in repo and pushed to `main` |
 
 ## Edge Case Inventory
 Use this section as the source pool for later QA scenarios. Each item should eventually become one or more test cases with role, setup data, action, expected result, and severity.
