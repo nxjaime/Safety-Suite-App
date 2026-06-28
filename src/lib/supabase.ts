@@ -24,8 +24,18 @@ if (!isSupabaseConfigured) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export const getCurrentOrganization = async (): Promise<string | null> => {
+export const getSessionUser = async () => {
+    if (typeof supabase.auth.getSession === 'function') {
+        const { data: { session } } = await supabase.auth.getSession();
+        return session?.user ?? null;
+    }
+
     const { data: { user } } = await supabase.auth.getUser();
+    return user ?? null;
+};
+
+export const getCurrentOrganization = async (): Promise<string | null> => {
+    const user = await getSessionUser();
     if (!user) return null;
 
     const { data: profile } = await supabase
@@ -38,7 +48,7 @@ export const getCurrentOrganization = async (): Promise<string | null> => {
 };
 
 export const getCurrentProfile = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getSessionUser();
     if (!user) return null;
 
     const { data: profile } = await supabase

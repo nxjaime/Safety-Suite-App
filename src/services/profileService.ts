@@ -28,6 +28,16 @@ export interface ProfileUpdates {
 
 const OWNER_ADMIN_EMAILS = ['nxjaime@gmail.com'];
 
+const getProfileUser = async () => {
+  if (typeof supabase.auth.getSession === 'function') {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.user ?? null;
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  return user ?? null;
+};
+
 const parseAdminEmails = (): string[] => {
   const raw = import.meta.env.VITE_ADMIN_EMAILS;
   const configured = raw
@@ -42,8 +52,7 @@ const parseAdminEmails = (): string[] => {
 
 export const profileService = {
   async getExtendedProfile(): Promise<ExtendedProfile | null> {
-    const { data: userData } = await supabase.auth.getUser();
-    const user = userData.user;
+    const user = await getProfileUser();
     if (!user) return null;
 
     const { data, error } = await supabase
@@ -78,8 +87,7 @@ export const profileService = {
   },
 
   async updateProfile(updates: ProfileUpdates): Promise<void> {
-    const { data: userData } = await supabase.auth.getUser();
-    const user = userData.user;
+    const user = await getProfileUser();
     if (!user) throw new Error('Not authenticated');
 
     const { error } = await supabase
@@ -98,8 +106,7 @@ export const profileService = {
   },
 
   async getCurrentProfileSummary(): Promise<ProfileSummary | null> {
-    const { data: userData } = await supabase.auth.getUser();
-    const user = userData.user;
+    const user = await getProfileUser();
     if (!user) return null;
 
     const { data, error } = await supabase
