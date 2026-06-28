@@ -554,8 +554,9 @@ const Settings: React.FC = () => {
                         <form onSubmit={handleSaveCarrierSettings} className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Company Name</label>
+                                    <label htmlFor="carrier-company-name" className="block text-sm font-medium text-slate-700 mb-2">Company Name</label>
                                     <input
+                                        id="carrier-company-name"
                                         type="text"
                                         className="w-full border border-slate-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                         placeholder="Enter company name"
@@ -564,8 +565,9 @@ const Settings: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">USDOT Number</label>
+                                    <label htmlFor="carrier-dot-number" className="block text-sm font-medium text-slate-700 mb-2">USDOT Number</label>
                                     <input
+                                        id="carrier-dot-number"
                                         type="text"
                                         className="w-full border border-slate-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                         placeholder="e.g. 1234567"
@@ -575,8 +577,9 @@ const Settings: React.FC = () => {
                                     <p className="mt-1 text-xs text-slate-500">Your 7-digit FMCSA USDOT number</p>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">MC Number (Optional)</label>
+                                    <label htmlFor="carrier-mc-number" className="block text-sm font-medium text-slate-700 mb-2">MC Number (Optional)</label>
                                     <input
+                                        id="carrier-mc-number"
                                         type="text"
                                         className="w-full border border-slate-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                         placeholder="e.g. MC-123456"
