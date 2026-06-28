@@ -743,7 +743,7 @@ Verification (2026-06-27):
 - Passed: latest Vercel production deployment from GitHub `main` reached Ready.
 
 ### Sprint 53: Critical Workflow Hosted QA
-Status: In progress
+Status: Complete
 
 User stories:
 - As a fleet manager, I can complete the equipment, maintenance, and work-order workflows in the hosted app.
@@ -765,7 +765,7 @@ Exit criteria:
 - Critical fleet and safety workflows persist correctly in Supabase.
 - Motive placeholder is visible where relevant and no Motive network calls occur.
 
-Progress note (2026-06-27):
+Completion note (2026-06-28):
 - Hosted smoke QA now confirms login, dashboard, admin, drivers, hypercare, and driver portal render on the production domain with no console errors on the representative final check.
 - The first production browser pass exposed a stale lazy-chunk failure after deployment; the app now refreshes once on dynamic import chunk failures so users recover to the current build.
 - Broad section-level route coverage has rendered successfully for Dashboard, Drivers, Tasks, Safety, Watchlist, Equipment, Maintenance, Work Orders, Training, Compliance, Documents, FMCSA, Reporting, Hypercare, CSA Predictor, Settings, Help, Driver Portal, and Admin.
@@ -774,10 +774,13 @@ Progress note (2026-06-27):
 - Verified the hosted Tasks workflow on production: created a task, started it, reloaded the page, searched by title, and confirmed the In Progress task remained visible in the default Active list.
 - Fixed Work Orders hosted workflow access by adding org-scoped RLS policies for `work_orders` and `work_order_line_items`, and by passing the authenticated role into the Work Orders status-transition guard.
 - Verified the hosted Work Orders fleet workflow on production: created a work order, approved it, started it, completed it, closed it with closeout notes, reloaded the page, and confirmed the Closed state persisted.
+- Fixed long modal usability so large forms such as Add Driver remain reachable inside the viewport.
+- Deployed the Supabase `encrypt-pii` Edge Function, configured `PII_ENCRYPTION_SECRET`, and made production PII handling default to server-side Edge crypto.
+- Fixed Vercel Function TypeScript build issues for integration health, email, and carrier health API routes.
+- Verified the hosted Training safety workflow on production: created a driver through Edge crypto, created a training template, assigned it, marked it complete, reloaded Training, and confirmed the Completed state persisted.
 
-Remaining Sprint 53 work:
-- Exercise safety workflow persistence beyond Tasks.
-- Add hosted smoke coverage for at least one safety workflow.
+Accepted residual observation:
+- A non-blocking `carrier settings` fetch error can appear during hosted browser navigation. It did not block login, Tasks, Work Orders, Driver creation, or Training completion. Treat as Sprint 54 monitoring/backlog unless it becomes user-visible or repeatable on a single route.
 
 ### Sprint 54: Wave 1 Launch Operations and Support Handoff
 Status: Planned
