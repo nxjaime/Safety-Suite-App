@@ -6,6 +6,7 @@ import { equipmentService } from '../services/equipmentService';
 import type { WorkOrder, Equipment } from '../types';
 import toast from 'react-hot-toast';
 import { useOfflineSync } from '../contexts/OfflineSyncContext';
+import { useAuth } from '../contexts/AuthContext';
 import { getLoadErrorMessage } from '../utils/loadErrorMessage';
 
 export const workOrderStatusPipeline = ['Draft', 'Approved', 'In Progress', 'Completed', 'Closed', 'Cancelled'] as const;
@@ -20,6 +21,7 @@ const statusTransitionLabel: Record<string, string> = {
 
 const WorkOrders: React.FC = () => {
   const { transitionWorkOrderStatus, closeWorkOrder } = useOfflineSync();
+  const { role } = useAuth();
   const [workOrders, setWorkOrders] = React.useState<WorkOrder[]>([]);
   const [equipment, setEquipment] = React.useState<Equipment[]>([]);
   const [workOrderPage, setWorkOrderPage] = React.useState(1);
@@ -70,7 +72,7 @@ const WorkOrders: React.FC = () => {
   const repeatCount = workOrderService.getRepeatServiceCount(workOrders);
 
   const handleStatusTransition = async (order: WorkOrder, nextStatus: WorkOrderStatus) => {
-    if (!canTransitionStatus(order.status, nextStatus)) return;
+    if (!canTransitionStatus(order.status, nextStatus, role)) return;
 
     // For Closed transition, open the closeout modal instead of transitioning immediately
     if (nextStatus === 'Closed') {
@@ -196,7 +198,7 @@ const WorkOrders: React.FC = () => {
                 <td colSpan={6} className="px-6 py-8 text-sm text-slate-500 text-center">No work orders yet.</td>
               </tr>
             ) : workOrders.map((order) => {
-              const allowedNext = getNextStatuses(order.status);
+              const allowedNext = getNextStatuses(order.status).filter((next) => canTransitionStatus(order.status, next, role));
               const linkedAsset = equipment.find(e => e.id === order.equipmentId);
               return (
                 <tr key={order.id} className="hover:bg-slate-50">
