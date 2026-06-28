@@ -198,7 +198,7 @@ const Landing: React.FC = () => {
                     </div>
                   </dt>
                   <dd className="mt-2 pr-12">
-                    <p className="text-base leading-7 text-slate-400">We support integrations with major ELD providers including Motive, Samsara, and Geotab.</p>
+                    <p className="text-base leading-7 text-slate-400">ELD integrations are planned for controlled rollout. Current production workflows use in-app records, FMCSA data, documents, inspections, training, and coaching history.</p>
                   </dd>
                 </div>
               </dl>

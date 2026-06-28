@@ -769,10 +769,10 @@ Progress note (2026-06-27):
 - Hosted smoke QA now confirms login, dashboard, admin, drivers, hypercare, and driver portal render on the production domain with no console errors on the representative final check.
 - The first production browser pass exposed a stale lazy-chunk failure after deployment; the app now refreshes once on dynamic import chunk failures so users recover to the current build.
 - Broad section-level route coverage has rendered successfully for Dashboard, Drivers, Tasks, Safety, Watchlist, Equipment, Maintenance, Work Orders, Training, Compliance, Documents, FMCSA, Reporting, Hypercare, CSA Predictor, Settings, Help, Driver Portal, and Admin.
+- Consolidated Motive API routes onto one disabled placeholder response and removed the public landing-page claim that Motive is supported.
 
 Remaining Sprint 53 work:
 - Exercise create/edit/archive/closeout persistence for highest-risk hosted workflows, not just route rendering.
-- Confirm Motive placeholders with network capture in the hosted app.
 - Add hosted smoke coverage for at least one fleet workflow and one safety workflow.
 
 ### Sprint 54: Wave 1 Launch Operations and Support Handoff

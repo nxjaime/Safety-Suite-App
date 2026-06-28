@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { querySchema as carrierSchema } from '../../api/carrier-health';
-import { MOTIVE_UNSUPPORTED_RESPONSE } from '../../api/motive/drivers';
+import { MOTIVE_UNSUPPORTED_RESPONSE } from '../../api/motive/placeholder';
 import { bodySchema as emailSchema } from '../../api/send-email';
 
 describe('API Schema Validation', () => {
