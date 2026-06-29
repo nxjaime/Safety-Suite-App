@@ -78,7 +78,15 @@ const ListWorkflowControls: React.FC<Props> = ({ target, filters, headers, rows,
             {savedViews.length === 0 ? <div className="p-2 text-sm text-slate-500">No saved views</div> : savedViews.map((view) => (
               <div key={view.id} className="flex items-center justify-between gap-2 rounded-md px-2 py-2 hover:bg-slate-50">
                 <button className="text-left text-sm text-slate-700" onClick={() => onApply?.(view.filters)}>{view.name}</button>
-                <button onClick={() => handleDelete(view.id)} className="text-slate-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(view.id)}
+                  className="text-slate-400 hover:text-red-600"
+                  aria-label={`Delete saved view ${view.name}`}
+                  title={`Delete saved view ${view.name}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
             ))}
           </div>

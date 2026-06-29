@@ -241,7 +241,14 @@ Progress notes:
 - Production Browser QA verified notification panel opens, exposes actionable notification links, and the overdue-task notification routes to `/tasks` without fresh console errors.
 - Live export-download observation was interrupted by the in-app Browser transport; code review found CSV formula-injection risk in user-facing exports and the shared export utility now neutralizes formula-prefixed cells.
 - Code review found notification mark-all-read was session-only and would be undone by the next polling refresh; read notification IDs now persist locally by user until new notification IDs appear.
-- Continue Sprint 59 with saved views, reporting export recheck after production deploy, and settings preference changes once Browser control is available again.
+- 2026-06-28 resume attempt: in-app Browser runtime connected, but production QA could not continue because `@browser` had no active tabs and every clean `browser.tabs.new()` attempt timed out while waiting for the Browser webview to attach. No new live production checks were claimed from this attempt.
+- Later 2026-06-28 Browser recovery: `@browser` tab creation recovered and production QA resumed against the hosted app.
+- Production Browser QA verified `/reporting` export button exists, can be clicked without `waitForEvent('download')`, leaves the reporting page stable, and emits no fresh app-level console errors. No new CSV artifact appeared in `~/Downloads`, so file-level download/content verification remains unclaimed for the in-app Browser.
+- Production Browser QA verified `/tasks` saved views: a search-filtered view could be saved, appeared in the Views menu, reapplied the saved search filter, persisted after page reload, and was deleted after the test. No fresh app-level console errors.
+- Production Browser QA found P3 accessibility issue on `/tasks`: the saved-view delete icon button had no accessible name. Fix prepared in `ListWorkflowControls` with focused component coverage.
+- Production Browser QA verified notification Mark all read on `/tasks`: unread badge and Mark all read action disappeared after marking read, and stayed gone after reload while read notifications remained accessible. No fresh app-level console errors.
+- Production Browser QA verified `/settings` notification delivery preferences: risk score delivery changed from In-app only to Both, persisted after reload, was restored to In-app only, and the restored value persisted after a second reload. No fresh app-level console errors.
+- Continue Sprint 59 with hosted verification of the saved-view delete accessible-name fix after deployment, plus any deeper file-level export-download verification if a Browser-compatible download artifact path becomes available.
 
 ### Sprint 60: Driver, Driver Portal, Safety, Watchlist, and Coaching Browser QA
 Goal:
