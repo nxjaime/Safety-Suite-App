@@ -248,7 +248,9 @@ Progress notes:
 - Production Browser QA found P3 accessibility issue on `/tasks`: the saved-view delete icon button had no accessible name. Fix prepared in `ListWorkflowControls` with focused component coverage.
 - Production Browser QA verified notification Mark all read on `/tasks`: unread badge and Mark all read action disappeared after marking read, and stayed gone after reload while read notifications remained accessible. No fresh app-level console errors.
 - Production Browser QA verified `/settings` notification delivery preferences: risk score delivery changed from In-app only to Both, persisted after reload, was restored to In-app only, and the restored value persisted after a second reload. No fresh app-level console errors.
-- Continue Sprint 59 with hosted verification of the saved-view delete accessible-name fix after deployment, plus any deeper file-level export-download verification if a Browser-compatible download artifact path becomes available.
+- Commit `79561a1` (`fix: label saved view delete action`) was pushed to `main`; Vercel production deployment `dpl_8H1Bzw9jG4pn62CxiTXubWXjD3GC` reached READY and the production Tasks chunk contains the new `Delete saved view` label string. Final live @browser verification of the deployed label is still pending because the active Browser tab initially served the previous service-worker-cached Tasks bundle and then @browser became unavailable with no browser instances listed.
+- A temporary verification saved view named `Sprint59 Label Verify 1782705030150` may remain from the blocked post-deploy check; remove it from `/tasks` Views when @browser is available again if it appears.
+- Continue Sprint 59 with hosted @browser verification of the saved-view delete accessible-name fix, plus any deeper file-level export-download verification if a Browser-compatible download artifact path becomes available.
 
 ### Sprint 60: Driver, Driver Portal, Safety, Watchlist, and Coaching Browser QA
 Goal:
