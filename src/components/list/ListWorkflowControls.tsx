@@ -54,7 +54,9 @@ const ListWorkflowControls: React.FC<Props> = ({ target, filters, headers, rows,
     const a = document.createElement('a');
     a.href = url;
     a.download = `${target}-export.csv`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast.success('CSV exported');
   };

@@ -47,7 +47,10 @@ function renderWithProvider() {
 }
 
 describe('NotificationContext', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    window.localStorage.clear();
+  });
 
   it('fetches notifications on mount and exposes them', async () => {
     mockGetNotifications.mockResolvedValue(mockNotifications);
@@ -64,6 +67,29 @@ describe('NotificationContext', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /mark read/i }));
     expect(screen.getByTestId('count').textContent).toBe('0');
+  });
+
+  it('markAllRead keeps known notifications read after refresh', async () => {
+    const RefreshConsumer: React.FC = () => {
+      const { unreadCount, markAllRead, refresh } = useNotifications();
+      return (
+        <div>
+          <span data-testid="count">{unreadCount}</span>
+          <button onClick={markAllRead}>mark read</button>
+          <button onClick={() => refresh()}>refresh</button>
+        </div>
+      );
+    };
+
+    mockGetNotifications.mockResolvedValue(mockNotifications);
+    render(<NotificationProvider><RefreshConsumer /></NotificationProvider>);
+    await waitFor(() => expect(screen.getByTestId('count').textContent).toBe('5'));
+
+    fireEvent.click(screen.getByRole('button', { name: /mark read/i }));
+    expect(screen.getByTestId('count').textContent).toBe('0');
+
+    fireEvent.click(screen.getByRole('button', { name: /refresh/i }));
+    await waitFor(() => expect(screen.getByTestId('count').textContent).toBe('0'));
   });
 
   it('refresh() re-fetches and updates notification count', async () => {

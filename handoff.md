@@ -240,7 +240,8 @@ Progress notes:
 - Production Browser QA verified global search opens from the dashboard header, accepts keyboard input for `driver`, shows a clear no-results state, and emits no fresh console errors.
 - Production Browser QA verified notification panel opens, exposes actionable notification links, and the overdue-task notification routes to `/tasks` without fresh console errors.
 - Live export-download observation was interrupted by the in-app Browser transport; code review found CSV formula-injection risk in user-facing exports and the shared export utility now neutralizes formula-prefixed cells.
-- Continue Sprint 59 with saved views, reporting export recheck after production deploy, mark-all-read notification behavior, and settings preference changes.
+- Code review found notification mark-all-read was session-only and would be undone by the next polling refresh; read notification IDs now persist locally by user until new notification IDs appear.
+- Continue Sprint 59 with saved views, reporting export recheck after production deploy, and settings preference changes once Browser control is available again.
 
 ### Sprint 60: Driver, Driver Portal, Safety, Watchlist, and Coaching Browser QA
 Goal:
@@ -406,6 +407,7 @@ Use this table once browser QA begins.
 | S58-003 | 58 | P2 | Login keyboard navigation | Signed-out visitor | User navigates the login form by keyboard only | Browser automation could focus the controls individually, but Tab traversal stayed on the email field in the in-app Browser; code review found no login focus trap | Human keyboard-only pass should confirm focus order reaches back link, email, password, remember me, forgot password, sign in, and signup toggle | 59 | Scheduled follow-up; no P0/P1 blocker |
 | S59-001 | 59 | P2 | Settings layout | Platform admin | User opens Settings at a narrow desktop/mobile width | User management table and tab bar forced page-level horizontal overflow | Settings should keep the page viewport stable and use local horizontal scrolling only where wide tabular data requires it | 59 | Fixed, pushed to `main`, Vercel production READY, browser-verified on production at 390px |
 | S59-002 | 59 | P1 | CSV exports | Platform admin / manager | User exports rows containing values that start with spreadsheet formula prefixes such as `=`, `+`, `-`, `@`, tab, or carriage return | CSV exporters quoted values but did not neutralize spreadsheet formula execution on open | All CSV exports should escape quotes and neutralize formula-prefixed cells before download | 59 | Fixed, pushed to `main`, focused CSV tests and build passed, Vercel production READY; live Browser export recheck pending because Browser transport closed during download observation |
+| S59-003 | 59 | P2 | Notifications | Platform admin / manager | User clicks Mark all read and stays in the app past the next notification poll | Read state was only an in-memory unread count reset; the next poll would restore the same notifications as unread | Mark all read should persist known notification IDs as read and only show new notification IDs as unread | 59 | Fixed in repo; focused notification tests and build passed; production deploy verification pending |
 
 ## Edge Case Inventory
 Use this section as the source pool for later QA scenarios. Each item should eventually become one or more test cases with role, setup data, action, expected result, and severity.

@@ -3,6 +3,7 @@ import { notificationService, type Notification } from '../services/notification
 import { useAuth } from './AuthContext';
 
 const POLL_INTERVAL_MS = 60_000;
+const READ_NOTIFICATIONS_PREFIX = 'safety-suite.read-notifications:';
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -15,23 +16,39 @@ interface NotificationContextType {
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { session } = useAuth();
+  const { session, user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const storageKey = `${READ_NOTIFICATIONS_PREFIX}${user?.id ?? 'anonymous'}`;
+
+  const readNotificationIds = useCallback(() => {
+    if (typeof window === 'undefined') return new Set<string>();
+    try {
+      return new Set<string>(JSON.parse(window.localStorage.getItem(storageKey) || '[]'));
+    } catch {
+      return new Set<string>();
+    }
+  }, [storageKey]);
+
+  const writeNotificationIds = useCallback((ids: Set<string>) => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(storageKey, JSON.stringify([...ids].slice(-500)));
+  }, [storageKey]);
 
   const refresh = useCallback(async () => {
     if (!session) return;
     try {
       const result = await notificationService.getNotifications();
+      const readIds = readNotificationIds();
       setNotifications(result);
-      setUnreadCount(result.length);
+      setUnreadCount(result.filter((notification) => !readIds.has(notification.id)).length);
       setLastRefreshed(new Date());
     } catch {
       // silently degrade — stale count is better than an error toast
     }
-  }, [session]);
+  }, [readNotificationIds, session]);
 
   // Initial fetch + polling
   useEffect(() => {
@@ -45,7 +62,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
   }, [session, refresh]);
 
-  const markAllRead = useCallback(() => setUnreadCount(0), []);
+  const markAllRead = useCallback(() => {
+    const readIds = readNotificationIds();
+    notifications.forEach((notification) => readIds.add(notification.id));
+    writeNotificationIds(readIds);
+    setUnreadCount(0);
+  }, [notifications, readNotificationIds, writeNotificationIds]);
 
   return (
     <NotificationContext.Provider value={{ notifications, unreadCount, lastRefreshed, markAllRead, refresh }}>
