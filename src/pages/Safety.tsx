@@ -13,6 +13,7 @@ import {
 } from '../services/interventionQueueService';
 import { useAuth } from '../contexts/AuthContext';
 import { canManageSafety } from '../services/authorizationService';
+import { buildCsv } from '../utils/csv';
 
 const Safety: React.FC = () => {
     const { role, capabilities } = useAuth();
@@ -191,10 +192,7 @@ const Safety: React.FC = () => {
             (d.coachingPlans?.filter((p: any) => p.status === 'Active').length || 0).toString()
         ]);
 
-        const csvContent = [
-            headers.join(','),
-            ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-        ].join('\n');
+        const csvContent = buildCsv([headers, ...rows]);
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');

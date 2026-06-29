@@ -1,4 +1,5 @@
 import { supabase, getCurrentOrganization } from '../lib/supabase';
+import { buildCsv } from '../utils/csv';
 
 export interface FeedbackEntry {
   id: string;
@@ -81,18 +82,18 @@ export const feedbackService = {
   },
 
   toCsv(rows: FeedbackEntry[]): string {
-    const escape = (value: string) => `"${String(value || '').replace(/"/g, '""')}"`;
     const header = ['id', 'category', 'priority', 'status', 'message', 'submitter_email', 'created_at'];
-    const lines = rows.map((entry) => [
-      escape(entry.id),
-      escape(entry.category),
-      escape(entry.priority),
-      escape(entry.status),
-      escape(entry.message),
-      escape(entry.submitterEmail || ''),
-      escape(entry.createdAt)
-    ].join(','));
-
-    return [header.join(','), ...lines].join('\n');
+    return buildCsv([
+      header,
+      ...rows.map((entry) => [
+        entry.id,
+        entry.category,
+        entry.priority,
+        entry.status,
+        entry.message,
+        entry.submitterEmail || '',
+        entry.createdAt
+      ])
+    ]);
   }
 };

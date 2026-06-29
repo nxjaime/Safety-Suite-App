@@ -11,6 +11,7 @@ import {
   type ReportingPreferenceAuditEntry,
   type ReportingSavedView
 } from '../services/reportingPreferencesService';
+import { buildCsv } from '../utils/csv';
 
 const windowOptions: Array<{ value: ReportingWindow; label: string }> = [
   { value: '30d', label: 'Last 30 Days' },
@@ -95,7 +96,7 @@ const Reporting: React.FC = () => {
       ['Training Completion', 'Completion Rate %', String(snapshot.trainingCompletion.completionRate)]
     ];
 
-    const csv = rows.map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(',')).join('\n');
+    const csv = buildCsv(rows);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');

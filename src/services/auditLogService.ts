@@ -1,4 +1,5 @@
 import { supabase, getCurrentOrganization } from '../lib/supabase';
+import { buildCsv } from '../utils/csv';
 
 export type AuditAction =
   | 'user.role_changed'
@@ -66,8 +67,6 @@ const mapRow = (row: any): AuditLogEntry => ({
   organizationId: row.organization_id || null,
   createdAt: row.created_at,
 });
-
-const csvEscape = (value: unknown): string => `"${String(value ?? '').replace(/"/g, '""')}"`;
 
 export const auditLogService = {
   async recordMutation(input: {
@@ -186,7 +185,7 @@ export const auditLogService = {
         JSON.stringify((log.details as any)?.after ?? {}),
       ]),
     ];
-    return rows.map((row) => row.map(csvEscape).join(',')).join('\n');
+    return buildCsv(rows);
   },
 
   severityForAction(action: AuditAction): AuditSeverity {

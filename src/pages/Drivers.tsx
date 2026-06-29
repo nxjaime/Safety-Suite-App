@@ -9,6 +9,7 @@ import type { Driver } from '../types';
 import { DriverImportModal } from '../components/drivers/DriverImportModal';
 import { MOTIVE_UNSUPPORTED_MESSAGE } from '../services/motiveService';
 import { getLoadErrorMessage } from '../utils/loadErrorMessage';
+import { buildCsv } from '../utils/csv';
 
 const Drivers: React.FC = () => {
     const navigate = useNavigate();
@@ -252,10 +253,7 @@ const Drivers: React.FC = () => {
                 d.email
             ]);
 
-            const csvContent = [
-                headers.join(','),
-                ...rows.map(row => row.map(cell => `"${cell || ''}"`).join(','))
-            ].join('\n');
+            const csvContent = buildCsv([headers, ...rows]);
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');

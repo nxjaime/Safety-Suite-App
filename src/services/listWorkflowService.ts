@@ -1,4 +1,5 @@
 import { supabase, getCurrentOrganization } from '../lib/supabase';
+import { buildCsv } from '../utils/csv';
 
 export type SavedViewTarget = 'tasks' | 'equipment' | 'drivers' | 'work_orders';
 export type ViewFilters = Record<string, string | number | boolean | null | undefined>;
@@ -92,7 +93,6 @@ export const listWorkflowService = {
     }
   },
   async exportCsv(headers: string[], rows: Array<Array<string | number | boolean | null | undefined>>): Promise<string> {
-    const escape = (value: string | number | boolean | null | undefined) => `"${String(value ?? '').replace(/"/g, '""')}"`;
-    return [headers.map(escape).join(','), ...rows.map((row) => row.map(escape).join(','))].join('\n');
+    return buildCsv([headers, ...rows]);
   }
 };
