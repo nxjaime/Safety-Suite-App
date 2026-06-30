@@ -254,6 +254,8 @@ Progress notes:
 - Continue Sprint 59 with any deeper file-level export-download verification if a Browser-compatible download artifact path becomes available.
 
 ### Sprint 60: Driver, Driver Portal, Safety, Watchlist, and Coaching Browser QA
+Status: In progress
+
 Goal:
 - Prove driver safety lifecycle workflows work from manager and driver perspectives.
 
@@ -278,6 +280,17 @@ Exit checks:
 - Watchlist and coaching actions are role-correct.
 - Risk/coaching state changes survive refresh.
 - No P0/P1 driver or safety findings remain open.
+
+Progress notes:
+- Production Browser QA verified `/drivers` renders Driver Operations with the active test driver, the Import Drivers modal opens with CSV upload and disabled zero-row import state, and the Add Driver modal opens with expected driver fields. No fresh app-level console errors.
+- Production Browser QA verified an existing driver profile renders summary risk score, tabs, coaching notes, risk trend, and the Safety & Compliance, Documents, Training, and Timeline tab content/empty states without fresh app-level console errors.
+- Production Browser QA verified the driver profile Log Risk Event modal and Coaching Plan modal both open and expose their expected fields without fresh app-level console errors.
+- Production Browser QA verified `/safety` renders Safety Intelligence Center empty states and the Safety Log Event modal, and `/watchlist` renders the Intervention Watchlist empty queue and counts without fresh app-level console errors.
+- Production Browser QA found `/driver-portal` under the current platform-admin/unmatched session displayed `QA Defensive Driving 891595`, exposing assignment data when no matching driver record existed for the current user.
+- Commit `9142ef4` (`fix: scope driver portal assignments`) now filters Driver Portal assignments to the linked driver or current user only; if no driver record is linked, only direct user assignments are shown. Focused `src/test/driverPortal.test.tsx` coverage passed, `npm run build` passed, and Vercel deployment `dpl_Degqur9qkpWXSfdRSTNcisVZU7j5` reached READY for `safetyhubconnect.vercel.app`.
+- Post-deploy production verification for the Driver Portal fix is still unclaimed: the in-app Browser automation currently reports no registered browser instances (`agent.browsers.list()` returns `[]`, and `iab` is unavailable), so `/driver-portal` has not yet been rechecked live after `9142ef4`.
+- Remaining P3 accessibility follow-ups observed during Sprint 60 QA: driver row action icon button has no accessible name, Driver Import close icon has no accessible name, shared modal close icon has no accessible name, and Add Driver visible labels are not programmatically associated with their inputs.
+- Driver-role-specific portal verification remains incomplete without driver-role credentials; the unmatched-user assignment leak has a regression test and deployed fix, but the driver-owned-data happy path still needs a live driver session.
 
 ### Sprint 61: Training, Compliance, Inspections, and Corrective Action Browser QA
 Goal:
