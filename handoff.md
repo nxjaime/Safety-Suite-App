@@ -295,6 +295,8 @@ Progress notes:
 - Driver-role-specific portal verification remains incomplete without driver-role credentials; the non-driver portal leak is fixed and verified in production for the current platform-admin session, but the driver-owned-data happy path still needs a live driver session.
 
 ### Sprint 61: Training, Compliance, Inspections, and Corrective Action Browser QA
+Status: In progress
+
 Goal:
 - Prove training and compliance workflows close the loop from assignment or inspection through remediation.
 
@@ -317,6 +319,18 @@ Exit checks:
 - Offline inspection behavior queues and syncs where supported.
 - Compliance exports and filters are tenant-scoped.
 - No P0/P1 training/compliance findings remain open.
+
+Progress notes:
+- Production Browser QA verified `/training` renders Training & Development metrics, the completed `QA Defensive Driving 891595` assignment row, Pending Manager Review, and corrective-training shortcut with no fresh app-level console errors.
+- Production Browser QA verified the Assign Training modal opens with Template, Assignee, and Due Date controls; no assignment was created.
+- Production Browser QA verified Assignment Details opens from `View assignment details` and exposes module, assignee, due date, status, progress, coach talking points, driver required actions, completion timestamp, attestation notes, and `Mark reviewed`; the review action was not submitted.
+- Production Browser QA verified the Pending Manager Review `Review` action opens the same assignment review surface without fresh app-level console errors.
+- Production Browser QA verified the corrective-training shortcut for `QA Training 891595` opens a scoped `Assign Corrective Training` modal with module, due date, trigger type, Cancel, and Assign controls; no corrective assignment was created.
+- Production Browser QA verified `/compliance` renders Compliance Management metrics, Upcoming Expirations empty state, and Add DQ File modal with no fresh app-level console errors. Add DQ File has native required guards on Driver Name and Expiration Date, but Document Type is not marked required.
+- Production Browser QA verified the DOT Inspections internal compliance view opens from the metric card, shows the inspections table empty state, and opens the New Driver Vehicle Examination Report modal.
+- Production Browser QA verified the DVER modal Administrative, Carrier & Driver, Vehicle, and Violations steps render expected fields, including required Date and Report #, driver selector, vehicle fields, out-of-service checkbox, violation code/description/type/OOS controls, and Save Report. No inspection was submitted.
+- Remaining Sprint 61 P3 accessibility follow-ups: Training/Compliance modal close icon buttons are unnamed; several Training corrective-assignment and Compliance/DVER form controls are not programmatically associated with visible labels; the DVER add-violation icon button has no accessible name.
+- Sprint 61 still needs mutation-path QA for creating inspections with and without violations, remediation task/work-order creation, offline inspection queue/sync, compliance exports/filters, and driver-role completion/attestation with driver credentials.
 
 ### Sprint 62: Equipment, Maintenance, PM, Work Orders, and Offline Queue Browser QA
 Goal:
