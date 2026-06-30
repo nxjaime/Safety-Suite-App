@@ -62,6 +62,20 @@ describe('equipmentService', () => {
 
       expect(eqSpy).toHaveBeenCalledWith('type', 'Truck');
     });
+
+    it('applies grouped type filters when provided', async () => {
+      const eqSpy = vi.fn().mockReturnThis();
+      const inSpy = vi.fn().mockReturnThis();
+      const selectSpy = vi.fn().mockReturnThis();
+      const chain: any = { select: selectSpy, eq: eqSpy, in: inSpy, range: vi.fn().mockReturnValue({ data: [], count: 0, error: null }) };
+      chain.order = vi.fn().mockReturnValue(chain);
+      (supa.supabase as any).from = vi.fn().mockReturnValue(chain);
+
+      const { equipmentService } = await import('../services/equipmentService');
+      await equipmentService.getEquipment({ type: ['Truck', 'Tractor', 'Box Truck'] });
+
+      expect(inSpy).toHaveBeenCalledWith('type', ['Truck', 'Tractor', 'Box Truck']);
+    });
   });
 
   describe('createEquipment', () => {

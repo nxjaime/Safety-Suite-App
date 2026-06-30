@@ -56,6 +56,14 @@ const CATEGORY_TYPE_MAP: Record<CategoryTab, string> = {
     'Sales Vehicles': 'Sales Vehicle',
 };
 
+const CATEGORY_TYPE_FILTERS: Record<CategoryTab, string[]> = {
+    'Trucks': ['Truck', 'Tractor', 'Box Truck'],
+    'Trailers': ['Trailer'],
+    'Forklifts': ['Forklift'],
+    'Pallet Jacks': ['Pallet Jack'],
+    'Sales Vehicles': ['Sales Vehicle', 'Company Vehicle'],
+};
+
 const STATUS_BADGE: Record<string, string> = {
     active: 'bg-green-100 text-green-800',
     maintenance: 'bg-yellow-100 text-yellow-800',
@@ -125,8 +133,7 @@ const Equipment: React.FC = () => {
     const loadEquipment = useCallback(async (page = equipmentPage) => {
         setLoadingVehicles(true);
         try {
-            const typeFilter = CATEGORY_TYPE_MAP[activeTab];
-            const filters: { type?: string; status?: string } = { type: typeFilter };
+            const filters: { type?: string | string[]; status?: string } = { type: CATEGORY_TYPE_FILTERS[activeTab] };
             if (statusFilter && statusFilter !== 'all') filters.status = statusFilter;
             const { data } = await equipmentService.getEquipmentPaginated(page, equipmentPageSize, filters);
             setVehicles(data);
@@ -207,8 +214,7 @@ const Equipment: React.FC = () => {
 
     const selectedAsset = vehicles.find(v => v.id === selectedEquipmentId) ?? null;
 
-    const handleAddAsset = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const saveAsset = async () => {
         try {
             const payload: Partial<Equipment> = {
                 assetTag: formData.assetTag,
@@ -242,6 +248,11 @@ const Equipment: React.FC = () => {
         } catch (err) {
             toast.error(err instanceof Error ? err.message : 'Failed to save asset');
         }
+    };
+
+    const handleAddAsset = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await saveAsset();
     };
 
     const handleEdit = (asset: Equipment) => {
@@ -1060,7 +1071,8 @@ const Equipment: React.FC = () => {
                             Cancel
                         </button>
                         <button
-                            type="submit"
+                            type="button"
+                            onClick={saveAsset}
                             className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700"
                         >
                             {editingId ? 'Save Changes' : 'Add Asset'}
