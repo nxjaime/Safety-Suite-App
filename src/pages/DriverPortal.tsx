@@ -28,7 +28,11 @@ const DriverPortal: React.FC = () => {
           || drivers.find((item) => item.id === user?.id)
           || null;
         setDriver(currentDriver);
-        setAssignments(allAssignments.filter((assignment) => !currentDriver || assignment.assignee_id === currentDriver.id || assignment.assignee_id === user?.id));
+        setAssignments(allAssignments.filter((assignment) => (
+          currentDriver
+            ? assignment.assignee_id === currentDriver.id || assignment.assignee_id === user?.id
+            : assignment.assignee_id === user?.id
+        )));
       } catch (err) {
         console.warn('Failed to load driver portal', err);
       } finally {
