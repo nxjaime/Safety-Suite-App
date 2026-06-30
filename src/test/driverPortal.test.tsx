@@ -1,10 +1,12 @@
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { driverService } from '../services/driverService';
 import { trainingService } from '../services/trainingService';
 
 const authState = vi.hoisted(() => ({
-  role: 'driver' as 'driver' | 'readonly',
+  role: 'driver' as 'driver' | 'readonly' | 'platform_admin',
   user: { id: 'driver-user', email: 'driver@example.com', user_metadata: { role: 'driver' } },
 }));
 
@@ -107,5 +109,20 @@ describe('DriverPortal', () => {
     expect(screen.queryByText('Hours of Service')).not.toBeInTheDocument();
     expect(screen.queryByText('Completed Refresher')).not.toBeInTheDocument();
     expect(screen.getByText(/No training assignments are currently assigned to you/i)).toBeInTheDocument();
+  });
+
+  it('redirects non-driver sessions without loading portal data', () => {
+    authState.role = 'platform_admin';
+    authState.user = { id: 'admin-user', email: 'admin@example.com', user_metadata: { role: 'platform_admin' } };
+
+    render(
+      <MemoryRouter>
+        <DriverPortal />
+      </MemoryRouter>
+    );
+
+    expect(screen.queryByRole('heading', { name: /Your training assignments/i })).not.toBeInTheDocument();
+    expect(driverService.fetchDriversDetailed).not.toHaveBeenCalled();
+    expect(trainingService.listAssignments).not.toHaveBeenCalled();
   });
 });

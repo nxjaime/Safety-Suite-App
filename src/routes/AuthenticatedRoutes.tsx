@@ -47,19 +47,23 @@ const RouteSuspense = ({ children }: { children: React.ReactNode }) => (
 const ProtectedRoute = () => {
   const { session, loading, role } = useAuth();
   const location = useLocation();
+  const isE2EAuthBypass = isAuthBypassEnabled();
 
   if (loading) {
     return <LoadingScreen />;
   }
 
-  const isE2EAuthBypass = isAuthBypassEnabled();
+  if (!session && !isE2EAuthBypass) {
+    return <Navigate to="/login" replace />;
+  }
+
   const driverRole = role === 'driver';
   if (driverRole && location.pathname !== '/driver-portal') {
     return <Navigate to="/driver-portal" replace />;
   }
 
-  if (!session && !isE2EAuthBypass) {
-    return <Navigate to="/login" replace />;
+  if (!driverRole && location.pathname === '/driver-portal') {
+    return <Navigate to="/" replace />;
   }
 
   return <Outlet />;

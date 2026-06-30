@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, ClipboardCheck, Clock3, GraduationCap, ShieldAlert, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { driverService } from '../services/driverService';
 import { trainingService } from '../services/trainingService';
@@ -17,6 +18,11 @@ const DriverPortal: React.FC = () => {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
+      if (role !== 'driver') {
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       try {
         const [drivers, allAssignments] = await Promise.all([
@@ -41,12 +47,16 @@ const DriverPortal: React.FC = () => {
     };
     load();
     return () => { cancelled = true; };
-  }, [user?.email, user?.id]);
+  }, [role, user?.email, user?.id]);
 
   const openTraining = useMemo(() => assignments.filter((a) => a.status !== 'Completed').length, [assignments]);
   const completed = useMemo(() => assignments.filter((a) => a.status === 'Completed').length, [assignments]);
   const dueSoon = useMemo(() => assignments.filter((a) => a.due_date && a.status !== 'Completed').slice(0, 3), [assignments]);
   const coachingPlans = driver?.coachingPlans || [];
+
+  if (role !== 'driver') {
+    return <Navigate to="/" replace />;
+  }
 
   const handleAcknowledgePlan = (planId: string) => {
     setAcknowledgedPlans((prev) => ({ ...prev, [planId]: true }));
