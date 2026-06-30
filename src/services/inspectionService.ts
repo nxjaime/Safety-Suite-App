@@ -193,12 +193,10 @@ export const inspectionService = {
             carrier_name: inspection.carrier_name,
             carrier_address: inspection.carrier_address,
             usdot_number: inspection.usdot_number,
-            driver_name: inspection.driver_name,
             driver_dob: inspection.driver_dob,
             driver_license_number: inspection.driver_license_number,
             driver_license_state: inspection.driver_license_state,
             medical_cert_status: inspection.medical_cert_status,
-            vehicle_name: inspection.vehicle_name,
             vehicle_type: inspection.vehicle_type,
             plate_number: inspection.plate_number,
             plate_state: inspection.plate_state,
@@ -221,7 +219,11 @@ export const inspectionService = {
 
         if (error) throw error;
 
-        const complianceTasks = buildInspectionComplianceTasks(data, parsed.data.violations_data);
+        const complianceTasks = buildInspectionComplianceTasks({
+            ...data,
+            driver_name: inspection.driver_name,
+            vehicle_name: inspection.vehicle_name
+        }, parsed.data.violations_data);
         if (complianceTasks.length > 0) {
             const { error: taskError } = await supabase.from('tasks').insert(complianceTasks);
             if (taskError) {
