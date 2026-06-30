@@ -346,6 +346,8 @@ Progress notes:
 - Sprint 61 still needs driver-role completion/attestation with driver credentials, plus a future Browser/offline-capable setup for offline inspection queue/sync.
 
 ### Sprint 62: Equipment, Maintenance, PM, Work Orders, and Offline Queue Browser QA
+Status: Blocked on production Supabase fleet RLS migration
+
 Goal:
 - Prove the fleet operations lifecycle works from asset creation through work-order closeout.
 
@@ -369,6 +371,14 @@ Exit checks:
 - Closeout notes and costs persist after refresh.
 - Supported offline actions queue and sync correctly.
 - No P0/P1 fleet operations findings remain open.
+
+Progress notes:
+- Production Browser QA verified `/equipment` renders the Equipment Command Center, Trucks tab, empty active-truck state, and Add New Asset modal for the platform-admin session.
+- Production Browser QA found Equipment create is blocked in production: entering valid asset data and activating Add Asset leaves the modal open, no visible asset row appears, no validation text/toast is exposed in the DOM, and no new browser console error is emitted.
+- Code review found a secondary Equipment UX/data issue: the Trucks tab queried only exact type `Truck`, while production settings expose truck-like options such as `Tractor` and `Box Truck`. Commit `c8ffb00` adds grouped type filters and makes the Add Asset button invoke the save path directly; focused `src/test/equipmentService.test.ts` and `npm run build` passed, and Vercel deployment `dpl_ExrffUWyzf7NK7eedQ9GfEU5oKHK` reached READY.
+- Production Browser verification after `c8ffb00` still failed to create equipment, which points to the backend mutation path rather than stale frontend code. The deployed production chunk contains the grouped filter and direct save changes.
+- RLS review found `20260627000000_sprint49_security_gate.sql` drops permissive demo policies for `equipment`, `pm_templates`, `work_orders`, and `work_order_line_items`, but only restores org-scoped policies for inspections and selected safety tables. Prepared `supabase/migrations/20260630070000_restore_fleet_operations_org_rls.sql` to restore authenticated org-scoped policies for the fleet operations tables.
+- Production Supabase migration application is blocked: Supabase MCP `_apply_migration` for `restore_fleet_operations_org_rls` on project `mnxcorsldepaigilbkju` returned `You do not have permission to perform this action`. Equipment create/edit/archive QA remains blocked until the migration is applied through a Supabase account with migration privileges and production is rechecked in @browser.
 
 ### Sprint 63: Documents, FMCSA, Carrier Health, API, and Integration Browser QA
 Goal:
@@ -464,6 +474,7 @@ Use this table once browser QA begins.
 | S61-002 | 61 | P2 | Compliance / Work Orders | Platform admin | User creates an out-of-service DVER and reviews generated work orders | Production created a visible draft work-order artifact titled `Inspection OOS: Vehicle`, but the visible title did not include the source DVER report number | Auto-generated OOS work orders should expose enough report/inspection context for operators to distinguish and trace them | 62 | Follow-up candidate; explicit inspection-row `Create WO` action does create report-numbered draft `Inspection QA-S61-VIOL-1782844966494 remediation` |
 | S61-003 | 61 | P2 | Compliance exports / filters | Platform admin | User reviews Compliance and DOT Inspections for export/filter workflows | No visible Compliance-specific Export, Download, or Filter controls exist on `/compliance` overview or DOT Inspections | If export/filter QA is in scope, Compliance should expose tenant-scoped controls or the sprint scope should point to shared Reporting/List exports instead | 62 | Product gap documented from production Browser QA |
 | S61-004 | 61 | P2 | Offline inspection queue | Platform admin | User submits inspection while offline and verifies queued sync | Required @browser surface exposes no offline/network toggle in this session, so live offline behavior could not be tested | Provide a Browser-capable offline simulation path or run a supervised manual browser offline test before marking offline queue/sync complete | 62 | Blocked by test environment capability, not verified |
+| S62-001 | 62 | P1 | Equipment create / Fleet RLS | Platform admin | User creates a valid asset from `/equipment` Add Trucks modal | Production keeps the Add New Asset modal open, no asset row appears, and no visible recovery message is exposed; code/RLS review found fleet RLS policies were dropped by Sprint 49 without org-scoped replacements | Valid fleet users should be able to create org-scoped equipment records, see the modal close, and see the asset persist after reload | 62 | Frontend grouped type/direct-save fix committed in `c8ffb00`; production DB migration `20260630070000_restore_fleet_operations_org_rls.sql` prepared but MCP apply is blocked by Supabase permission error |
 
 ## Edge Case Inventory
 Use this section as the source pool for later QA scenarios. Each item should eventually become one or more test cases with role, setup data, action, expected result, and severity.
