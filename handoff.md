@@ -259,7 +259,7 @@ Progress notes:
 - 2026-06-30 user-provided production browser screenshot showed `/tasks` export created `/home/nickj/Downloads/tasks-export.csv` and opened it in LibreOffice. Filesystem inspection verified the downloaded CSV exists, is 49 bytes, and contains the expected header row `"Title","Assignee","Due Date","Priority","Status"`. The exported task set had no data rows, so live file-content verification covers download/header shape; formula-neutralization remains covered by focused CSV tests and deployed shared export utility.
 
 ### Sprint 60: Driver, Driver Portal, Safety, Watchlist, and Coaching Browser QA
-Status: In progress
+Status: Closed with follow-up backlog
 
 Goal:
 - Prove driver safety lifecycle workflows work from manager and driver perspectives.
@@ -298,6 +298,7 @@ Progress notes:
 - Commit `4864cc9` (`fix: restrict driver portal to drivers`) was pushed to `main`; Vercel production deployment `dpl_6XQYJKM1aDBHT7H5nbHW5PPo5bNo` reached READY. Production Browser QA verified the current platform-admin/non-driver session navigating to `/driver-portal` redirects to `/`, loads the new production app shell, does not show `QA Defensive Driving 891595`, and emits no fresh app-level console errors.
 - Remaining P3 accessibility follow-ups observed during Sprint 60 QA: driver row action icon button has no accessible name, Driver Import close icon has no accessible name, shared modal close icon has no accessible name, and Add Driver visible labels are not programmatically associated with their inputs.
 - Driver-role-specific portal verification remains incomplete without driver-role credentials; the non-driver portal leak is fixed and verified in production for the current platform-admin session, but the driver-owned-data happy path still needs a live driver session.
+- Sprint 60 is closed for the completed platform-admin driver/safety/watchlist/coaching checks and the fixed P1 non-driver portal leak. Remaining driver-role happy-path and P3 accessibility polish are moved to the Sprint Issue Backlog and Sprint 66/cleanup backlog instead of holding Sprint 60 open.
 
 ### Sprint 61: Training, Compliance, Inspections, and Corrective Action Browser QA
 Status: In progress
@@ -474,11 +475,11 @@ Exit checks:
 - No open P0/P1 findings remain.
 - P2/P3 backlog is reviewed and accepted or scheduled.
 
-### Sprint 66: Role Coverage and Tenant Boundary Backlog
+### Sprint 66: Role Coverage, Tenant Boundary, and Accessibility Cleanup Backlog
 Status: Backlog
 
 Goal:
-- Finish the Sprint 57 role and tenant-boundary checks that require live non-platform-admin accounts or a clean signed-out browser path.
+- Finish role/tenant-boundary checks that require live non-platform-admin accounts or a clean signed-out browser path, plus low-risk accessibility cleanup rolled forward from completed QA sprints.
 
 Prerequisites:
 - Disposable live credentials for org-admin, manager/full, safety, readonly, and driver users.
@@ -492,6 +493,7 @@ Exit checks:
 - Org-admin, manager/full, safety, and readonly users see only role-appropriate navigation and mutation controls.
 - Role changes are reflected after refresh/sign-in.
 - Cross-org URL tampering and payload tampering fail safely.
+- Rolled-forward P3 accessibility findings are fixed or accepted with owner and rationale.
 - No new P0/P1 auth, RLS, or tenant-isolation findings remain open.
 
 ## Sprint Issue Backlog
@@ -513,6 +515,9 @@ Use this table once browser QA begins.
 | S59-001 | 59 | P2 | Settings layout | Platform admin | User opens Settings at a narrow desktop/mobile width | User management table and tab bar forced page-level horizontal overflow | Settings should keep the page viewport stable and use local horizontal scrolling only where wide tabular data requires it | 59 | Fixed, pushed to `main`, Vercel production READY, browser-verified on production at 390px |
 | S59-002 | 59 | P1 | CSV exports | Platform admin / manager | User exports rows containing values that start with spreadsheet formula prefixes such as `=`, `+`, `-`, `@`, tab, or carriage return | CSV exporters quoted values but did not neutralize spreadsheet formula execution on open | All CSV exports should escape quotes and neutralize formula-prefixed cells before download | 59 | Fixed, pushed to `main`, focused CSV tests and build passed, Vercel production READY; production `/tasks` export produced `/home/nickj/Downloads/tasks-export.csv` with expected headers and no data rows in the current task set |
 | S59-003 | 59 | P2 | Notifications | Platform admin / manager | User clicks Mark all read and stays in the app past the next notification poll | Read state was only an in-memory unread count reset; the next poll would restore the same notifications as unread | Mark all read should persist known notification IDs as read and only show new notification IDs as unread | 59 | Fixed, pushed to `main`, focused notification tests and build passed, Vercel production READY, live asset verified |
+| S60-001 | 60 | P1 | Driver Portal RBAC/data scope | Platform admin / non-driver | Non-driver platform-admin session opens `/driver-portal` | Production displayed `QA Defensive Driving 891595`, exposing driver-portal assignment data to a non-driver session | Non-driver sessions should redirect away from `/driver-portal`; driver portal data should only load for driver-role users | 60 | Fixed by `9142ef4` scoped assignment filtering and `4864cc9` route/component driver-role gate; production @browser verified platform-admin/non-driver redirects to `/` and no longer shows `QA Defensive Driving 891595` |
+| S60-002 | 60 | P2 | Driver Portal happy path | Driver user | Driver-role user opens `/driver-portal` and reviews/completes owned assignments | Not verified because no live driver-role credentials are available | Driver-role users should land on `/driver-portal`, see only their own assignments, and complete/attest allowed training/actions | 66 | Backlog: needs disposable live driver credentials |
+| S60-003 | 60 | P3 | Driver workflow accessibility | Platform admin / keyboard or screen-reader user | User navigates Drivers row actions, Driver Import modal, shared modal close buttons, and Add Driver form labels | Production QA observed unnamed icon buttons and visible labels not programmatically associated with some inputs | Icon buttons should have accessible names; visible labels should be programmatically associated with their controls | 66 | Backlog cleanup: driver row action icon button, Driver Import close icon, shared modal close icon, and Add Driver label associations |
 | S61-001 | 61 | P1 | Compliance / DOT Inspections | Platform admin | User creates a minimal DVER/inspection with required fields and no violations | Production save failed, dialog stayed open, no row was created, and console logged `Failed to create inspection Object` | Valid inspection submissions should persist, close the dialog, show in the table, and survive reload | 61 | Fixed in commit `eb7dd8a`; Vercel deployment `dpl_CBhFjmFr3GGkNotC1snyTB45cAZ2` READY; production Browser verified report `QA-S61-FRESH-1782844661885` persisted and displayed with no new save error |
 | S61-002 | 61 | P2 | Compliance / Work Orders | Platform admin | User creates an out-of-service DVER and reviews generated work orders | Production created a visible draft work-order artifact titled `Inspection OOS: Vehicle`, but the visible title did not include the source DVER report number | Auto-generated OOS work orders should expose enough report/inspection context for operators to distinguish and trace them | 62 | Follow-up candidate; explicit inspection-row `Create WO` action does create report-numbered draft `Inspection QA-S61-VIOL-1782844966494 remediation` |
 | S61-003 | 61 | P2 | Compliance exports / filters | Platform admin | User reviews Compliance and DOT Inspections for export/filter workflows | No visible Compliance-specific Export, Download, or Filter controls exist on `/compliance` overview or DOT Inspections | If export/filter QA is in scope, Compliance should expose tenant-scoped controls or the sprint scope should point to shared Reporting/List exports instead | 62 | Product gap documented from production Browser QA |
