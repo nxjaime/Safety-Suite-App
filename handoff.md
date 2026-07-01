@@ -301,7 +301,7 @@ Progress notes:
 - Sprint 60 is closed for the completed platform-admin driver/safety/watchlist/coaching checks and the fixed P1 non-driver portal leak. Remaining driver-role happy-path and P3 accessibility polish are moved to the Sprint Issue Backlog and Sprint 66/cleanup backlog instead of holding Sprint 60 open.
 
 ### Sprint 61: Training, Compliance, Inspections, and Corrective Action Browser QA
-Status: In progress
+Status: Closed with follow-up backlog
 
 Goal:
 - Prove training and compliance workflows close the loop from assignment or inspection through remediation.
@@ -350,9 +350,10 @@ Progress notes:
 - Vercel environment investigation found production has `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `VITE_USE_EDGE_CRYPTO` configured. The deployed production bundle is built against Supabase project ref `mnxcorsldepaigilbkju`, matching the handoff production project. A stale typo env var `ITE_SUPABASE_URL` also exists in Vercel but is ignored by Vite and is not the cause of the DVER save failure.
 - Remaining Sprint 61 P3 accessibility follow-ups: Training/Compliance modal close icon buttons are unnamed; several Training corrective-assignment and Compliance/DVER form controls are not programmatically associated with visible labels; the DVER add-violation icon button has no accessible name.
 - Sprint 61 still needs driver-role completion/attestation with driver credentials, plus a future Browser/offline-capable setup for offline inspection queue/sync.
+- Sprint 61 is closed for the completed platform-admin training/compliance/DVER/remediation checks and fixed P1 DVER creation path. Remaining driver-role completion, offline queue/sync, compliance export/filter product gap, auto-OOS work-order traceability, and P3 accessibility polish are moved to the Sprint Issue Backlog and Sprint 66/cleanup backlog.
 
 ### Sprint 62: Equipment, Maintenance, PM, Work Orders, and Offline Queue Browser QA
-Status: In progress after production fleet RLS migration
+Status: Closed with follow-up backlog
 
 Goal:
 - Prove the fleet operations lifecycle works from asset creation through work-order closeout.
@@ -389,9 +390,10 @@ Progress notes:
 - User applied `supabase/migrations/20260630070000_restore_fleet_operations_org_rls.sql` manually through the Supabase Dashboard SQL Editor and reported success with no rows returned.
 - 2026-07-01 production @browser post-migration recheck verified Equipment create/edit/reload now works for `QA-S62-RLS-1782869879947`: Add Trucks accepted valid Tractor asset data, showed `Asset added successfully`, closed the modal, displayed the asset row, and the row persisted after reload. Editing the model to `Cascadia S63` showed `Asset updated successfully`, closed the modal, updated the row, and persisted after another reload. No fresh browser console errors appeared during create, reload, edit, or edit reload.
 - Archive verification for `QA-S62-RLS-1782869879947` is still unclaimed: clicking the scoped Archive button caused the in-app Browser CDP channel to time out, likely at the native confirmation step, and the Browser runtime then stopped accepting DOM/input commands. Reconnect opened no active tabs at first, then recovered enough to list the original tab but not enough to inspect or accept the confirmation. Re-run archive/retire cleanup in a fresh Browser session before closing Sprint 62.
+- Sprint 62 is closed for the fixed P1 fleet RLS/create path and verified production create/reload/edit/reload. Remaining archive/retire cleanup, PM/maintenance/work-order breadth, and offline/PWA queue coverage are moved to the Sprint Issue Backlog and Sprint 66/cleanup backlog.
 
 ### Sprint 63: Documents, FMCSA, Carrier Health, API, and Integration Browser QA
-Status: In progress
+Status: Closed with follow-up backlog
 
 Goal:
 - Prove document/storage and external-data workflows fail safely and remain tenant-safe.
@@ -423,6 +425,7 @@ Progress notes:
 - 2026-07-01 production @browser verified `/settings?verify-s63-carrier=1782866400000` Carrier Settings save/reload persistence. Company name was temporarily changed from `SafetyHub QA Carrier 842501` to `SafetyHub QA Carrier 842501 S63`, saved, verified after reload, restored to the original value, and verified restored after a second reload. USDOT `3114665` and MC `MC-842501` remained intact; no fresh console errors.
 - 2026-07-01 production @browser verified `/drivers?verify-s63-motive-ui=1782866550000` exposes the `Motive Disabled` placeholder. Activating it shows `Motive integration is not enabled for this product.`, does not expose secret-like text, and emits no fresh console errors. Direct Browser navigation to `/api/motive/drivers` did not verify the API placeholder because the app shell handled the route, and the Browser page context did not expose `fetch`.
 - 2026-07-01 production @browser verified `/admin?verify-s63-integrations=1782866600000` Integrations tab renders webhook registration controls, empty registered-webhook state, and empty delivery-history state with no fresh console errors. The visible Secret input contains the default form value `integration-secret`; no webhook was registered.
+- Sprint 63 is closed for completed Documents render/upload-dialog, FMCSA lookup, carrier settings persistence, Motive UI placeholder, and Admin Integrations empty-state checks. Remaining file upload/download/archive, direct API placeholder verification, FMCSA empty-input validation, and webhook registration delivery checks are moved to the Sprint Issue Backlog and Sprint 66/cleanup backlog.
 
 ### Sprint 64: Admin, Customer Operations, Audit, Retention, Webhooks, and Launch Recovery Browser QA
 Goal:
@@ -475,16 +478,17 @@ Exit checks:
 - No open P0/P1 findings remain.
 - P2/P3 backlog is reviewed and accepted or scheduled.
 
-### Sprint 66: Role Coverage, Tenant Boundary, and Accessibility Cleanup Backlog
+### Sprint 66: Role Coverage, Tenant Boundary, and Cleanup Backlog
 Status: Backlog
 
 Goal:
-- Finish role/tenant-boundary checks that require live non-platform-admin accounts or a clean signed-out browser path, plus low-risk accessibility cleanup rolled forward from completed QA sprints.
+- Finish role/tenant-boundary checks that require live non-platform-admin accounts or a clean signed-out browser path, plus cleanup and product-gap checks rolled forward from completed QA sprints.
 
 Prerequisites:
 - Disposable live credentials for org-admin, manager/full, safety, readonly, and driver users.
 - A clean signed-out or incognito-like @browser path, or explicit approval to sign out of the current platform-admin session and log back in.
 - A safe cross-org test fixture or approved Supabase/production setup that lets QA attempt wrong-org URLs and payloads without touching customer data.
+- Browser support for file upload/download inspection, native confirmation dialogs, and offline/network simulation, or supervised manual test paths for those capabilities.
 
 Exit checks:
 - Signed-out users redirect from protected routes to `/login`.
@@ -494,6 +498,7 @@ Exit checks:
 - Role changes are reflected after refresh/sign-in.
 - Cross-org URL tampering and payload tampering fail safely.
 - Rolled-forward P3 accessibility findings are fixed or accepted with owner and rationale.
+- Rolled-forward product gaps are accepted or scheduled with owner and acceptance criteria.
 - No new P0/P1 auth, RLS, or tenant-isolation findings remain open.
 
 ## Sprint Issue Backlog
@@ -522,7 +527,16 @@ Use this table once browser QA begins.
 | S61-002 | 61 | P2 | Compliance / Work Orders | Platform admin | User creates an out-of-service DVER and reviews generated work orders | Production created a visible draft work-order artifact titled `Inspection OOS: Vehicle`, but the visible title did not include the source DVER report number | Auto-generated OOS work orders should expose enough report/inspection context for operators to distinguish and trace them | 62 | Follow-up candidate; explicit inspection-row `Create WO` action does create report-numbered draft `Inspection QA-S61-VIOL-1782844966494 remediation` |
 | S61-003 | 61 | P2 | Compliance exports / filters | Platform admin | User reviews Compliance and DOT Inspections for export/filter workflows | No visible Compliance-specific Export, Download, or Filter controls exist on `/compliance` overview or DOT Inspections | If export/filter QA is in scope, Compliance should expose tenant-scoped controls or the sprint scope should point to shared Reporting/List exports instead | 62 | Product gap documented from production Browser QA |
 | S61-004 | 61 | P2 | Offline inspection queue | Platform admin | User submits inspection while offline and verifies queued sync | Required @browser surface exposes no offline/network toggle in this session, so live offline behavior could not be tested | Provide a Browser-capable offline simulation path or run a supervised manual browser offline test before marking offline queue/sync complete | 62 | Blocked by test environment capability, not verified |
+| S61-005 | 61 | P2 | Training completion / attestation | Driver user | Driver completes or attests assigned training from the driver-facing workflow | Not verified because no live driver-role credentials are available | Driver-role users should complete/attest assigned training and persistence should be visible after reload/admin review | 66 | Backlog: needs disposable live driver credentials |
+| S61-006 | 61 | P3 | Training/Compliance accessibility | Platform admin / keyboard or screen-reader user | User navigates Training/Compliance modal close buttons, corrective assignment fields, DVER controls, and add-violation control | Production QA observed unnamed modal close/add-violation icon buttons and several visible labels not programmatically associated with fields | Icon buttons should have accessible names; visible labels should be programmatically associated with their controls | 66 | Backlog cleanup: Training/Compliance modal close names, corrective-assignment/DVER label associations, DVER add-violation accessible name |
 | S62-001 | 62 | P1 | Equipment create / Fleet RLS | Platform admin | User creates a valid asset from `/equipment` Add Trucks modal | Production kept the Add New Asset modal open, showed `Failed to save asset`, no asset row appeared, and no browser console error was emitted; code/RLS review found fleet RLS policies were dropped by Sprint 49 without org-scoped replacements | Valid fleet users should be able to create org-scoped equipment records, see the modal close, and see the asset persist after reload | 62 | Fixed by frontend grouped type/direct-save commit `c8ffb00` plus manual production Supabase migration `20260630070000_restore_fleet_operations_org_rls.sql`; 2026-07-01 production @browser verified create/reload/edit/reload for `QA-S62-RLS-1782869879947` with no fresh console errors. Archive/retire cleanup remains unverified because @browser hung on Archive confirmation |
+| S62-002 | 62 | P2 | Equipment archive/retire cleanup | Platform admin | User archives or retires the QA asset `QA-S62-RLS-1782869879947` and verifies reload state | Clicking Archive caused the in-app Browser CDP channel to time out, likely at the native confirmation step, so archive/retire result could not be inspected | Archive/retire should complete, update filters/counts, and persist after reload without leaving QA artifacts active | 66 | Backlog: needs fresh Browser session or supervised manual native-confirmation path |
+| S62-003 | 62 | P2 | PM/Maintenance/Work Orders breadth | Platform admin / fleet manager | User exercises PM templates, maintenance records, work-order status transitions, closeout notes/costs, and related reload checks | Not fully covered before Sprint 62 was closed; only equipment create/reload/edit/reload and inspection-to-work-order artifacts were verified | PM, maintenance, and work-order lifecycle should persist and enforce role/state rules | 66 | Backlog: schedule focused fleet lifecycle pass |
+| S62-004 | 62 | P2 | Fleet offline/PWA queue | Platform admin | User performs supported fleet/inspection/work-order actions while offline and verifies queued sync | Required @browser surface exposes no offline/network toggle in this session, so live offline behavior could not be tested | Supported offline actions should queue, surface pending state, and sync correctly when online | 66 | Backlog: needs Browser-capable offline simulation or supervised manual offline test |
+| S63-001 | 63 | P2 | Documents upload/download/archive | Platform admin | User uploads a harmless test document, verifies download/open, archives it, and reloads | Not verified because the current Browser surface did not provide a supported file-selection path | Document upload/download/archive should work or fail with actionable messaging and no secret leakage | 66 | Backlog: needs Browser file upload/download support or supervised manual file test |
+| S63-002 | 63 | P3 | FMCSA empty-input validation | Platform admin | User clears Carrier Health Lookup DOT field and clicks Look Up | Empty-input behavior was not claimed because the Browser field-clear action did not actually clear the DOT input during QA | Empty DOT lookup should show actionable validation without stale carrier data confusion | 66 | Backlog cleanup: re-run with reliable field-clear path |
+| S63-003 | 63 | P2 | Direct API placeholder verification | Authenticated or direct production request | User/API client requests disabled Motive endpoints directly | Direct Browser navigation to `/api/motive/drivers` was handled by the app shell, and Browser page context did not expose `fetch`, so direct API response was not verified through @browser | Disabled Motive endpoints should return the placeholder response without leaking secrets | 66 | Backlog: verify through approved production API inspection path |
+| S63-004 | 63 | P2 | Integrations webhook registration/delivery | Platform admin | User registers a safe webhook and reviews delivery health/failure behavior | Not submitted during QA; only empty Integrations panel and registration controls were verified | Webhook registration and delivery history should persist or fail with actionable messaging and no secret leakage | 66 | Backlog: needs safe webhook endpoint/fixture |
 
 ## Edge Case Inventory
 Use this section as the source pool for later QA scenarios. Each item should eventually become one or more test cases with role, setup data, action, expected result, and severity.
