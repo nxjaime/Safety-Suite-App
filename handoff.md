@@ -382,6 +382,8 @@ Progress notes:
 - Production Supabase migration application is blocked: Supabase MCP `_apply_migration`, `_list_migrations`, `_execute_sql`, and `_get_logs` on project `mnxcorsldepaigilbkju` returned `You do not have permission to perform this action`. Equipment create/edit/archive QA remains blocked until the migration is applied through a Supabase account with migration privileges and production is rechecked in @browser.
 
 ### Sprint 63: Documents, FMCSA, Carrier Health, API, and Integration Browser QA
+Status: In progress
+
 Goal:
 - Prove document/storage and external-data workflows fail safely and remain tenant-safe.
 
@@ -405,6 +407,13 @@ Exit checks:
 - Motive endpoints and UI remain disabled placeholders.
 - API errors do not leak secrets.
 - No P0/P1 document/integration findings remain open.
+
+Progress notes:
+- 2026-07-01 production @browser verified `/documents?verify-s63-docs=1782866200000` renders the Document Library, empty table state, bulk controls, and Upload Document action with no fresh console errors. Opening the Upload Document dialog exposes document name/category/type fields, a required multi-file input, required-document checkbox, expiration date, Cancel, and Upload; no upload was submitted because the current Browser surface did not provide a supported file-selection path.
+- 2026-07-01 production @browser verified `/fmcsa?verify-s63-fmcsa=1782866300000` renders FMCSA regulations and Carrier Health Lookup controls with no fresh console errors. Looking up DOT `0000000` returned a safe `UNKNOWN` carrier-health card with no secret-like text and no console errors; a separate empty-input validation check was not claimed because the Browser field-clear action did not actually clear the DOT input.
+- 2026-07-01 production @browser verified `/settings?verify-s63-carrier=1782866400000` Carrier Settings save/reload persistence. Company name was temporarily changed from `SafetyHub QA Carrier 842501` to `SafetyHub QA Carrier 842501 S63`, saved, verified after reload, restored to the original value, and verified restored after a second reload. USDOT `3114665` and MC `MC-842501` remained intact; no fresh console errors.
+- 2026-07-01 production @browser verified `/drivers?verify-s63-motive-ui=1782866550000` exposes the `Motive Disabled` placeholder. Activating it shows `Motive integration is not enabled for this product.`, does not expose secret-like text, and emits no fresh console errors. Direct Browser navigation to `/api/motive/drivers` did not verify the API placeholder because the app shell handled the route, and the Browser page context did not expose `fetch`.
+- 2026-07-01 production @browser verified `/admin?verify-s63-integrations=1782866600000` Integrations tab renders webhook registration controls, empty registered-webhook state, and empty delivery-history state with no fresh console errors. The visible Secret input contains the default form value `integration-secret`; no webhook was registered.
 
 ### Sprint 64: Admin, Customer Operations, Audit, Retention, Webhooks, and Launch Recovery Browser QA
 Goal:
