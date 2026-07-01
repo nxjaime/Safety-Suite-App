@@ -137,7 +137,7 @@ Backlog handling:
 - P2/P3 findings can roll forward only if documented with owner, impact, and acceptance criteria.
 
 ### Sprint 57: Auth, Session, RBAC, and Tenant Isolation Browser QA
-Status: In progress; platform-admin route checks verified
+Status: Closed with follow-up backlog
 
 Goal:
 - Prove users can only access the correct routes, roles, and tenant data through normal browser behavior.
@@ -175,7 +175,7 @@ Progress notes:
 - 2026-07-01 production @browser verified the current platform-admin/non-driver session navigating to `/driver-portal` redirects to `/`, does not expose Driver Portal data or `QA Defensive Driving`, and emits no fresh console errors.
 - 2026-07-01 production @browser verified `/settings` renders User Management for the platform-admin session. A stale captured console entry `Failed to list documents Object` appeared in the Browser log with timestamp `2026-07-01T01:47:32.052Z`; a focused `/documents` rerun rendered the Document Library and empty state with no visible error, so this was not treated as a new route failure.
 - 2026-07-01 production @browser verified `/profile` exposes only safe self-service profile fields: full name, job title, email, phone, location, avatar URL, and photo upload. No role or organization self-edit controls are exposed through the normal UI.
-- Sprint 57 still cannot be closed honestly without live org-admin, manager/full, safety, readonly, and driver credentials, or an approved clean signed-out/incognito Browser path. Signed-out protected-route behavior, non-admin `/admin` denial, driver full-dashboard denial, role-change refresh behavior, and cross-org/data-tamper browser checks remain unverified in live @browser for those roles.
+- Sprint 57 is closed for the completed P0/P1 fixes and the production platform-admin route checks above. Remaining role-coverage and tenant-tamper checks require live org-admin, manager/full, safety, readonly, and driver credentials, or an approved clean signed-out/incognito Browser path; those items are moved to Sprint 66 and the Sprint Issue Backlog rather than keeping Sprint 57 open indefinitely.
 
 ### Sprint 58: Public Landing, Login UX, Navigation, Layout, and Accessibility Browser QA
 Status: Complete with P2 follow-up
@@ -474,6 +474,26 @@ Exit checks:
 - No open P0/P1 findings remain.
 - P2/P3 backlog is reviewed and accepted or scheduled.
 
+### Sprint 66: Role Coverage and Tenant Boundary Backlog
+Status: Backlog
+
+Goal:
+- Finish the Sprint 57 role and tenant-boundary checks that require live non-platform-admin accounts or a clean signed-out browser path.
+
+Prerequisites:
+- Disposable live credentials for org-admin, manager/full, safety, readonly, and driver users.
+- A clean signed-out or incognito-like @browser path, or explicit approval to sign out of the current platform-admin session and log back in.
+- A safe cross-org test fixture or approved Supabase/production setup that lets QA attempt wrong-org URLs and payloads without touching customer data.
+
+Exit checks:
+- Signed-out users redirect from protected routes to `/login`.
+- Non-admin users cannot access `/admin`.
+- Driver users are constrained to `/driver-portal` and cannot reach full dashboard/workspace routes.
+- Org-admin, manager/full, safety, and readonly users see only role-appropriate navigation and mutation controls.
+- Role changes are reflected after refresh/sign-in.
+- Cross-org URL tampering and payload tampering fail safely.
+- No new P0/P1 auth, RLS, or tenant-isolation findings remain open.
+
 ## Sprint Issue Backlog
 Use this table once browser QA begins.
 
@@ -482,6 +502,11 @@ Use this table once browser QA begins.
 | S57-001 | 57 | P0 | Supabase `profiles` RLS / AuthZ | Authenticated user | User attempts a direct Supabase write not allowed by UI; user tampers with request payload `organization_id` or `role` | Existing policy `Users can manage own profile` authorizes all self profile mutations with only `id = auth.uid()`, allowing self-service role/org/status writes by policy shape | Users may edit safe profile fields only; only authorized admin workflows can change role, org, or status | 57 | Fixed in repo and production migration applied through Supabase Dashboard SQL Editor |
 | S57-002 | 57 | P1 | Protected route driver role check | Authenticated user | User metadata role conflicts with profile role; driver-role user attempts to access full dashboard | Route guard trusted `user.user_metadata.role === 'driver'`, which is user-editable metadata and unsafe for authorization | Route guard must use canonical profile role from `profiles.role` | 57 | Fixed in repo and pushed to `main` |
 | S57-003 | 58 | P1 | AuthContext role resolution | Authenticated user | User metadata role conflicts with profile role; user metadata says `platform_admin` | AuthContext still elevated platform admin from user-editable metadata | AuthContext must derive admin from trusted profile data or explicit admin allowlist only | 58 | Fixed, pushed to `main`, build/focused tests passed |
+| S57-004 | 57 | P2 | Protected routes / Auth | Signed-out visitor | Signed-out user opens `/dashboard`, `/admin`, `/driver-portal`, and a deep protected route | Not rechecked in live @browser because the current Browser session is authenticated and no clean signed-out/incognito path has been provided | Signed-out users should redirect to `/login` without protected data flash or console errors | 66 | Backlog: needs clean signed-out Browser path or approval to sign out and restore the platform-admin session |
+| S57-005 | 57 | P2 | Admin route RBAC | Org admin / manager / safety / readonly | Non-platform-admin user opens `/admin` | Not rechecked in live @browser because disposable non-platform-admin credentials are not available | Non-platform-admin users should be redirected away from `/admin` and should not see Admin & Enterprise Controls | 66 | Backlog: needs org-admin, manager/full, safety, and readonly credentials |
+| S57-006 | 57 | P2 | Driver route RBAC | Driver user | Driver user opens `/dashboard`, `/admin`, `/drivers`, and `/driver-portal` | Not rechecked in live @browser because driver credentials are not available | Driver users should be constrained to `/driver-portal`; non-driver sessions should be redirected away from `/driver-portal` | 66 | Backlog: non-driver redirect verified for platform admin; driver-owned happy path and dashboard denial need driver credentials |
+| S57-007 | 57 | P2 | Role change refresh | Admin/user session | User role is changed, then the affected user refreshes or signs in again | Not rechecked in live @browser because multiple role accounts and an approved role-change fixture are not available | Route access, navigation, and capabilities should reflect the canonical `profiles.role` after refresh/sign-in | 66 | Backlog: needs disposable role accounts and safe admin role-change procedure |
+| S57-008 | 57 | P1 | Tenant isolation / tamper checks | Authenticated non-platform user | User attempts wrong-org URL access or payload tampering for tenant-scoped data | Not rechecked in live @browser because no safe cross-org fixture or secondary tenant credentials are available | RLS and service code should deny cross-org reads/writes without exposing data | 66 | Backlog: needs safe cross-org test fixture; treat any failure as release-blocking |
 | S58-001 | 58 | P2 | Login password recovery | Signed-out visitor | User clicks Forgot your password after entering an email | Link used `href="#"` and did not start a recovery flow | Send Supabase reset email or remove the control until recovery is available | 58 | Fixed, browser-verified locally and on production, pushed to `main` |
 | S58-002 | 58 | P2 | Login/signup mode switch | Signed-out visitor | Invalid login fails, then user switches to create account | Stale invalid-login toast and entered password carry into signup mode | Switching modes should clear stale auth feedback and password-only fields | 58 | Fixed, browser-verified locally and on production, pushed to `main` |
 | S58-003 | 58 | P2 | Login keyboard navigation | Signed-out visitor | User navigates the login form by keyboard only | Browser automation could focus the controls individually, but Tab traversal stayed on the email field in the in-app Browser; code review found no login focus trap | Human keyboard-only pass should confirm focus order reaches back link, email, password, remember me, forgot password, sign in, and signup toggle | 59 | Scheduled follow-up; no P0/P1 blocker |
