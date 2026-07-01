@@ -137,7 +137,7 @@ Backlog handling:
 - P2/P3 findings can roll forward only if documented with owner, impact, and acceptance criteria.
 
 ### Sprint 57: Auth, Session, RBAC, and Tenant Isolation Browser QA
-Status: Blocked on production Supabase migration and browser access
+Status: In progress; platform-admin route checks verified
 
 Goal:
 - Prove users can only access the correct routes, roles, and tenant data through normal browser behavior.
@@ -171,6 +171,11 @@ Progress notes:
 - Repo fix prepared: authenticated route logic now uses profile role `driver`, not user-editable `user_metadata.role`.
 - Production migration applied through Supabase Dashboard SQL Editor on project `mnxcorsldepaigilbkju`; Supabase returned success with no rows.
 - Do not mark role, tenant-isolation, or data-integrity browser QA complete until the production migration has been applied and verified.
+- 2026-07-01 production @browser verified the current platform-admin session is active and can access `/admin`, which renders Admin & Enterprise Controls, User Management, the platform-admin test user, and no fresh console errors.
+- 2026-07-01 production @browser verified the current platform-admin/non-driver session navigating to `/driver-portal` redirects to `/`, does not expose Driver Portal data or `QA Defensive Driving`, and emits no fresh console errors.
+- 2026-07-01 production @browser verified `/settings` renders User Management for the platform-admin session. A stale captured console entry `Failed to list documents Object` appeared in the Browser log with timestamp `2026-07-01T01:47:32.052Z`; a focused `/documents` rerun rendered the Document Library and empty state with no visible error, so this was not treated as a new route failure.
+- 2026-07-01 production @browser verified `/profile` exposes only safe self-service profile fields: full name, job title, email, phone, location, avatar URL, and photo upload. No role or organization self-edit controls are exposed through the normal UI.
+- Sprint 57 still cannot be closed honestly without live org-admin, manager/full, safety, readonly, and driver credentials, or an approved clean signed-out/incognito Browser path. Signed-out protected-route behavior, non-admin `/admin` denial, driver full-dashboard denial, role-change refresh behavior, and cross-org/data-tamper browser checks remain unverified in live @browser for those roles.
 
 ### Sprint 58: Public Landing, Login UX, Navigation, Layout, and Accessibility Browser QA
 Status: Complete with P2 follow-up
