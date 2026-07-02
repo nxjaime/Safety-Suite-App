@@ -135,7 +135,7 @@ const AdminDashboard: React.FC = () => {
   const [integrationsLoading, setIntegrationsLoading] = useState(false);
   const [webhookForm, setWebhookForm] = useState({
     endpointUrl: 'https://example.com/webhooks/safety-suite',
-    secret: 'integration-secret',
+    secret: '',
     eventTypes: ['inspection_failed', 'work_order_closed'] as WebhookEventType[],
   });
   const [onboardingSummary, setOnboardingSummary] = useState({ completedCount: 0, totalSteps: 5, percentage: 0 });
@@ -892,6 +892,7 @@ const AdminDashboard: React.FC = () => {
                 try {
                   const webhook = await webhookService.createWebhook(role, webhookForm);
                   setWebhooks((prev) => [webhook, ...prev]);
+                  setWebhookForm((prev) => ({ ...prev, secret: '' }));
                   toast.success('Webhook registered');
                 } catch (err) {
                   console.error(err);
@@ -903,11 +904,11 @@ const AdminDashboard: React.FC = () => {
               <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Register webhook</h4>
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Endpoint URL</label>
-                <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" value={webhookForm.endpointUrl} onChange={(e) => setWebhookForm({ ...webhookForm, endpointUrl: e.target.value })} />
+                <input type="url" required className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" value={webhookForm.endpointUrl} onChange={(e) => setWebhookForm({ ...webhookForm, endpointUrl: e.target.value })} />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Secret</label>
-                <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" value={webhookForm.secret} onChange={(e) => setWebhookForm({ ...webhookForm, secret: e.target.value })} />
+                <input type="password" required autoComplete="new-password" placeholder="Enter webhook signing secret" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" value={webhookForm.secret} onChange={(e) => setWebhookForm({ ...webhookForm, secret: e.target.value })} />
               </div>
               <div>
                 <div className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Event types</div>

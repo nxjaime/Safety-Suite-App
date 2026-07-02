@@ -168,6 +168,7 @@ describe('AdminDashboard — Enterprise Controls Hub', () => {
         fireEvent.click(within(screen.getByRole('navigation')).getByText('Integrations'));
 
         expect(await screen.findByText(/Register webhook/i)).toBeInTheDocument();
+        expect(screen.queryByDisplayValue('integration-secret')).not.toBeInTheDocument();
         expect(screen.getByText('https://example.com/hooks')).toBeInTheDocument();
         expect(screen.getByText(/Delivery history/i)).toBeInTheDocument();
         expect(screen.getByText(/HTTP 500/i)).toBeInTheDocument();
