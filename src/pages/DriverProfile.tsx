@@ -470,15 +470,19 @@ const DriverProfile: React.FC = () => {
     const handleLogRiskEvent = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!driver) return;
+        if (!newRiskEvent.type) {
+            toast.error('Select an event type before logging a risk event');
+            return;
+        }
 
         // Calculate points/severity defaults from selected type
         let points = 5;
         let severity = 1;
         switch (newRiskEvent.type) {
             case 'Speeding': points = 10; severity = 2; break;
-            case 'Hard Braking': points = 8; severity = 2; break;
-            case 'HOS Violation': points = 12; severity = 3; break;
-            case 'Accident': points = 25; severity = 5; break;
+            case 'Hard Braking': points = 5; severity = 1; break;
+            case 'HOS Violation': points = 15; severity = 3; break;
+            case 'Accident': points = 20; severity = 4; break;
             case 'Citation': points = 10; severity = 2; break;
             default: points = 5; severity = 1;
         }
@@ -1171,6 +1175,7 @@ const DriverProfile: React.FC = () => {
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Event Type</label>
                             <select
+                                required
                                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 value={newRiskEvent.type}
                                 onChange={(e) => setNewRiskEvent({ ...newRiskEvent, type: e.target.value })}
