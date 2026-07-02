@@ -495,6 +495,58 @@ QA notes:
 - XSS-like task title `<img src=x onerror=alert(1)> QA S65 XSS 1782991069607` was created through production `/tasks`, rendered as text in the table, produced no fresh console errors, and DOM inspection found `badImgCount: 0` for `img[onerror]` / `img[src="x"]`. The QA task was then closed with notes; no fresh console errors appeared during cleanup.
 - Production `/tasks` Export CSV was clicked without using `waitForEvent('download')` and produced no browser console error, but `/home/nickj/Downloads/tasks-export.csv` did not update from its prior timestamp/size. The download-save path remains unverified and is moved to the Sprint Issue Backlog/Sprint 66 rather than marked passed.
 
+### Sprint 67: End-to-End Customer Lifecycle Browser QA
+Status: Active / Next
+
+Goal:
+- Prove a real customer can run the daily SafetyHub Connect lifecycle end to end, using production like an operator rather than checking isolated edge cases.
+
+Primary persona:
+- Platform admin / customer admin using the live hosted app.
+
+Browser test surfaces:
+- Settings / organization configuration
+- Drivers and driver profile
+- Equipment
+- Maintenance
+- DOT Inspections / Compliance
+- Work Orders
+- Documents
+- Training
+- Safety / Watchlist / Coaching
+- Dashboard, Reporting, Search, Notifications
+- CSV export surfaces that can be verified without `waitForEvent('download')`
+
+End-to-end workflow:
+1. Confirm organization/admin settings are usable and existing settings persist after reload.
+2. Create a full QA driver record with realistic profile, contact, license, medical, employment, and manager fields.
+3. Create a full QA equipment asset with realistic tractor/trailer lifecycle, assignment, odometer, VIN/unit, and maintenance context fields.
+4. Create or verify maintenance/PM setup for the QA asset, including due/overdue state where supported.
+5. Create a DOT inspection/DVER for the QA driver and asset, first with no violations, then with a violation/OOS path if safe.
+6. Generate or create related remediation/work-order records from inspection, PM, or manual workflow.
+7. Move a QA work order through the real lifecycle: draft/open, approve, start, complete, close with notes/costs where supported.
+8. Upload or attach a harmless QA document where Browser/manual file support allows; otherwise record the exact blocker and required manual path.
+9. Create or assign training to the QA driver, verify assignment appears in Training and related driver surfaces, and complete/review where the current role allows.
+10. Log a safety/risk/coaching event for the QA driver, verify watchlist/coaching effects where supported, and reload to confirm persistence.
+11. Verify dashboard, reporting, global search, notifications, and related list pages reflect the QA data after reload/navigation.
+12. Export applicable CSVs and verify file creation/content when Browser/manual download support allows.
+13. Clean up or close QA artifacts where the app supports safe closure/archive; document any artifacts intentionally left for traceability.
+
+Exit checks:
+- Every major customer-facing form in the lifecycle has been opened and its required/optional fields exercised with realistic data.
+- Each saved record appears in the appropriate list/detail page, survives reload, and is reflected in at least one downstream surface.
+- Buttons/actions in the normal workflow either complete successfully or fail with actionable messaging and no fresh P0/P1 console errors.
+- The lifecycle can be explained as a coherent customer story from driver/equipment setup through inspection, remediation, training, safety follow-up, reporting, and cleanup.
+- Any blocked steps are documented with exact missing capability: credentials, file picker/download path, native confirmation handling, safe fixture, or product gap.
+- No new P0/P1 lifecycle findings remain unresolved.
+
+Execution notes:
+- Use `https://safetyhubconnect.vercel.app` only for end-user QA.
+- Use @browser for all live end-user verification.
+- Do not use `waitForEvent('download')`; verify downloads through filesystem/manual observation.
+- Prefer unique QA names prefixed `QA-S67-LIFECYCLE-<timestamp>` so artifacts can be searched and cleaned up.
+- This sprint intentionally takes priority over Sprint 66 backlog work unless a Sprint 67 step requires credentials or fixtures from Sprint 66.
+
 ### Sprint 66: Role Coverage, Tenant Boundary, and Cleanup Backlog
 Status: Backlog
 
