@@ -18,7 +18,13 @@ const processDriverForStorage = async (driver: any) => {
 const processDriverFromStorage = async (driver: any) => {
     const processed = { ...driver };
     if (processed.ssn) {
-        processed.ssn = await decryptPII(processed.ssn);
+        try {
+            processed.ssn = await decryptPII(processed.ssn);
+        } catch (error) {
+            console.error('Failed to decrypt driver SSN; returning driver with SSN redacted', error);
+            processed.ssn = '';
+            processed.ssnRedacted = true;
+        }
     }
     return processed;
 };
