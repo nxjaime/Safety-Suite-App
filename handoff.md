@@ -547,6 +547,26 @@ Execution notes:
 - Prefer unique QA names prefixed `QA-S67-LIFECYCLE-<timestamp>` so artifacts can be searched and cleaned up.
 - This sprint intentionally takes priority over Sprint 66 backlog work unless a Sprint 67 step requires credentials or fixtures from Sprint 66.
 
+Live browser QA progress:
+- 2026-07-02: Sprint 67 run `QA-S67-LIFECYCLE-1782991847855` continued on production using the visible in-app Browser only.
+- Verified Settings loads for platform admin, carrier settings values persist, Notifications preferences/rules tab opens, and Settings remains stable after reload.
+- Created full QA driver `Lifecycle QA-S67-LIFECYCLE-1782991847855` with realistic contact/license/medical/employment fields; verified it appears in Drivers and opens driver profile `/drivers/88a40e03-fe6d-4c93-b01e-016cc74b4cfa`.
+- Verified driver profile Overview, Safety & Compliance, Documents, Training, and Timeline tabs open with no fresh console errors. Documents exposes Upload Document; Training exposes View all in Training.
+- Found production driver risk-event bug: submitting Log Risk Event with no Event Type sent a request and logged a DriverProfile console error instead of blocking the form.
+- Fixed and deployed commit `361c9d9 fix: require driver risk event type`; focused tests `npm test -- --run src/test/driverService.test.ts src/test/safetyPage.test.tsx` passed and `npm run build` passed. Vercel deployment `dpl_D375PpKXRCKPBqwQiWXtrAhHk3KE` reached READY.
+- Reverified production DriverProfile risk modal after deployment: Event Type select is now required and browser-native validation shows "Please select an item in the list" with no new submit request when empty.
+- Browser automation could not change the native Event Type `<select>` through DOM click, coordinate click, typed letter, or keyboard dropdown sequence, so a valid risk-event submit remains blocked by Browser native-select interaction rather than marked passed.
+- Created QA equipment asset `TRK-S67-847855` through Equipment > Add Trucks using realistic make/model/year/odometer/hours/equipment fields; modal closed and the added row appeared with View/Edit actions.
+- Opened the new equipment detail view and verified Inspections, Maintenance, Work Orders, and Documents tabs. Maintenance exposes Manage PM; Work Orders exposes New Work Order and All Work Orders; Documents exposes Manage Documents.
+- Product gap observed: equipment detail Start Inspection button did not visibly navigate or open an inspection form during live browser QA.
+- Created equipment-linked work order `Work order — TRK-S67-847855` from the equipment Work Orders tab with description and due date `2026-07-09`; verified it appears on `/work-orders` with asset `TRK-S67-847855`, status Draft, and due date.
+- Advanced the QA work order through Draft -> Approved -> In Progress -> Completed using visible buttons; toasts confirmed status updates and the row showed the expected status/action after each step.
+
+Remaining Sprint 67 checks:
+- Continue live browser lifecycle QA for maintenance/PM creation, DOT inspection/DVER creation, training assignment/completion, safety/coaching valid-submit path, dashboard/reporting/search/notification reflection, exports, and cleanup/closure.
+- Revisit valid driver risk-event submit when Browser can interact with native selects or when a supervised manual selection path is available.
+- Investigate/fix equipment Start Inspection action if code confirms it is intended to open a form or route.
+
 ### Sprint 66: Role Coverage, Tenant Boundary, and Cleanup Backlog
 Status: Backlog
 
