@@ -170,19 +170,38 @@ export const equipmentService = {
     }));
   },
 
-  // Inspections link via vehicle_name = asset_tag (no FK yet; Sprint 24 will add proper FK)
+  // Inspections link via vehicle_name = asset_tag where present. Older rows may only
+  // have the unit stored in the generated description fallback.
   async getLinkedInspections(equipmentId: string): Promise<any[]> {
     const asset = await this.getEquipmentById(equipmentId);
     if (!asset) return [];
     const orgId = await getCurrentOrganization();
-    let query = supabase
+
+    let byVehicleNameQuery = supabase
       .from('inspections')
       .select('*')
       .eq('vehicle_name', asset.assetTag);
-    if (orgId) query = query.eq('organization_id', orgId);
-    const { data, error } = await query.order('date', { ascending: false });
-    if (error) return [];
-    return data || [];
+    if (orgId) byVehicleNameQuery = byVehicleNameQuery.eq('organization_id', orgId);
+
+    let byDescriptionQuery = supabase
+      .from('inspections')
+      .select('*')
+      .ilike('description', `%Vehicle: ${asset.assetTag}%`);
+    if (orgId) byDescriptionQuery = byDescriptionQuery.eq('organization_id', orgId);
+
+    const [byVehicleName, byDescription] = await Promise.all([
+      byVehicleNameQuery.order('date', { ascending: false }),
+      byDescriptionQuery.order('date', { ascending: false })
+    ]);
+
+    if (byVehicleName.error && byDescription.error) return [];
+
+    const byId = new Map<string, any>();
+    [...(byVehicleName.data || []), ...(byDescription.data || [])].forEach((inspection) => {
+      byId.set(inspection.id, inspection);
+    });
+
+    return Array.from(byId.values()).sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
   },
 
   async getLinkedWorkOrders(equipmentId: string): Promise<any[]> {
