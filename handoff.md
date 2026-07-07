@@ -561,9 +561,14 @@ Live browser QA progress:
 - Product gap observed: equipment detail Start Inspection button did not visibly navigate or open an inspection form during live browser QA.
 - Created equipment-linked work order `Work order — TRK-S67-847855` from the equipment Work Orders tab with description and due date `2026-07-09`; verified it appears on `/work-orders` with asset `TRK-S67-847855`, status Draft, and due date.
 - Advanced the QA work order through Draft -> Approved -> In Progress -> Completed using visible buttons; toasts confirmed status updates and the row showed the expected status/action after each step.
+- 2026-07-06 production @browser verified Maintenance > Manage PM path from the selected equipment asset: created `QA-S67-LIFECYCLE PM 1782991847855` for `Truck` with 30-day / 5,000-mile / 250-hour intervals, verified it appeared as Active, survived reload, and the PM due checker for `TRK-S67-847855` reported no preventive maintenance due plus empty service history.
+- 2026-07-06 production @browser created no-violation DVER `QA-S67-DVER-1782991847855` from Compliance > DOT Inspections with driver `Lifecycle QA-S67-LIFECYCLE-1782991847855` and unit `TRK-S67-847855`. Save closed the modal, the row appeared with 0 violations and Closed remediation, and the row persisted after reload.
+- Production QA found an equipment-linked inspection gap: Compliance showed `QA-S67-DVER-1782991847855`, but Equipment > `TRK-S67-847855` > Inspections still showed `No inspections recorded for this asset` because equipment inspection linking only matched the physical `vehicle_name` field, while legacy/current inspection rows can store unit linkage in the generated description fallback.
+- Fixed the linked-inspection gap in commits `522157e` and `44e68d6`; focused test `npm test -- --run src/test/equipmentService.test.ts` passed and `npm run build` passed. Vercel deployment `dpl_FdZL1m76sTYMJ6RLxuCNKBQnj4o1` reached READY and is aliased to `https://safetyhubconnect.vercel.app`.
+- Reverified production Equipment > `TRK-S67-847855` > Inspections after deployment `dpl_FdZL1m76sTYMJ6RLxuCNKBQnj4o1`: the tab now shows `2026-07-07 — Level I`, `#QA-S67-DVER-1782991847855`, and `Passed`.
 
 Remaining Sprint 67 checks:
-- Continue live browser lifecycle QA for maintenance/PM creation, DOT inspection/DVER creation, training assignment/completion, safety/coaching valid-submit path, dashboard/reporting/search/notification reflection, exports, and cleanup/closure.
+- Continue live browser lifecycle QA for training assignment/completion, safety/coaching valid-submit path, dashboard/reporting/search/notification reflection, exports, and cleanup/closure.
 - Revisit valid driver risk-event submit when Browser can interact with native selects or when a supervised manual selection path is available.
 - Investigate/fix equipment Start Inspection action if code confirms it is intended to open a form or route.
 
