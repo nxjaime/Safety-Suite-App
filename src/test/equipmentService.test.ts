@@ -261,46 +261,29 @@ describe('equipmentService', () => {
 
   describe('getLinkedInspections', () => {
     it('links inspections by vehicle_name and legacy description fallback', async () => {
-      const vehicleEqSpy = vi.fn().mockReturnThis();
-      const vehicleSelectSpy = vi.fn().mockReturnThis();
-      const vehicleOrderSpy = vi.fn().mockReturnValue({
-        data: [{ id: 'inspection-vehicle', date: '2026-07-07', vehicle_name: 'TRK-001' }],
-        error: null
-      });
-      const vehicleChain: any = {
-        select: vehicleSelectSpy,
-        eq: vehicleEqSpy,
-        order: vehicleOrderSpy
-      };
-      vehicleSelectSpy.mockReturnValue(vehicleChain);
-      vehicleEqSpy.mockReturnValue(vehicleChain);
-
-      const descriptionEqSpy = vi.fn().mockReturnThis();
-      const descriptionSelectSpy = vi.fn().mockReturnThis();
-      const descriptionIlikeSpy = vi.fn().mockReturnThis();
-      const descriptionOrderSpy = vi.fn().mockReturnValue({
+      const eqSpy = vi.fn().mockReturnThis();
+      const selectSpy = vi.fn().mockReturnThis();
+      const orderSpy = vi.fn().mockReturnValue({
         data: [
+          { id: 'inspection-vehicle', date: '2026-07-07', vehicle_name: 'TRK-001' },
           {
             id: 'inspection-description',
             date: '2026-07-08',
             description: 'Driver: QA Driver, Vehicle: TRK-001'
+          },
+          {
+            id: 'inspection-other',
+            date: '2026-07-09',
+            description: 'Driver: QA Driver, Vehicle: TRK-999'
           }
         ],
         error: null
       });
-      const descriptionChain: any = {
-        select: descriptionSelectSpy,
-        eq: descriptionEqSpy,
-        ilike: descriptionIlikeSpy,
-        order: descriptionOrderSpy
-      };
-      descriptionSelectSpy.mockReturnValue(descriptionChain);
-      descriptionEqSpy.mockReturnValue(descriptionChain);
-      descriptionIlikeSpy.mockReturnValue(descriptionChain);
+      const chain: any = { select: selectSpy, eq: eqSpy, order: orderSpy };
+      selectSpy.mockReturnValue(chain);
+      eqSpy.mockReturnValue(chain);
 
-      (supa.supabase as any).from = vi.fn()
-        .mockReturnValueOnce(vehicleChain)
-        .mockReturnValueOnce(descriptionChain);
+      (supa.supabase as any).from = vi.fn().mockReturnValue(chain);
 
       const { equipmentService } = await import('../services/equipmentService');
       vi.spyOn(equipmentService, 'getEquipmentById').mockResolvedValue({
@@ -314,11 +297,8 @@ describe('equipmentService', () => {
       const result = await equipmentService.getLinkedInspections('eq-1');
 
       expect((supa.supabase as any).from).toHaveBeenCalledWith('inspections');
-      expect(vehicleEqSpy).toHaveBeenCalledWith('vehicle_name', 'TRK-001');
-      expect(vehicleEqSpy).toHaveBeenCalledWith('organization_id', 'org-test');
-      expect(descriptionIlikeSpy).toHaveBeenCalledWith('description', '%Vehicle: TRK-001%');
-      expect(descriptionEqSpy).toHaveBeenCalledWith('organization_id', 'org-test');
-      expect(result.map((row) => row.id)).toEqual(['inspection-description', 'inspection-vehicle']);
+      expect(eqSpy).toHaveBeenCalledWith('organization_id', 'org-test');
+      expect(result.map((row) => row.id)).toEqual(['inspection-vehicle', 'inspection-description']);
     });
   });
 
