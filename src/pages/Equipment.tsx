@@ -9,11 +9,61 @@ import { equipmentService } from '../services/equipmentService';
 import { maintenanceService } from '../services/maintenanceService';
 import { workOrderService } from '../services/workOrderService';
 import { useAuth } from '../contexts/AuthContext';
-import type { Equipment, EquipmentStatus, OwnershipType, MaintenanceTemplate } from '../types';
+import type { Equipment, EquipmentStatus, OwnershipType, MaintenanceTemplate, EldLoggingOption, OwnLeaseOption, VehicleTypeOption } from '../types';
 import { equipmentProfileTabs, type EquipmentProfileTab } from './equipmentConstants';
 import { getLoadErrorMessage } from '../utils/loadErrorMessage';
 
 type CategoryTab = 'Trucks' | 'Trailers' | 'Forklifts' | 'Pallet Jacks' | 'Sales Vehicles';
+
+export const OWN_LEASE_OPTIONS = ['Own', 'Lease', 'Rent'] as const;
+export const ELD_LOGGING_OPTIONS = ['Enabled', 'Disabled', 'Exempt'] as const;
+export const VEHICLE_TYPE_OPTIONS = ['Sales Vehicle', 'Truck', 'Trailer'] as const;
+export const US_STATE_OPTIONS = [
+    'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+    'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+    'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+    'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+    'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
+] as const;
+
+export const VEHICLE_LEASING_FIELD_LABELS = [
+    'Vehicle #',
+    'VIN',
+    'License Plate #',
+    'State',
+    'City',
+    'Vehicle Type',
+    'Owner',
+    'Mth Lease Charge',
+    'Mileage Charge',
+    'Lease Expir. Year',
+    'Added to Fleet',
+    'Removed from Fleet',
+    'Follow Up',
+    'Gross Weight',
+    'Geotab',
+    'Toll Transponder',
+    'ELD Logging',
+    'IMEI #',
+    'ELD Notes',
+    'Driver',
+    'Rep Code',
+    'Driver Check #',
+    'MGR',
+    'Email',
+    'Ph #',
+    'Vehicle Value',
+    'Months In Service',
+    '2/1/2026',
+    'Avg Miles Per Month',
+    'Estimated Odometer 6 months',
+    'Div #',
+    'Div',
+    'Corp',
+    'GL Acct',
+    'Ins. Class',
+    'NOTES',
+] as const;
 
 type LinkedInspection = {
     id: string;
@@ -73,7 +123,7 @@ const STATUS_BADGE: Record<string, string> = {
     retired: 'bg-gray-200 text-gray-500',
 };
 
-const EMPTY_FORM: {
+type EquipmentFormState = {
     assetTag: string;
     type: string;
     make: string;
@@ -85,7 +135,46 @@ const EMPTY_FORM: {
     usageHours: string;
     attachments: string;
     forkliftAttachments: string[];
-} = {
+    removedFromFleet: string;
+    addedToFleet: string;
+    divNumber: string;
+    division: string;
+    corp: string;
+    ownLease: OwnLeaseOption | '';
+    owner: string;
+    city: string;
+    state: string;
+    vehicleNumber: string;
+    vin: string;
+    insClass: string;
+    glAcct: string;
+    grossWeight: string;
+    geotab: string;
+    tollTransponder: string;
+    driver: string;
+    repCode: string;
+    driverCheckNumber: string;
+    mthLeaseCharge: string;
+    mileageCharge: string;
+    followUp: string;
+    leaseExpirYear: string;
+    vehicleValue: string;
+    licensePlate: string;
+    notes: string;
+    monthsInService: string;
+    asOfDate: string;
+    avgMilesPerMonth: string;
+    estimatedOdometer6mo: string;
+    mgr: string;
+    eldLogging: EldLoggingOption | '';
+    email: string;
+    phone: string;
+    imei: string;
+    eldNotes: string;
+    vehicleType: VehicleTypeOption | '';
+};
+
+const EMPTY_FORM: EquipmentFormState = {
     assetTag: '',
     type: '',
     make: '',
@@ -97,7 +186,109 @@ const EMPTY_FORM: {
     usageHours: '',
     attachments: '',
     forkliftAttachments: [],
+    removedFromFleet: '',
+    addedToFleet: '',
+    divNumber: '',
+    division: '',
+    corp: '',
+    ownLease: '',
+    owner: '',
+    city: '',
+    state: '',
+    vehicleNumber: '',
+    vin: '',
+    insClass: '',
+    glAcct: '',
+    grossWeight: '',
+    geotab: '',
+    tollTransponder: '',
+    driver: '',
+    repCode: '',
+    driverCheckNumber: '',
+    mthLeaseCharge: '',
+    mileageCharge: '',
+    followUp: '',
+    leaseExpirYear: '',
+    vehicleValue: '',
+    licensePlate: '',
+    notes: '',
+    monthsInService: '',
+    asOfDate: '',
+    avgMilesPerMonth: '',
+    estimatedOdometer6mo: '',
+    mgr: '',
+    eldLogging: '',
+    email: '',
+    phone: '',
+    imei: '',
+    eldNotes: '',
+    vehicleType: '',
 };
+
+const parseDecimalField = (value: string) => {
+    if (!value.trim()) return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+};
+
+const parseIntegerField = (value: string) => {
+    if (!value.trim()) return null;
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) ? parsed : null;
+};
+
+export const buildEquipmentPayload = (formData: EquipmentFormState, fallbackType: string): Partial<Equipment> => ({
+    assetTag: formData.assetTag,
+    type: formData.type || fallbackType,
+    make: formData.make,
+    model: formData.model,
+    year: formData.year ? Number.parseInt(formData.year, 10) : undefined,
+    ownershipType: formData.ownershipType,
+    status: formData.status,
+    usageMiles: formData.usageMiles ? Number.parseInt(formData.usageMiles, 10) : 0,
+    usageHours: formData.usageHours ? Number.parseInt(formData.usageHours, 10) : 0,
+    attachments: formData.attachments
+        ? formData.attachments.split(',').map(s => s.trim()).filter(Boolean)
+        : [],
+    forkliftAttachments: formData.forkliftAttachments,
+    removedFromFleet: formData.removedFromFleet,
+    addedToFleet: formData.addedToFleet,
+    divNumber: formData.divNumber.trim(),
+    division: formData.division.trim(),
+    corp: formData.corp.trim(),
+    ownLease: formData.ownLease || undefined,
+    owner: formData.owner.trim(),
+    city: formData.city.trim(),
+    state: formData.state,
+    vehicleNumber: formData.vehicleNumber.trim(),
+    vin: formData.vin.trim(),
+    insClass: formData.insClass.trim(),
+    glAcct: formData.glAcct.trim(),
+    grossWeight: parseIntegerField(formData.grossWeight),
+    geotab: formData.geotab.trim(),
+    tollTransponder: formData.tollTransponder.trim(),
+    driver: formData.driver.trim(),
+    repCode: formData.repCode.trim(),
+    driverCheckNumber: formData.driverCheckNumber.trim(),
+    mthLeaseCharge: parseDecimalField(formData.mthLeaseCharge),
+    mileageCharge: parseDecimalField(formData.mileageCharge),
+    followUp: formData.followUp,
+    leaseExpirYear: parseIntegerField(formData.leaseExpirYear),
+    vehicleValue: parseDecimalField(formData.vehicleValue),
+    licensePlate: formData.licensePlate.trim(),
+    notes: formData.notes.trim(),
+    monthsInService: parseIntegerField(formData.monthsInService),
+    asOfDate: formData.asOfDate,
+    avgMilesPerMonth: parseIntegerField(formData.avgMilesPerMonth),
+    estimatedOdometer6mo: parseIntegerField(formData.estimatedOdometer6mo),
+    mgr: formData.mgr.trim(),
+    eldLogging: formData.eldLogging || undefined,
+    email: formData.email.trim(),
+    phone: formData.phone.trim(),
+    imei: formData.imei.trim(),
+    eldNotes: formData.eldNotes.trim(),
+    vehicleType: formData.vehicleType || undefined,
+});
 
 const Equipment: React.FC = () => {
     const navigate = useNavigate();
@@ -216,21 +407,7 @@ const Equipment: React.FC = () => {
 
     const saveAsset = async () => {
         try {
-            const payload: Partial<Equipment> = {
-                assetTag: formData.assetTag,
-                type: formData.type || CATEGORY_TYPE_MAP[activeTab],
-                make: formData.make,
-                model: formData.model,
-                year: formData.year ? parseInt(formData.year) : undefined,
-                ownershipType: formData.ownershipType,
-                status: formData.status,
-                usageMiles: formData.usageMiles ? parseInt(formData.usageMiles) : 0,
-                usageHours: formData.usageHours ? parseInt(formData.usageHours) : 0,
-                attachments: formData.attachments
-                    ? formData.attachments.split(',').map(s => s.trim()).filter(Boolean)
-                    : [],
-                forkliftAttachments: formData.forkliftAttachments,
-            };
+            const payload = buildEquipmentPayload(formData, CATEGORY_TYPE_MAP[activeTab]);
 
             if (editingId) {
                 const updated = await equipmentService.updateEquipment(editingId, payload, role);
@@ -268,6 +445,43 @@ const Equipment: React.FC = () => {
             usageHours: asset.usageHours?.toString() || '',
             attachments: (asset.attachments || []).join(', '),
             forkliftAttachments: asset.forkliftAttachments || [],
+            removedFromFleet: asset.removedFromFleet || '',
+            addedToFleet: asset.addedToFleet || '',
+            divNumber: asset.divNumber || '',
+            division: asset.division || '',
+            corp: asset.corp || '',
+            ownLease: asset.ownLease || '',
+            owner: asset.owner || '',
+            city: asset.city || '',
+            state: asset.state || '',
+            vehicleNumber: asset.vehicleNumber || '',
+            vin: asset.vin || '',
+            insClass: asset.insClass || '',
+            glAcct: asset.glAcct || '',
+            grossWeight: asset.grossWeight?.toString() || '',
+            geotab: asset.geotab || '',
+            tollTransponder: asset.tollTransponder || '',
+            driver: asset.driver || '',
+            repCode: asset.repCode || '',
+            driverCheckNumber: asset.driverCheckNumber || '',
+            mthLeaseCharge: asset.mthLeaseCharge?.toString() || '',
+            mileageCharge: asset.mileageCharge?.toString() || '',
+            followUp: asset.followUp || '',
+            leaseExpirYear: asset.leaseExpirYear?.toString() || '',
+            vehicleValue: asset.vehicleValue?.toString() || '',
+            licensePlate: asset.licensePlate || '',
+            notes: asset.notes || '',
+            monthsInService: asset.monthsInService?.toString() || '',
+            asOfDate: asset.asOfDate || '',
+            avgMilesPerMonth: asset.avgMilesPerMonth?.toString() || '',
+            estimatedOdometer6mo: asset.estimatedOdometer6mo?.toString() || '',
+            mgr: asset.mgr || '',
+            eldLogging: asset.eldLogging || '',
+            email: asset.email || '',
+            phone: asset.phone || '',
+            imei: asset.imei || '',
+            eldNotes: asset.eldNotes || '',
+            vehicleType: asset.vehicleType || '',
         });
         setEditingId(asset.id);
         setIsModalOpen(true);
@@ -360,6 +574,9 @@ const Equipment: React.FC = () => {
     const activeCount = vehicles.filter(v => v.status === 'active').length;
     const maintenanceCount = vehicles.filter(v => v.status === 'maintenance').length;
     const oosCount = vehicles.filter(v => v.status === 'out_of_service').length;
+    const setFormField = (field: keyof EquipmentFormState, value: string) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    };
 
     return (
         <div className="space-y-8" data-testid="equipment-page">
@@ -545,6 +762,21 @@ const Equipment: React.FC = () => {
                             <p className="text-sm text-slate-500 mb-3">
                                 {selectedAsset.year} {selectedAsset.make} {selectedAsset.model} · {selectedAsset.ownershipType} · {selectedAsset.usageMiles?.toLocaleString() || 0} mi / {selectedAsset.usageHours?.toLocaleString() || 0} hrs
                             </p>
+                            <div className="mb-4 grid grid-cols-1 gap-3 text-sm md:grid-cols-3">
+                                {[
+                                    ['Vehicle #', selectedAsset.vehicleNumber],
+                                    ['VIN', selectedAsset.vin],
+                                    ['Plate', [selectedAsset.licensePlate, selectedAsset.state].filter(Boolean).join(' · ')],
+                                    ['Own / Lease', selectedAsset.ownLease],
+                                    ['Driver', selectedAsset.driver],
+                                    ['ELD Logging', selectedAsset.eldLogging],
+                                ].map(([label, value]) => (
+                                    <div key={label} className="rounded-md border border-slate-100 bg-slate-50 px-3 py-2">
+                                        <div className="text-xs font-semibold uppercase text-slate-400">{label}</div>
+                                        <div className="mt-0.5 font-medium text-slate-700">{value || '—'}</div>
+                                    </div>
+                                ))}
+                            </div>
                             <div className="flex gap-2 text-sm">
                                 {(['Inspections', 'Maintenance', 'Work Orders', 'Documents'] as const).map(tab => (
                                     <button
@@ -1060,6 +1292,196 @@ const Equipment: React.FC = () => {
                                     <span>{option}</span>
                                 </label>
                             ))}
+                        </div>
+                    </div>
+                    <div className="border-t border-slate-200 pt-4 space-y-4">
+                        <div className="text-sm font-semibold text-slate-800">Vehicle & Leasing</div>
+
+                        <div className="space-y-3">
+                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Identity</div>
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                {[
+                                    ['Vehicle #', 'vehicleNumber'],
+                                    ['VIN', 'vin'],
+                                    ['License Plate #', 'licensePlate'],
+                                    ['City', 'city'],
+                                ].map(([label, field]) => (
+                                    <div key={field}>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
+                                        <input
+                                            type="text"
+                                            className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                            value={String(formData[field as keyof EquipmentFormState])}
+                                            onChange={(e) => setFormField(field as keyof EquipmentFormState, e.target.value)}
+                                        />
+                                    </div>
+                                ))}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">State</label>
+                                    <select
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={formData.state}
+                                        onChange={(e) => setFormField('state', e.target.value)}
+                                    >
+                                        <option value="">Select</option>
+                                        {US_STATE_OPTIONS.map(state => (
+                                            <option key={state} value={state}>{state}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Vehicle Type</label>
+                                    <select
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={formData.vehicleType}
+                                        onChange={(e) => setFormField('vehicleType', e.target.value)}
+                                    >
+                                        <option value="">Select</option>
+                                        {VEHICLE_TYPE_OPTIONS.map(option => (
+                                            <option key={option} value={option}>{option}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Ownership & Leasing</div>
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Own / Lease / Rent</label>
+                                    <select
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={formData.ownLease}
+                                        onChange={(e) => setFormField('ownLease', e.target.value)}
+                                    >
+                                        <option value="">Select</option>
+                                        {OWN_LEASE_OPTIONS.map(option => (
+                                            <option key={option} value={option}>{option}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                {[
+                                    ['Owner', 'owner', 'text'],
+                                    ['Mth Lease Charge', 'mthLeaseCharge', 'number'],
+                                    ['Mileage Charge', 'mileageCharge', 'number'],
+                                    ['Lease Expir. Year', 'leaseExpirYear', 'number'],
+                                ].map(([label, field, type]) => (
+                                    <div key={field}>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
+                                        <input
+                                            type={type}
+                                            min={type === 'number' ? '0' : undefined}
+                                            className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                            value={String(formData[field as keyof EquipmentFormState])}
+                                            onChange={(e) => setFormField(field as keyof EquipmentFormState, e.target.value)}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Operations</div>
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                {[
+                                    ['Added to Fleet', 'addedToFleet', 'date'],
+                                    ['Removed from Fleet', 'removedFromFleet', 'date'],
+                                    ['Follow Up', 'followUp', 'date'],
+                                    ['Gross Weight', 'grossWeight', 'number'],
+                                    ['Geotab', 'geotab', 'text'],
+                                    ['Toll Transponder', 'tollTransponder', 'text'],
+                                    ['IMEI #', 'imei', 'text'],
+                                    ['ELD Notes', 'eldNotes', 'text'],
+                                ].map(([label, field, type]) => (
+                                    <div key={field}>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
+                                        <input
+                                            type={type}
+                                            min={type === 'number' ? '0' : undefined}
+                                            className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                            value={String(formData[field as keyof EquipmentFormState])}
+                                            onChange={(e) => setFormField(field as keyof EquipmentFormState, e.target.value)}
+                                        />
+                                    </div>
+                                ))}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">ELD Logging</label>
+                                    <select
+                                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        value={formData.eldLogging}
+                                        onChange={(e) => setFormField('eldLogging', e.target.value)}
+                                    >
+                                        <option value="">Select</option>
+                                        {ELD_LOGGING_OPTIONS.map(option => (
+                                            <option key={option} value={option}>{option}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Assignment</div>
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                {[
+                                    ['Driver', 'driver', 'text'],
+                                    ['Rep Code', 'repCode', 'text'],
+                                    ['Driver Check #', 'driverCheckNumber', 'text'],
+                                    ['MGR', 'mgr', 'text'],
+                                    ['Email', 'email', 'email'],
+                                    ['Ph #', 'phone', 'tel'],
+                                ].map(([label, field, type]) => (
+                                    <div key={field}>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
+                                        <input
+                                            type={type}
+                                            className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                            value={String(formData[field as keyof EquipmentFormState])}
+                                            onChange={(e) => setFormField(field as keyof EquipmentFormState, e.target.value)}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Metrics & Accounting</div>
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                {[
+                                    ['Vehicle Value', 'vehicleValue', 'number'],
+                                    ['Months In Service', 'monthsInService', 'number'],
+                                    ['2/1/2026', 'asOfDate', 'date'],
+                                    ['Avg Miles Per Month', 'avgMilesPerMonth', 'number'],
+                                    ['Estimated Odometer 6 months', 'estimatedOdometer6mo', 'number'],
+                                    ['Div #', 'divNumber', 'text'],
+                                    ['Div', 'division', 'text'],
+                                    ['Corp', 'corp', 'text'],
+                                    ['GL Acct', 'glAcct', 'text'],
+                                    ['Ins. Class', 'insClass', 'text'],
+                                ].map(([label, field, type]) => (
+                                    <div key={field}>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
+                                        <input
+                                            type={type}
+                                            min={type === 'number' ? '0' : undefined}
+                                            className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                            value={String(formData[field as keyof EquipmentFormState])}
+                                            onChange={(e) => setFormField(field as keyof EquipmentFormState, e.target.value)}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">NOTES</label>
+                            <textarea
+                                rows={3}
+                                className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                value={formData.notes}
+                                onChange={(e) => setFormField('notes', e.target.value)}
+                            />
                         </div>
                     </div>
                     <div className="flex justify-end space-x-3 mt-6">
