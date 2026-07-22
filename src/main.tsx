@@ -3,6 +3,9 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { isSupabaseConfigured } from './lib/supabaseConfig'
+import { registerPwaUpdateHandler } from './pwaUpdate'
+
+registerPwaUpdateHandler();
 
 const rootElement = document.getElementById('root');
 

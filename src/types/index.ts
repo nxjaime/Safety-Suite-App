@@ -203,6 +203,9 @@ export interface Driver {
 export type EquipmentType = 'truck' | 'trailer' | 'forklift' | 'pallet_jack' | 'sales_vehicle';
 export type OwnershipType = 'owned' | 'leased' | 'rented';
 export type EquipmentStatus = 'active' | 'inactive' | 'out_of_service' | 'maintenance' | 'archived' | 'retired';
+export type OwnLeaseOption = 'Own' | 'Lease' | 'Rent';
+export type EldLoggingOption = 'Enabled' | 'Disabled' | 'Exempt';
+export type VehicleTypeOption = 'Sales Vehicle' | 'Truck' | 'Trailer';
 
 export interface Equipment {
     id: string;
@@ -221,6 +224,43 @@ export interface Equipment {
     nextServiceDate?: string;
     archivedAt?: string;
     retiredAt?: string;
+    removedFromFleet?: string;
+    addedToFleet?: string;
+    divNumber?: string;
+    division?: string;
+    corp?: string;
+    ownLease?: OwnLeaseOption;
+    owner?: string;
+    city?: string;
+    state?: string;
+    vehicleNumber?: string;
+    vin?: string;
+    insClass?: string;
+    glAcct?: string;
+    grossWeight?: number | null;
+    geotab?: string;
+    tollTransponder?: string;
+    driver?: string;
+    repCode?: string;
+    driverCheckNumber?: string;
+    mthLeaseCharge?: number | null;
+    mileageCharge?: number | null;
+    followUp?: string;
+    leaseExpirYear?: number | null;
+    vehicleValue?: number | null;
+    licensePlate?: string;
+    notes?: string;
+    monthsInService?: number | null;
+    asOfDate?: string;
+    avgMilesPerMonth?: number | null;
+    estimatedOdometer6mo?: number | null;
+    mgr?: string;
+    eldLogging?: EldLoggingOption;
+    email?: string;
+    phone?: string;
+    imei?: string;
+    eldNotes?: string;
+    vehicleType?: VehicleTypeOption;
 }
 
 export interface EquipmentStatusHistoryEntry {
