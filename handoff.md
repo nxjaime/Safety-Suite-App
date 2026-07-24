@@ -596,9 +596,11 @@ Live browser QA progress:
 - Production fresh-browser notifications check opened the notification panel without console errors and showed `No notifications`. This is consistent with the current notification rules because the QA training completion was manager-reviewed and the new coaching check-ins are not yet due in the browser's local date.
 - Fixed the equipment `Start Inspection` no-op gap: selected Equipment assets now navigate to `/compliance?view=inspections&start=1&vehicle=<assetTag>`, and Compliance opens the existing DVER modal with the selected unit prefilled. Regression coverage added in `src/test/equipmentVehicleFields.test.ts`.
 - Verification for the equipment inspection navigation fix passed: `npm test -- --run src/test/equipmentVehicleFields.test.ts` (4 tests), `npm test -- --run src/test/searchService.test.ts src/test/riskService.test.ts src/test/driverService.test.ts src/test/equipmentVehicleFields.test.ts` (32 tests), `npm run test:unit` (266 tests), `npm run lint` (139 existing warnings, 0 errors), `npm run build`, `npm run test:layout` (16 Playwright checks), and `npm run audit:prod` exited 0 at the high threshold with the same two moderate React Router advisories.
+- Commit `8534418` was pushed to GitHub `main` and deployed to Vercel production as `dpl_3dxKbLdCZzDXK9DypJpv8NpM2Uhs`, aliased to `https://safetyhubconnect.vercel.app`.
+- Production fresh-browser recheck loaded deployed `index-WayuQElz.js`; Equipment asset `TRK-S67-847855` > Inspections > Start Inspection navigated to `/compliance?view=inspections&start=1&vehicle=TRK-S67-847855`, opened the DVER modal on the Vehicle tab, and prefilled Unit Number with `TRK-S67-847855`.
 
 Remaining Sprint 67 checks:
-- Commit, push, deploy, and production @browser recheck the equipment Start Inspection navigation fix, then close Sprint 67 unless review identifies a new issue.
+- Sprint 67 lifecycle QA is ready for review. Remaining manual/security actions: rotate or delete the disposable QA admin credential; clear site data/hard refresh any stale in-app Browser tab still pinned to an older service-worker bundle; plan the breaking React Router 7 upgrade for the two moderate audit advisories; use a native/manual download path if CSV file-content verification is required.
 
 ### Sprint 66: Role Coverage, Tenant Boundary, and Cleanup Backlog
 Status: Backlog
