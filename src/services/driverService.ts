@@ -359,7 +359,7 @@ export const driverService = {
             severity,
             occurredAt,
             metadata: event.metadata || (event.notes ? { notes: event.notes } : {}),
-            scoreDelta: event.scoreDelta
+            scoreDelta: event.scoreDelta ?? event.points
         });
 
         await riskService.calculateScore(driverId, '90d');

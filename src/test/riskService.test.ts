@@ -194,4 +194,27 @@ describe('riskService', () => {
     const riskEventInserts = supabase.inserts.filter((entry: any) => entry.table === 'risk_events');
     expect(riskEventInserts).toHaveLength(0);
   });
+
+  it('persists legacy points when ingesting a normalized risk event', async () => {
+    const supabase = buildSupabaseMock([]);
+
+    const service = createRiskService({
+      supabase,
+      getCurrentOrganization: async () => 'org-1',
+      getMotiveScores: async () => ({ users: [] }),
+      now: () => new Date('2026-02-22T00:00:00Z')
+    });
+
+    await service.ingestEvent({
+      driverId: 'driver-1',
+      source: 'manual',
+      eventType: 'HOS Violation',
+      severity: 3,
+      occurredAt: '2026-02-22',
+      scoreDelta: 15
+    });
+
+    const riskEventInsert = supabase.inserts.find((entry: any) => entry.table === 'risk_events');
+    expect(riskEventInsert.payload[0].points).toBe(15);
+  });
 });

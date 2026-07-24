@@ -102,6 +102,9 @@ test.describe('Layout regression', () => {
 
   test('driver portal is usable on a phone viewport', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 900 });
+    await page.addInitScript(() => {
+      window.localStorage.setItem('safetyhub:e2e-role', 'driver');
+    });
     await page.goto('/driver-portal');
 
     await expect(page.getByText(/driver portal/i).first()).toBeVisible();

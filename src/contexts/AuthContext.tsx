@@ -35,6 +35,7 @@ const withTimeout = async <T,>(promise: PromiseLike<T>, timeoutMs = AUTH_TIMEOUT
 };
 
 const STORED_SESSION_EXPIRY_GRACE_SECONDS = 30;
+const E2E_BYPASS_ROLES: ProfileRole[] = ['platform_admin', 'full', 'safety', 'coaching', 'maintenance', 'readonly', 'driver'];
 
 const getStoredSession = (): Session | null => {
     if (typeof window === 'undefined') return null;
@@ -73,6 +74,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     useEffect(() => {
         if (isE2EAuthBypass) {
+            const storedE2ERole = window.localStorage.getItem('safetyhub:e2e-role') as ProfileRole | null;
+            const e2eRole = normalizeRole(storedE2ERole && E2E_BYPASS_ROLES.includes(storedE2ERole) ? storedE2ERole : 'platform_admin');
             const mockUser = {
                 id: 'e2e-user',
                 email: 'e2e@safetyhub.local',
@@ -81,7 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 user_metadata: {
                     full_name: 'E2E User',
                     title: 'QA Automation',
-                    role: 'platform_admin'
+                    role: e2eRole
                 },
                 created_at: new Date().toISOString()
             } as User;
@@ -98,7 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setSession(mockSession);
             setUser(mockUser);
             setOrganizationId('e2e-org');
-            setRole('platform_admin');
+            setRole(e2eRole);
             setLoading(false);
             return;
         }

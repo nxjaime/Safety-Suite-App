@@ -136,6 +136,7 @@ export const createRiskService = (deps: RiskServiceDeps) => {
         event_type: input.eventType,
         severity: Math.min(5, Math.max(1, Math.round(input.severity))),
         score_delta: input.scoreDelta ?? null,
+        points: input.scoreDelta ?? getRiskTypeWeight(input.eventType) * Math.min(5, Math.max(1, Math.round(input.severity))),
         occurred_at: input.occurredAt,
         metadata: input.metadata ?? {},
         type: input.eventType,
