@@ -34,6 +34,8 @@ const withTimeout = async <T,>(promise: PromiseLike<T>, timeoutMs = AUTH_TIMEOUT
     ]);
 };
 
+const STORED_SESSION_EXPIRY_GRACE_SECONDS = 30;
+
 const getStoredSession = (): Session | null => {
     if (typeof window === 'undefined') return null;
 
@@ -42,10 +44,23 @@ const getStoredSession = (): Session | null => {
 
     try {
         const stored = JSON.parse(window.localStorage.getItem(authKey) || 'null');
-        return stored?.access_token && stored?.user ? stored as Session : null;
+        if (!stored?.access_token || !stored?.user) return null;
+
+        const expiresAt = Number(stored.expires_at);
+        if (Number.isFinite(expiresAt) && expiresAt <= Math.floor(Date.now() / 1000) + STORED_SESSION_EXPIRY_GRACE_SECONDS) {
+            window.localStorage.removeItem(authKey);
+            return null;
+        }
+
+        return stored as Session;
     } catch {
+        window.localStorage.removeItem(authKey);
         return null;
     }
+};
+
+export const authStorage = {
+    getStoredSession,
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
