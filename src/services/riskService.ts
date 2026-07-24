@@ -172,9 +172,9 @@ export const createRiskService = (deps: RiskServiceDeps) => {
         deps.getMotiveScores(motiveStart, motiveEnd).catch(() => ({ users: [] }))
       ]);
 
-      if (driverError) throw driverError;
+      if (driverError && driverError.code !== '42703') throw driverError;
 
-      const motiveScore = resolveMotiveScore(motivePayload, driverRow?.motive_id);
+      const motiveScore = resolveMotiveScore(motivePayload, driverError?.code === '42703' ? null : driverRow?.motive_id);
       const localWindowDays = parseWindowDays(window);
       const cutoff = subtractDays(now, localWindowDays).toISOString();
 

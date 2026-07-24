@@ -4,7 +4,8 @@ import { createRiskService, getRiskBand } from '../services/riskService';
 const buildSupabaseMock = (
   events: Array<any>,
   motiveId: string | null = 'motive-1',
-  duplicateRiskEvent: any | null = null
+  duplicateRiskEvent: any | null = null,
+  driverError: any | null = null
 ) => {
   const inserts: Array<any> = [];
   const updates: Array<any> = [];
@@ -18,7 +19,7 @@ const buildSupabaseMock = (
   });
 
   const makeMaybeSingle = (data: any) => ({
-    maybeSingle: async () => ({ data, error: null })
+    maybeSingle: async () => ({ data, error: driverError })
   });
 
   const driversSelect = {
@@ -216,5 +217,26 @@ describe('riskService', () => {
 
     const riskEventInsert = supabase.inserts.find((entry: any) => entry.table === 'risk_events');
     expect(riskEventInsert.payload[0].points).toBe(15);
+  });
+
+  it('uses motive fallback when the driver motive column is unavailable', async () => {
+    const supabase = buildSupabaseMock(
+      [{ event_type: 'HOS Violation', severity: 3, score_delta: 15 }],
+      null,
+      null,
+      { code: '42703', message: 'column drivers.motive_id does not exist' }
+    );
+
+    const service = createRiskService({
+      supabase,
+      getCurrentOrganization: async () => 'org-1',
+      getMotiveScores: async () => ({ users: [] }),
+      now: () => new Date('2026-02-22T00:00:00Z')
+    });
+
+    const result = await service.calculateScore('driver-1', '90d');
+
+    expect(result.parts.motive).toBe(60);
+    expect(result.score).toBe(50);
   });
 });
