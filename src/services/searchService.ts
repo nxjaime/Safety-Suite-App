@@ -13,10 +13,11 @@ export interface SearchResult {
 const RESULTS_PER_TYPE = 5;
 
 async function searchDrivers(query: string, orgId: string | null): Promise<SearchResult[]> {
+  const safeSearch = query.replace(/[.%]/g, '');
   let q = supabase
     .from('drivers')
-    .select('id, full_name, license_number, status')
-    .ilike('full_name', `%${query}%`)
+    .select('id, name, employee_id, license_number, status')
+    .or(`name.ilike.%${safeSearch}%,employee_id.ilike.%${safeSearch}%`)
     .limit(RESULTS_PER_TYPE);
 
   if (orgId) q = q.eq('organization_id', orgId);
@@ -27,7 +28,7 @@ async function searchDrivers(query: string, orgId: string | null): Promise<Searc
   return (data || []).map((d) => ({
     id: d.id,
     type: 'driver' as const,
-    title: d.full_name || 'Unknown Driver',
+    title: d.name || 'Unknown Driver',
     subtitle: [d.license_number, d.status].filter(Boolean).join(' · '),
     href: `/drivers/${d.id}`,
   }));

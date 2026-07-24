@@ -10,7 +10,7 @@ vi.mock('../lib/supabase', () => ({
 import { supabase } from '../lib/supabase';
 const mockFrom = supabase.from as ReturnType<typeof vi.fn>;
 
-// Chain order in searchService: select → ilike/or → limit → eq (org filter, always set in tests)
+// Chain order in searchService: select -> ilike/or -> limit -> eq (org filter, always set in tests)
 function buildIlikeChain(rows: object[]) {
   return {
     select: vi.fn().mockReturnThis(),
@@ -41,12 +41,14 @@ describe('searchService', () => {
     expect(mockFrom).not.toHaveBeenCalled();
   });
 
-  it('returns driver results mapped to SearchResult shape', async () => {
+  it('returns driver results mapped from the live driver name column', async () => {
+    let driverChain: ReturnType<typeof buildIlikeChain> | undefined;
     mockFrom.mockImplementation((table: string) => {
       if (table === 'drivers') {
-        return buildIlikeChain([
-          { id: 'd1', full_name: 'Alice Johnson', license_number: 'CDL-001', status: 'Active' },
+        driverChain = buildIlikeChain([
+          { id: 'd1', name: 'Alice Johnson', license_number: 'CDL-001', status: 'Active' },
         ]);
+        return driverChain;
       }
       return buildIlikeChain([]);
     });
@@ -55,6 +57,8 @@ describe('searchService', () => {
     const results = await searchService.search('Alice');
     const driver = results.find((r) => r.type === 'driver');
 
+    expect(driverChain?.select).toHaveBeenCalledWith('id, name, employee_id, license_number, status');
+    expect(driverChain?.or).toHaveBeenCalledWith('name.ilike.%Alice%,employee_id.ilike.%Alice%');
     expect(driver).toBeDefined();
     expect(driver?.title).toBe('Alice Johnson');
     expect(driver?.subtitle).toContain('CDL-001');
