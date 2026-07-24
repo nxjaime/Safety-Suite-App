@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildInspectionStartUrl,
   buildEquipmentPayload,
   ELD_LOGGING_OPTIONS,
   OWN_LEASE_OPTIONS,
@@ -79,5 +80,9 @@ describe('equipment vehicle fields', () => {
     expect(VEHICLE_LEASING_FIELD_LABELS).toContain('Vehicle #');
     expect(VEHICLE_LEASING_FIELD_LABELS).toContain('ELD Logging');
     expect(VEHICLE_LEASING_FIELD_LABELS).toContain('Ins. Class');
+  });
+
+  it('builds a compliance DVER start URL for the selected asset', () => {
+    expect(buildInspectionStartUrl({ assetTag: 'TRK S67/847855' } as any)).toBe('/compliance?view=inspections&start=1&vehicle=TRK+S67%2F847855');
   });
 });

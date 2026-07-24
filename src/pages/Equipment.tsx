@@ -18,6 +18,15 @@ type CategoryTab = 'Trucks' | 'Trailers' | 'Forklifts' | 'Pallet Jacks' | 'Sales
 export const OWN_LEASE_OPTIONS = ['Own', 'Lease', 'Rent'] as const;
 export const ELD_LOGGING_OPTIONS = ['Enabled', 'Disabled', 'Exempt'] as const;
 export const VEHICLE_TYPE_OPTIONS = ['Sales Vehicle', 'Truck', 'Trailer'] as const;
+
+export function buildInspectionStartUrl(asset: Pick<Equipment, 'assetTag'>): string {
+    const params = new URLSearchParams({
+        view: 'inspections',
+        start: '1',
+        vehicle: asset.assetTag,
+    });
+    return `/compliance?${params.toString()}`;
+}
 export const US_STATE_OPTIONS = [
     'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
     'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
@@ -803,7 +812,11 @@ const Equipment: React.FC = () => {
                                 {selectedAsset ? `Showing inspections for ${selectedAsset.assetTag}` : 'Select an asset in the Overview tab to view its inspections.'}
                             </p>
                         </div>
-                        <button className="px-3 py-2 text-sm font-medium border border-slate-200 rounded-md hover:bg-slate-50">
+                        <button
+                            onClick={() => selectedAsset && navigate(buildInspectionStartUrl(selectedAsset))}
+                            disabled={!selectedAsset}
+                            className="px-3 py-2 text-sm font-medium border border-slate-200 rounded-md hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
                             <FileText className="w-4 h-4 inline mr-2" />
                             Start Inspection
                         </button>

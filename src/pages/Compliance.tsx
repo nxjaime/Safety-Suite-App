@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { AlertCircle, CheckCircle, Clock, FileText, Plus, User, Calendar, Trash2, AlertTriangle, Truck, ClipboardList, ShieldAlert } from 'lucide-react';
 import Modal from '../components/UI/Modal';
 import { inspectionService } from '../services/inspectionService';
@@ -45,6 +46,7 @@ function CreateWorkOrderFromInspectionButton({ inspection, onCreated }: { inspec
 
 const Compliance: React.FC = () => {
     const { submitInspection } = useOfflineSync();
+    const [searchParams] = useSearchParams();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newDQFile, setNewDQFile] = useState({
         driverName: '',
@@ -119,6 +121,20 @@ const Compliance: React.FC = () => {
 
     const [newInspection, setNewInspection] = useState<Partial<Inspection>>(initialInspectionState);
     const [currentViolation, setCurrentViolation] = useState<ViolationItem>({ code: '', description: '', type: 'Vehicle', oos: false });
+
+    useEffect(() => {
+        if (searchParams.get('view') !== 'inspections') return;
+
+        setView('inspections');
+        const vehicle = searchParams.get('vehicle');
+        if (vehicle) {
+            setNewInspection(prev => ({ ...prev, vehicle_name: vehicle }));
+            setActiveTab('vehicle');
+        }
+        if (searchParams.get('start') === '1') {
+            setIsInspectionModalOpen(true);
+        }
+    }, [searchParams]);
 
     // Load inspections on mount (for overdue count on overview) and when entering inspections view (for drivers)
     useEffect(() => {
